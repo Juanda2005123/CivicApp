@@ -26,10 +26,11 @@
   * **Publicar un comentario constructivo:** **+15 XP** para el usuario que comenta.
   * **Penalización por revocación de voto:** Si un usuario retira su upvote, se descuentan automáticamente **-10 XP** al votante y **-10 XP** al autor del reporte. Si la revocación reduce el total de votos por debajo de 10, no se retira el bono de validación si este ya había sido consolidado.
 * **RN-09 (Escala de Rangos Cívicos):**
-  * *Nivel 1 - Observador Urbano:* 0 a 1000 XP.
-  * *Nivel 2 - Vecino Activo:* 1000 a 2,500 XP.
-  * *Nivel 3 - Guardián Vial:* 2,000 a 4,000 XP.
+  * *Nivel 1 - Observador Urbano:* 0 a 999 XP.
+  * *Nivel 2 - Vecino Activo:* 1,000 a 2,499 XP.
+  * *Nivel 3 - Guardián Vial:* 2,500 a 3,999 XP.
   * *Nivel 4 - Veedor Maestro:* 4,000+ XP.
+  * *Nota:* cada rango queda definido por `rango_civico.xp_minimo` (0, 1000, 2500 y 4000). El rango del usuario es el de mayor `xp_minimo` que no supere sus `puntos_experiencia`.
 * **RN-10 (Asignación Automática de Insignias):** Las insignias se otorgan de forma síncrona al cumplir las siguientes condiciones acumulativas:
   * *Primer Paso Cívico:* Al publicar el primer reporte.
   * *Voz Activa:* Al realizar 10 comentarios en discusiones comunitarias.
