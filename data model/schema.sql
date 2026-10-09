@@ -91,9 +91,9 @@ CREATE TABLE reporte (
     
     CONSTRAINT fk_reporte_usuario 
         FOREIGN KEY (id_usuario_reportante) 
-        REFERENCES usuario (id_usuario) 
-        ON DELETE CASCADE,
-        
+        REFERENCES usuario (id_usuario)
+        ON DELETE RESTRICT,
+
     CONSTRAINT fk_reporte_categoria 
         FOREIGN KEY (id_categoria) 
         REFERENCES categoria_reporte (id_categoria) 
@@ -135,8 +135,7 @@ CREATE TABLE comentario (
 
 -- 9. TABLA: foto_comentario (Foto Opcional en Comentarios - 0..1:1)
 CREATE TABLE foto_comentario (
-    id_foto_comentario UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    id_comentario UUID NOT NULL UNIQUE,
+    id_comentario UUID PRIMARY KEY,
     url_archivo VARCHAR(500) NOT NULL,
     fecha_subida TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
@@ -192,3 +191,35 @@ CREATE INDEX idx_reporte_fecha_creacion ON reporte (fecha_creacion DESC);
 CREATE INDEX idx_reporte_usuario ON reporte (id_usuario_reportante);
 CREATE INDEX idx_comentario_reporte ON comentario (id_reporte, fecha_creacion ASC);
 CREATE INDEX idx_apoyo_reporte_id ON apoyo_reporte (id_reporte);
+
+-- =============================================================================
+-- DATOS SEMILLA
+-- =============================================================================
+
+-- Rangos cívicos
+INSERT INTO rango_civico (nombre, xp_minimo, url_icono) VALUES
+    ('Observador Urbano', 0, NULL),
+    ('Vecino Activo', 1000, NULL),
+    ('Guardián Vial', 2500, NULL),
+    ('Veedor Maestro', 4000, NULL)
+ON CONFLICT (nombre) DO NOTHING;
+
+-- Categorías de reporte (icono = nombre de ícono Material)
+INSERT INTO categoria_reporte (nombre, icono, descripcion) VALUES
+    ('Hueco o Bache', 'warning', 'Huecos, baches o hundimientos en la calzada.'),
+    ('Semáforo', 'traffic', 'Semáforos dañados, apagados o desincronizados.'),
+    ('Obra Paralizada', 'construction', 'Obras viales detenidas o abandonadas.'),
+    ('Andén', 'directions_walk', 'Andenes deteriorados u obstruidos para el peatón.'),
+    ('Fuga de Agua', 'water_drop', 'Fugas de agua potable o aguas residuales en la vía.'),
+    ('Señalización', 'signpost', 'Señales de tránsito ausentes, dañadas o ilegibles.'),
+    ('Otro', 'more_horiz', 'Otras incidencias viales no clasificadas.')
+ON CONFLICT (nombre) DO NOTHING;
+
+-- Insignias
+INSERT INTO insignia (codigo_clave, nombre, descripcion, url_icono) VALUES
+    ('PRIMER_PASO_CIVICO', 'Primer Paso Cívico', 'Publicaste tu primer reporte.', 'https://example.com/insignias/primer_paso_civico.png'),
+    ('VOZ_ACTIVA', 'Voz Activa', 'Realizaste 10 comentarios en discusiones comunitarias.', 'https://example.com/insignias/voz_activa.png'),
+    ('CAZADOR_DE_BACHES', 'Cazador de Baches', 'Publicaste 5 reportes en la categoría Hueco o Bache.', 'https://example.com/insignias/cazador_de_baches.png'),
+    ('REPORTE_DE_ALTO_IMPACTO', 'Reporte de Alto Impacto', 'Uno de tus reportes alcanzó 10 apoyos.', 'https://example.com/insignias/reporte_de_alto_impacto.png'),
+    ('GUARDIAN_COMUNITARIO', 'Guardián Comunitario', 'Otorgaste 50 apoyos a reportes de otros vecinos.', 'https://example.com/insignias/guardian_comunitario.png')
+ON CONFLICT (codigo_clave) DO NOTHING;
