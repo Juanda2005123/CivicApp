@@ -21,6 +21,10 @@ CREATE TABLE usuario (
     nombre_completo VARCHAR(120) NOT NULL,
     correo_electronico VARCHAR(150) NOT NULL UNIQUE,
     hash_contrasena VARCHAR(255) NULL,
+    proveedor_auth VARCHAR(30) NOT NULL DEFAULT 'LOCAL'
+        CHECK (proveedor_auth IN ('LOCAL', 'GOOGLE', 'APPLE')),
+    ciudad_residencia VARCHAR(80) NOT NULL DEFAULT 'Cali',
+    barrio_residencia VARCHAR(100) NULL,
     url_foto_perfil VARCHAR(500) NULL,
     puntos_experiencia INT NOT NULL DEFAULT 0 CHECK (puntos_experiencia >= 0),
     fecha_registro TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -88,11 +92,18 @@ CREATE TABLE reporte (
     ciudad VARCHAR(80) NOT NULL DEFAULT 'Cali',
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_resolucion TIMESTAMPTZ NULL,
+    id_usuario_resolucion UUID NULL,
     
     CONSTRAINT fk_reporte_usuario 
         FOREIGN KEY (id_usuario_reportante) 
         REFERENCES usuario (id_usuario)
         ON DELETE RESTRICT,
+
+    CONSTRAINT fk_reporte_usuario_resolucion
+        FOREIGN KEY (id_usuario_resolucion)
+        REFERENCES usuario (id_usuario)
+        ON DELETE SET NULL,
 
     CONSTRAINT fk_reporte_categoria 
         FOREIGN KEY (id_categoria) 
@@ -183,6 +194,29 @@ CREATE TABLE seguimiento_reporte (
         ON DELETE CASCADE
 );
 
+-- 12. TABLA: notificacion (Alertas y Novedades del Ciudadano)
+CREATE TABLE notificacion (
+    id_notificacion UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id_usuario UUID NOT NULL,
+    id_reporte UUID NULL,
+    tipo VARCHAR(50) NOT NULL 
+        CHECK (tipo IN ('VALIDACION_COMUNITARIA', 'NUEVO_APOYO', 'NUEVO_COMENTARIO', 'PROPUESTA_RESOLUCION', 'REPORTE_RESUELTO', 'SUBIDA_RANGO', 'NUEVA_INSIGNIA')),
+    titulo VARCHAR(120) NOT NULL,
+    mensaje TEXT NOT NULL,
+    leida BOOLEAN NOT NULL DEFAULT FALSE,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT fk_notificacion_usuario 
+        FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) 
+        ON DELETE CASCADE,
+        
+    CONSTRAINT fk_notificacion_reporte 
+        FOREIGN KEY (id_reporte) 
+        REFERENCES reporte (id_reporte) 
+        ON DELETE CASCADE
+);
+
 -- ÍNDICES ESTRATÉGICOS
 CREATE INDEX idx_reporte_coordenadas ON reporte (latitud, longitud);
 CREATE INDEX idx_reporte_barrio ON reporte (barrio);
@@ -191,6 +225,11 @@ CREATE INDEX idx_reporte_fecha_creacion ON reporte (fecha_creacion DESC);
 CREATE INDEX idx_reporte_usuario ON reporte (id_usuario_reportante);
 CREATE INDEX idx_comentario_reporte ON comentario (id_reporte, fecha_creacion ASC);
 CREATE INDEX idx_apoyo_reporte_id ON apoyo_reporte (id_reporte);
+CREATE INDEX idx_notificacion_usuario ON notificacion (id_usuario, leida, fecha_creacion DESC);
+
+-- Índice único parcial: asegura que solo haya como máximo 1 foto principal por reporte
+CREATE UNIQUE INDEX idx_foto_principal_unica ON foto_reporte (id_reporte) WHERE es_principal = TRUE;
+
 
 -- =============================================================================
 -- DATOS SEMILLA
