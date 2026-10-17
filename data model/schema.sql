@@ -14,7 +14,20 @@ CREATE TABLE rango_civico (
     url_icono VARCHAR(500) NULL
 );
 
--- 2. TABLA: usuario (Ciudadanos Registrados)
+-- 2. TABLA: ciudad_cobertura (Catálogo Oficial de Ciudades Urbanas de Cobertura DANE)
+CREATE TABLE ciudad_cobertura (
+    id_ciudad SERIAL PRIMARY KEY,
+    nombre VARCHAR(80) NOT NULL,
+    departamento VARCHAR(80) NOT NULL,
+    latitud_centro DECIMAL(10, 8) NOT NULL,
+    longitud_centro DECIMAL(11, 8) NOT NULL,
+    es_capital BOOLEAN NOT NULL DEFAULT FALSE,
+    activa BOOLEAN NOT NULL DEFAULT TRUE,
+    
+    CONSTRAINT uq_ciudad_departamento UNIQUE (nombre, departamento)
+);
+
+-- 3. TABLA: usuario (Ciudadanos Registrados)
 CREATE TABLE usuario (
     id_usuario UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     id_rango INT NOT NULL,
@@ -23,7 +36,8 @@ CREATE TABLE usuario (
     hash_contrasena VARCHAR(255) NULL,
     proveedor_auth VARCHAR(30) NOT NULL DEFAULT 'LOCAL'
         CHECK (proveedor_auth IN ('LOCAL', 'GOOGLE', 'APPLE')),
-    ciudad_preferida VARCHAR(80) NULL DEFAULT 'Cali',
+    ciudad_referencia VARCHAR(80) NOT NULL DEFAULT 'Cali',
+    ultima_ciudad VARCHAR(80) NOT NULL DEFAULT 'Cali',
     url_foto_perfil VARCHAR(500) NULL,
     puntos_experiencia INT NOT NULL DEFAULT 0 CHECK (puntos_experiencia >= 0),
     fecha_registro TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -130,9 +144,6 @@ CREATE TABLE comentario (
     id_reporte UUID NOT NULL,
     id_usuario UUID NOT NULL,
     contenido TEXT NOT NULL,
-    tipo_comentario VARCHAR(30) NOT NULL DEFAULT 'GENERAL'
-        CHECK (tipo_comentario IN ('GENERAL', 'PROPUESTA_RESOLUCION')),
-    votos_confirmacion INT NOT NULL DEFAULT 0 CHECK (votos_confirmacion >= 0),
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT fk_comentario_reporte 
@@ -158,7 +169,57 @@ CREATE TABLE foto_comentario (
         ON DELETE CASCADE
 );
 
--- 10. TABLA: apoyo_reporte (Votos Comunitarios / Upvotes - N:M)
+-- 10. TABLA: resolucion_reporte (Propuesta Formal de Cierre y Verificación Comunitaria)
+CREATE TABLE resolucion_reporte (
+    id_resolucion UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id_reporte UUID NOT NULL,
+    id_usuario_proponente UUID NOT NULL,
+    url_foto_evidencia VARCHAR(500) NOT NULL,
+    descripcion TEXT NOT NULL,
+    estado VARCHAR(30) NOT NULL DEFAULT 'PENDIENTE'
+        CHECK (estado IN ('PENDIENTE', 'APROBADA_AUTOR', 'APROBADA_COMUNIDAD', 'RECHAZADA')),
+    votos_confirmacion INT NOT NULL DEFAULT 0 CHECK (votos_confirmacion >= 0),
+    fecha_propuesta TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_resolucion TIMESTAMPTZ NULL,
+    id_usuario_aprobador UUID NULL,
+    motivo_rechazo TEXT NULL,
+    
+    CONSTRAINT fk_resolucion_reporte 
+        FOREIGN KEY (id_reporte) 
+        REFERENCES reporte (id_reporte) 
+        ON DELETE CASCADE,
+        
+    CONSTRAINT fk_resolucion_proponente 
+        FOREIGN KEY (id_usuario_proponente) 
+        REFERENCES usuario (id_usuario) 
+        ON DELETE RESTRICT,
+        
+    CONSTRAINT fk_resolucion_aprobador 
+        FOREIGN KEY (id_usuario_aprobador) 
+        REFERENCES usuario (id_usuario) 
+        ON DELETE SET NULL
+);
+
+-- 11. TABLA: confirmacion_resolucion (Votos de Verificación Ciudadana - N:M)
+CREATE TABLE confirmacion_resolucion (
+    id_usuario UUID NOT NULL,
+    id_resolucion UUID NOT NULL,
+    fecha_confirmacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    PRIMARY KEY (id_usuario, id_resolucion),
+    
+    CONSTRAINT fk_confirmacion_usuario 
+        FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) 
+        ON DELETE CASCADE,
+        
+    CONSTRAINT fk_confirmacion_resolucion 
+        FOREIGN KEY (id_resolucion) 
+        REFERENCES resolucion_reporte (id_resolucion) 
+        ON DELETE CASCADE
+);
+
+-- 12. TABLA: apoyo_reporte (Votos Comunitarios / Upvotes - N:M)
 CREATE TABLE apoyo_reporte (
     id_usuario UUID NOT NULL,
     id_reporte UUID NOT NULL,
@@ -177,7 +238,7 @@ CREATE TABLE apoyo_reporte (
         ON DELETE CASCADE
 );
 
--- 11. TABLA: seguimiento_reporte (Campanita de Alertas - N:M)
+-- 13. TABLA: seguimiento_reporte (Campanita de Alertas - N:M)
 CREATE TABLE seguimiento_reporte (
     id_usuario UUID NOT NULL,
     id_reporte UUID NOT NULL,
@@ -196,7 +257,7 @@ CREATE TABLE seguimiento_reporte (
         ON DELETE CASCADE
 );
 
--- 12. TABLA: notificacion (Alertas y Novedades del Ciudadano)
+-- 14. TABLA: notificacion (Alertas y Novedades del Ciudadano)
 CREATE TABLE notificacion (
     id_notificacion UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     id_usuario UUID NOT NULL,
@@ -228,6 +289,7 @@ CREATE INDEX idx_reporte_usuario ON reporte (id_usuario_reportante);
 CREATE INDEX idx_comentario_reporte ON comentario (id_reporte, fecha_creacion ASC);
 CREATE INDEX idx_apoyo_reporte_id ON apoyo_reporte (id_reporte);
 CREATE INDEX idx_notificacion_usuario ON notificacion (id_usuario, leida, fecha_creacion DESC);
+CREATE INDEX idx_resolucion_reporte ON resolucion_reporte (id_reporte, estado);
 
 -- Índice único parcial: asegura que solo haya como máximo 1 foto principal por reporte
 CREATE UNIQUE INDEX idx_foto_principal_unica ON foto_reporte (id_reporte) WHERE es_principal = TRUE;
@@ -264,3 +326,59 @@ INSERT INTO insignia (codigo_clave, nombre, descripcion, url_icono) VALUES
     ('REPORTE_DE_ALTO_IMPACTO', 'Reporte de Alto Impacto', 'Uno de tus reportes alcanzó 10 apoyos.', 'https://example.com/insignias/reporte_de_alto_impacto.png'),
     ('GUARDIAN_COMUNITARIO', 'Guardián Comunitario', 'Otorgaste 50 apoyos a reportes de otros vecinos.', 'https://example.com/insignias/guardian_comunitario.png')
 ON CONFLICT (codigo_clave) DO NOTHING;
+
+-- Ciudades de Cobertura Urbana (32 Capitales + Ciudades Principales > 100k hab DANE)
+INSERT INTO ciudad_cobertura (nombre, departamento, latitud_centro, longitud_centro, es_capital) VALUES
+    ('Cali', 'Valle del Cauca', 3.45160000, -76.53200000, TRUE),
+    ('Bogotá', 'Bogotá D.C.', 4.71100000, -74.07210000, TRUE),
+    ('Medellín', 'Antioquia', 6.24420000, -75.58120000, TRUE),
+    ('Barranquilla', 'Atlántico', 10.96850000, -74.78130000, TRUE),
+    ('Cartagena', 'Bolívar', 10.39100000, -75.47940000, TRUE),
+    ('Bucaramanga', 'Santander', 7.12540000, -73.11980000, TRUE),
+    ('Cúcuta', 'Norte de Santander', 7.89390000, -72.50780000, TRUE),
+    ('Pereira', 'Risaralda', 4.81330000, -75.69610000, TRUE),
+    ('Santa Marta', 'Magdalena', 11.24080000, -74.19900000, TRUE),
+    ('Ibagué', 'Tolima', 4.43890000, -75.23220000, TRUE),
+    ('Pasto', 'Nariño', 1.21360000, -77.28110000, TRUE),
+    ('Manizales', 'Caldas', 5.06890000, -75.51740000, TRUE),
+    ('Neiva', 'Huila', 2.92730000, -75.28190000, TRUE),
+    ('Villavicencio', 'Meta', 4.14200000, -73.62660000, TRUE),
+    ('Armenia', 'Quindío', 4.53390000, -75.68110000, TRUE),
+    ('Valledupar', 'Cesar', 10.46310000, -73.25320000, TRUE),
+    ('Montería', 'Córdoba', 8.74790000, -75.88140000, TRUE),
+    ('Sincelejo', 'Sucre', 9.30470000, -75.39780000, TRUE),
+    ('Popayán', 'Cauca', 2.44480000, -76.61470000, TRUE),
+    ('Tunja', 'Boyacá', 5.53530000, -73.36780000, TRUE),
+    ('Riohacha', 'La Guajira', 11.54440000, -72.90720000, TRUE),
+    ('Florencia', 'Caquetá', 1.61440000, -75.60620000, TRUE),
+    ('Quibdó', 'Chocó', 5.69470000, -76.66110000, TRUE),
+    ('Yopal', 'Casanare', 5.33780000, -72.39590000, TRUE),
+    ('San Andrés', 'San Andrés y Providencia', 12.58470000, -81.70060000, TRUE),
+    ('Mocoa', 'Putumayo', 1.14780000, -76.64640000, TRUE),
+    ('Arauca', 'Arauca', 7.08470000, -70.75910000, TRUE),
+    ('San José del Guaviare', 'Guaviare', 2.57290000, -72.64590000, TRUE),
+    ('Leticia', 'Amazonas', -4.21530000, -69.94060000, TRUE),
+    ('Inírida', 'Guainía', 3.86530000, -67.92390000, TRUE),
+    ('Mitú', 'Vaupés', 1.25280000, -70.23330000, TRUE),
+    ('Puerto Carreño', 'Vichada', 6.18900000, -67.48590000, TRUE),
+    -- Municipios no capitales > 100k hab / Áreas Metropolitanas
+    ('Palmira', 'Valle del Cauca', 3.53940000, -76.30360000, FALSE),
+    ('Buenaventura', 'Valle del Cauca', 3.88010000, -77.03120000, FALSE),
+    ('Tuluá', 'Valle del Cauca', 4.08470000, -76.19540000, FALSE),
+    ('Cartago', 'Valle del Cauca', 4.74640000, -75.91170000, FALSE),
+    ('Jamundí', 'Valle del Cauca', 3.26060000, -76.54140000, FALSE),
+    ('Yumbo', 'Valle del Cauca', 3.58220000, -76.49580000, FALSE),
+    ('Bello', 'Antioquia', 6.33730000, -75.55790000, FALSE),
+    ('Itagüí', 'Antioquia', 6.18460000, -75.59910000, FALSE),
+    ('Envigado', 'Antioquia', 6.16900000, -75.58740000, FALSE),
+    ('Rionegro', 'Antioquia', 6.15520000, -75.37370000, FALSE),
+    ('Soledad', 'Atlántico', 10.91850000, -74.76460000, FALSE),
+    ('Floridablanca', 'Santander', 7.06220000, -73.08640000, FALSE),
+    ('Barrancabermeja', 'Santander', 7.06530000, -73.85470000, FALSE),
+    ('Soacha', 'Cundinamarca', 4.58040000, -74.21690000, FALSE),
+    ('Chía', 'Cundinamarca', 4.86140000, -74.05920000, FALSE),
+    ('Zipaquirá', 'Cundinamarca', 5.02610000, -74.00390000, FALSE),
+    ('Facatativá', 'Cundinamarca', 4.81420000, -74.35420000, FALSE),
+    ('Duitama', 'Boyacá', 5.82450000, -73.03410000, FALSE),
+    ('Sogamoso', 'Boyacá', 5.71450000, -72.93390000, FALSE)
+ON CONFLICT (nombre, departamento) DO NOTHING;

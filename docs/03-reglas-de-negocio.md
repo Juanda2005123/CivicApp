@@ -41,39 +41,44 @@
 ## 3.4. Reglas de Resolución de Reportes
 * **RN-11 (Resolución Cívica con Evidencia Fotográfica y Verificación Cruzada):**
   * Para marcar un reporte en estado `RESUELTO`, es mandatorio presentar evidencia fotográfica reciente (1 foto) que demuestre que el daño vial ha sido reparado o subsanado, junto con una descripción del estado actual.
-  * **Interacción en UI y Modelo:** La pantalla de detalle cuenta con un botón dedicado *"Reportar como Reparado/Resuelto"* que abre un modal especializado. Este genera un registro en `comentario` tipificado como `tipo_comentario = 'PROPUESTA_RESOLUCION'` y asocia la imagen en `foto_comentario`.
+  * **Interacción en UI y Entidad Independiente:** La pantalla de detalle cuenta con un botón dedicado *"Reportar como Reparado/Resuelto"* que abre un modal especializado. Este genera un registro en la entidad desacoplada `resolucion_reporte` (con su fotografía en `url_foto_evidencia`).
+  * **Visualización en Frontend:** La propuesta activa se renderiza como una tarjeta fijada (*pinned card*) destacada con borde verde al inicio de la discusión del reporte.
   * **Resolución por el Autor Original:** Si el autor del reporte publica la evidencia de subsanación, el reporte pasa directamente a estado `RESUELTO`.
   * **Resolución por Ciudadano no Autor:** Si un ciudadano diferente al autor presenta la propuesta de resolución:
     * Se notifica de inmediato al autor del reporte con opciones de **[Aceptar Solución]** o **[Rechazar]**.
-    * **Salvaguarda Comunitaria:** Si el autor no responde en 48 horas, o si la propuesta recibe **3 votos de confirmación comunitaria** (`votos_confirmacion >= 3`), el sistema actualiza automáticamente el estado del reporte a `RESUELTO`.
+    * **Salvaguarda Comunitaria:** Si el autor no responde en 48 horas, o si la propuesta recibe **3 votos de confirmación comunitaria** mediante la tabla `confirmacion_resolucion` (`votos_confirmacion >= 3`), el sistema actualiza automáticamente el estado del reporte a `RESUELTO`.
   * **Recompensa Cívica por Verificación:** La resolución exitosa de un reporte otorga un bono de **+50 XP** al usuario que propuso la evidencia aceptada.
 
 ## 3.5. Reglas de Alcance Geográfico
-* **RN-12 (Delimitación Territorial y Criterio Urbano Nacional DANE):**
-  * VIGÍA opera sobre la infraestructura vial y espacio público urbano de las principales ciudades y aglomeraciones metropolitanas de Colombia, bajo dos criterios objetivos:
+* **RN-12 (Delimitación Territorial y Catálogo Oficial Urbano DANE):**
+  * VIGÍA opera sobre la infraestructura vial y espacio público urbano de las principales ciudades y aglomeraciones metropolitanas de Colombia registradas en la tabla `ciudad_cobertura`:
     1. Las 32 capitales de departamento de Colombia.
     2. Ciudades y municipios no capitales con población urbana superior a 100.000 habitantes o pertenecientes a áreas metropolitanas consolidadas (ej. Palmira, Tuluá, Buenaventura, Soledad, Bello, Itagüí, Soacha, Floridablanca).
   * Quedan excluidas las vías rurales terciarias (trochas) y carreteras interdepartamentales concesionadas (ANI / Invías).
   * Las coordenadas registradas deben ubicarse estrictamente dentro del Bounding Box del territorio continental colombiano (Latitud entre -4.2° y 13.5°, Longitud entre -79.0° y -66.8°).
 
 ## 3.6. Reglas de Notificaciones del Sistema
-* **RN-13 (Generación, Persistencia y Taxonomía de Notificaciones Cívicas):**
+* **RN-13 (Generación, Persistencia y Matriz de Notificaciones Cívicas):**
   * El sistema almacena persistentemente en la tabla `notificacion` todas las novedades cívicas del usuario para alimentar el Centro de Alertas (Campanita).
-  * **Notificaciones Prioritarias / Push:** Se reservan para eventos de alta relevancia que requieren atención:
-    1. *Validación Comunitaria:* Cuando un reporte propio alcanza los 10 apoyos.
-    2. *Propuesta de Resolución:* Cuando un vecino sugiere con foto que un reporte del autor o seguido ha sido solucionado.
+  * **Notificaciones Prioritarias / Push:**
+    1. *`VALIDACION_COMUNITARIA`:* Cuando un reporte propio alcanza los 10 apoyos.
+    2. *`PROPUESTA_RESOLUCION`:* Cuando un vecino sugiere con foto que un reporte del autor ha sido reparado.
+    3. *`REPORTE_RESUELTO`:* Cuando un reporte que el usuario sigue o reportó es marcado como solucionado.
   * **Notificaciones In-App Silenciosas:** 
-    1. *Apoyos individuales (+1 upvote)* y *nuevos comentarios de discusión*.
-    2. *Hitos de gamificación:* Subidas de rango o nuevas insignias se notifican mediante modales y banners interactivos en la sesión activa.
+    1. *`NUEVO_APOYO`:* Incrementos individuales de upvotes en publicaciones propias.
+    2. *`NUEVO_COMENTARIO`:* Participaciones de debate en reportes suscritos.
+    3. *`SUBIDA_RANGO` y `NUEVA_INSIGNIA`:* Hitos de gamificación celebrados mediante modales o banners interactivos en la sesión activa.
 
 ## 3.7. Reglas de Autenticación, Onboarding y Resumen de Perfil
-* **RN-14 (Registro, Permisos de Ubicación y Redirección a Perfil):**
-  * **Registro:** Requiere obligatoriamente nombre completo, correo electrónico único y contraseña con hash seguro. No se obliga a ingresar barrio ni ciudad en el formulario de registro para minimizar fricción de onboarding.
+* **RN-14 (Registro, Manejo de Ubicación y Redirección a Perfil):**
+  * **Registro:** Requiere obligatoriamente nombre completo, correo electrónico único, contraseña con hash seguro y selector de ciudad de referencia (`ciudad_referencia` del catálogo oficial). No se exige barrio ni comuna para eliminar fricción de onboarding.
   * **Permiso de Ubicación en Tiempo de Uso ("When in use"):** Al iniciar la app, se solicita permiso de GPS del sistema operativo para centrar dinámicamente el mapa y feed en la posición del usuario.
-  * **Plan de Mitigación ante Rechazo de Ubicación (3 Niveles):**
-    1. *Nivel 1 (Permiso Concedido):* Centrado automático en coordenadas GPS en vivo.
-    2. *Nivel 2 (Permiso Denegado / Sin GPS):* La aplicación permanece 100% operativa. Muestra un banner no intrusivo y sitúa el mapa en la ciudad de referencia (`ciudad_preferida` o selector de ciudad en el header).
-    3. *Nivel 3 (Creación de Reporte sin GPS):* El usuario puede mover el pin manualmente en el mapa o buscar una dirección aproximada por texto.
-  * **Redirección Inmediata Post-Login:** Tras autenticarse (registro o inicio de sesión), el sistema dirige al usuario directamente a la **Pantalla de Resumen de Perfil (Dashboard Cívico)**, donde visualiza su avatar, nivel cívico inicial (*Observador Urbano*), saldo de XP e insignias.
+  * **Planes de Mitigación ante Rechazo de Ubicación y Zonas sin Cobertura:**
+    1. *Permiso Concedido:* Centrado automático en coordenadas GPS en vivo.
+    2. *Permiso Denegado:* La aplicación permanece 100% operativa. Muestra un banner no intrusivo con botón **"Activar ubicación"** (que vuelve a solicitar permiso o abre ajustes del SO) y sitúa el mapa en la última ciudad activa del usuario (`usuario.ultima_ciudad`).
+    3. *Búsqueda de Ciudades:* Todos los usuarios disponen de un selector/buscador de ciudades en el mapa. Si un usuario sin GPS busca otra ciudad (ej. Bogotá), el mapa navega allí y actualiza `usuario.ultima_ciudad = 'Bogotá'` para sus siguientes aperturas.
+    4. *Apertura en Zona Rural / Fuera de Cobertura:* Si el GPS detecta una ubicación fuera de las ciudades catalogadas, la app mantiene la visualización en la última ciudad urbana activa (`ultima_ciudad`) con un mensaje informativo sutil.
+    5. *Creación de Reporte sin GPS:* El usuario puede mover el pin manualmente en el mapa o buscar una dirección aproximada por texto.
+  * **Redirección Inmediata Post-Login:** Tras autenticarse (registro o inicio de sesión), el sistema dirige al usuario directamente a la **Pantalla de Resumen de Perfil (Dashboard Cívico)**, donde visualiza su avatar, nivel cívico inicial (*Observador Urbano*), saldo de XP, ciudad de referencia y estadísticas personales.
 
 

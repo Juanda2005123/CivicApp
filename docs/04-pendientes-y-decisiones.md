@@ -19,7 +19,7 @@ El prototipo en Stitch / Figma es un **artefacto conceptual de diseño explorato
 
 1. **Trazabilidad del Trámite en Detalle:** Los textos de "Oficio a Secretaría", "Radicado legal `#RAD-INF-99120`" y "Plazo legal 72h" del prototipo se interpretan e implementan como **Radicado Cívico Comunitario** (ej. `#VIG-8492`), fecha de reporte y estado de validación ciudadana.
 2. **Entidades Oficiales (Alcaldía / IDU) y estado "En obra":** Se sustituyen funcionalmente por los estados del modelo: `REPORTADO`, `EN_REVISION`, `VALIDADO_COMUNIDAD` y `RESUELTO`.
-3. **Unificación Geográfica (Bogotá vs. Cali):** El prototipo utilizaba datos de prueba en ambas ciudades. La arquitectura formal define soporte para **ciudades principales de Colombia** (ver sección 4.4).
+3. **Unificación Geográfica (Bogotá vs. Cali):** El prototipo utilizaba datos de prueba en ambas ciudades. La arquitectura formal define soporte para el **catálogo nacional de ciudades principales de Colombia** (ver sección 4.4.B).
 4. **Umbral de Validación Comunitaria:** La meta formal es **10 apoyos (upvotes)** según RN-08 y RN-10 (el prototipo mostraba textos variables como "Meta: 60" o "40+ firmas" por fines ilustrativos).
 5. **Formulario del Wizard:** En la implementación del wizard se incluyen los campos exigidos por el modelo relacional: título, descripción, tipo y severidad (*Baja, Media, Alta, Crítica*).
 6. **Escala de Gamificación en Dashboard:** Rige la escala formal de RN-09: Nivel 1 (0-999 XP), Nivel 2 (1,000-2,499 XP), Nivel 3 (2,500-3,999 XP), Nivel 4 (4,000+ XP).
@@ -31,79 +31,87 @@ El prototipo en Stitch / Figma es un **artefacto conceptual de diseño explorato
 
 ## 4.3. Decisiones sobre Autenticación, Onboarding y Notificaciones
 
-### A. Autenticación Básica Local y Onboarding Basado en Permisos
+### A. Autenticación Básica Local y Flujo de Ubicación / Mitigación
 * **Enfoque Actual (100% Login Local):** 
   - La implementación se centra exclusivamente en **autenticación nativa (Correo electrónico + Contraseña hasheada + Nombre completo)**.
   - Esto garantiza el cumplimiento estricto y verificable del enunciado académico, permite generar usuarios de prueba controlados para evaluación y elimina problemas de dependencias externas.
 * **Compatibilidad Futura con Login Social (Google / Apple):**
   - La base de datos deja habilitada la columna `proveedor_auth VARCHAR(30) NOT NULL DEFAULT 'LOCAL'` (valores admitidos: `'LOCAL'`, `'GOOGLE'`, `'APPLE'`) y `hash_contrasena NULL` en la tabla `usuario`.
   - Esto permite que en el futuro la adición de botones de login social sea puramente una extensión visual/cliente sin requerir migraciones estructurales de base de datos.
-* **Onboarding Mínimo Necesario y Permisos de Ubicación (GPS en tiempo de uso):**
-  - **No se exige escribir barrio ni comuna de residencia en el registro:** Forzar campos de texto o dropdowns de miles de barrios introduce fricción innecesaria y limita al usuario (alguien puede reportar baches camino al trabajo o a la universidad fuera de su barrio residencial).
-  - **Ubicación bajo permiso en tiempo de ejecución ("When in use"):** Al abrir la app por primera vez, se solicita el permiso estándar del sistema operativo para acceder a la ubicación mientras la app esté abierta.
-* **Plan de Mitigación ante Permiso de Ubicación Denegado:**
+* **Toma de Datos en Registro (Onboarding Mínimo):**
+  - Se solicitan únicamente: Nombre completo, Correo electrónico, Contraseña y un **selector de ciudad de referencia** (`ciudad_referencia`, ej. Cali, Bogotá, Medellín).
+  - **No se pide barrio ni comuna en el registro:** evita fricción innecesaria y no restringe al usuario a reportar solo en su zona residencial.
+* **Permiso de Ubicación en Tiempo de Uso ("When in use"):**
+  - Al abrir la app por primera vez, el sistema operativo solicita el permiso para acceder al GPS del dispositivo mientras la app esté abierta.
+* **Planes de Mitigación ante Rechazo de Ubicación y Zonas sin Cobertura:**
   - **Principio clave:** *Bajo ninguna circunstancia se bloquea la aplicación si el usuario rechaza compartir su ubicación*.
-  - **Estrategia en 3 Niveles:**
-    1. *Nivel 1 (Permiso Concedido):* El mapa y el feed se centran automáticamente en las coordenadas GPS en vivo del dispositivo móvil.
-    2. *Nivel 2 (Permiso Denegado / Sin GPS en emulador):* La aplicación muestra un banner informativo no invasivo (*"Ubicación desactivada: explorando ciudad predeterminada"*) y centra el mapa en las coordenadas de la ciudad de referencia (`ciudad_preferida` en perfil o un selector de ciudad rápida en el header: *Cali | Bogotá | Medellín | Barranquilla*).
-    3. *Nivel 3 (Creación de Reportes sin GPS):* En el Paso 1 del Wizard, el usuario puede mover manualmente el pin en el mapa o buscar la dirección aproximada mediante una barra de búsqueda de texto georreferenciada.
-* **Flujo Post-Autenticación:**
-  - Tras registrarse o iniciar sesión, el usuario es redirigido directamente a la **Pantalla de Resumen de Perfil (Dashboard Cívico)** cumpliendo el enunciado, donde visualiza su avatar, nivel cívico inicial (*Observador Urbano*), XP y estadísticas personales.
+  1. *Permiso Denegado:* 
+     - La app muestra un banner superior no invasivo: *"Ubicación desactivada: explorando ciudad predeterminada"*.
+     - Incluye un botón interactivo: **"Activar ubicación"**, el cual vuelve a solicitar el permiso o abre directamente los ajustes del sistema operativo (`openAppSettings()`) si fue rechazado permanentemente.
+     - Sitúa el mapa en la última ciudad conocida del usuario (`usuario.ultima_ciudad`, por defecto su `ciudad_referencia`).
+  2. *Búsqueda por Ciudades (Disponible para todos los usuarios):*
+     - En el header del mapa existe una barra/selector de ciudades del catálogo oficial.
+     - **Usuario sin GPS:** Si busca otra ciudad (ej. Bogotá estando en Cali), el mapa se desplaza al centro de Bogotá y se actualiza `usuario.ultima_ciudad = 'Bogotá'`. La próxima vez que abra la app sin GPS, arrancará directamente en Bogotá.
+     - **Usuario con GPS activo:** La búsqueda de otra ciudad es una navegación exploratoria temporal; contará con un botón flotante estándar: *"Centrar en mi ubicación"* para volver a su posición física en cualquier momento.
+  3. *Apertura de App con GPS en zona rural / pueblo sin cobertura:*
+     - Si el GPS ubica al usuario en una coordenada fuera del catálogo de ciudades urbanas, la app **no salta a pueblos desconocidos ni intenta adivinar**: mantiene en el mapa su **última ciudad urbana registrada** (`usuario.ultima_ciudad`), desplegando un aviso sutil: *"Te encuentras fuera del perímetro urbano cubierto por VIGÍA. Mostrando tu última ciudad activa"*.
+  4. *Creación de Reportes sin GPS:* En el Paso 1 del Wizard, el usuario puede mover manualmente el pin en el mapa o buscar una dirección aproximada por texto.
 
-### B. Módulo de Notificaciones: Persistencia Relacional y Criterios Push
-* **Aclaración sobre Servicios Push (Firebase / FCM):**
-  - El uso de FCM no es obligatorio ni un requisito del proyecto. Fue citado como el estándar de transporte de la industria, pero **la arquitectura central de VIGÍA se apoya en una tabla relacional interna (`notificacion`) en PostgreSQL**.
-* **¿Por qué la tabla `notificacion` es la solución adecuada?**
-  - VIGÍA es una plataforma asíncrona: un bache publicado hoy puede recibir apoyos, fotos de seguimiento o soluciones días después.
-  - La tabla `notificacion` alimenta el **Centro de Alertas / Campanita** de la app con estado `leida = FALSE / TRUE`.
-* **Criterio de Notificaciones (Push vs. In-App Exclusivas):**
-  - **Notificaciones Prioritarias / Accionables (Candidatas a Push en dispositivo):**
-    1. *Validación Comunitaria:* "¡Tu reporte alcanzó 10 apoyos y fue validado por la comunidad! (+500 XP)".
-    2. *Propuesta de Cierre / Solución:* "Un ciudadano aportó evidencia fotográfica de reparación en tu reporte. Toca para verificar."
-  - **Notificaciones In-App Exclusivas (Baja prioridad / Silenciosas en campanita):**
-    1. *Nuevos apoyos individuales (+1 upvote):* Se acumulan en el contador sin interrumpir al usuario.
-    2. *Nuevos comentarios de debate vecinal en reportes seguidos.*
-    3. *Hitos de Gamificación (Subida de rango / Insignia):* Se presentan mediante un modal / banner de celebración dentro de la app en la sesión activa.
-* **Hoja de Ruta de Implementación:**
-  - **Fase de Arquitectura (Actual):** Modelo relacional definido con tabla `notificacion` y tipos estructurados.
-  - **Fase de Funcionalidad (Sprint de Notificaciones):** Lógica del backend para insertar registros ante eventos y vista de la bandeja en el cliente móvil.
-  - **Integración Push Externa:** Funcionalidad complementaria opcional a evaluar al final del desarrollo.
+---
+
+### B. Módulo de Notificaciones: Matriz Formal de Eventos
+* **Momento de Definición:** Se define y documenta **en esta fase de arquitectura** para que todos los módulos futuros (votos, comentarios, resolución) sepan exactamente qué evento disparar y a quién. La programación de la vista de campana se desarrollará en el sprint correspondiente.
+* **Arquitectura:** Se fundamenta en la tabla relacional `notificacion` en PostgreSQL (In-App), con categorización clara entre alertas prioritarias (Push) y silenciosas (In-App).
+
+#### Matriz Oficial de Notificaciones y Eventos del Sistema
+
+| Código de Tipo | Evento Disparador (Trigger) | Destinatario | Canal | Título de la Notificación | Contenido / Plantilla del Mensaje |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `VALIDACION_COMUNITARIA` | Reporte alcanza los 10 apoyos (*upvotes*) | Autor del reporte | **Push + In-App** | ¡Reporte Validado por la Comunidad! | Tu reporte "#{titulo}" en {barrio} ha alcanzado 10 apoyos comunitarios. ¡Has ganado +500 XP! |
+| `PROPUESTA_RESOLUCION` | Un vecino publica propuesta de cierre con foto | Autor del reporte | **Push + In-App** | Propuesta de Solución Recibida | Un ciudadano aportó evidencia fotográfica de reparación en tu reporte "#{titulo}". Toca para verificar. |
+| `REPORTE_RESUELTO` | Reporte pasa formalmente a estado `RESUELTO` | Autor y usuarios en `seguimiento_reporte` | **Push + In-App** | ¡Incidente Vial Solucionado! | El reporte #{radicado} en {barrio} ha sido verificado como reparado. |
+| `NUEVO_COMENTARIO` | Nuevo comentario publicado en hilo | Autor y seguidores | **In-App (Silencioso)** | Nuevo comentario en reporte | {nombre_usuario} comentó en el reporte #{radicado}. |
+| `NUEVO_APOYO` | Reporte recibe un nuevo upvote individual | Autor del reporte | **In-App (Silencioso)** | Nuevo apoyo recibido | Un vecino apoyó tu reporte en {barrio} (+10 XP). |
+| `SUBIDA_RANGO` | Usuario supera umbral de XP de un nuevo nivel | Usuario activo | **In-App (Modal/Banner)** | ¡Ascenso de Rango Cívico! | ¡Felicitaciones! Has ascendido al rango de {nombre_rango}. |
+| `NUEVA_INSIGNIA` | Usuario cumple condiciones de medalla cívica | Usuario activo | **In-App (Modal/Banner)** | ¡Nueva Insignia Desbloqueada! | Has obtenido la insignia "{nombre_insignia}". |
 
 ---
 
 ## 4.4. Decisiones de Modelo de Datos y Mejoras Resueltas
 
-### A. Mecanismo y Diseño de Cierre de Reportes (`RESUELTO`)
-* **Diferenciación entre Comentario Normal y Propuesta de Resolución:**
-  - Para evitar que una propuesta de reparación se confunda con un comentario de opinión, la UI del Detalle del Reporte incluye un botón específico: **"Reportar como Reparado / Resuelto"**.
-  - Este botón despliega un **Modal de Resolución Cívica** que exige obligatoriamente:
-    1. Una (1) fotografía reciente de la vía reparada/pavimentada (almacenada en `foto_comentario`).
-    2. Un comentario descriptivo de la intervención realizada.
-  - En la base de datos, el registro en la tabla `comentario` se clasifica con `tipo_comentario = 'PROPUESTA_RESOLUCION'`.
-* **Renderizado Visual en el Hilo de Discusión:**
-  - Las propuestas de resolución se muestran con una tarjeta destacada (borde verde, insignia *"Propuesta de Solución"* y foto de la obra).
-* **Flujo de Aprobación Cruzada:**
-  1. *Si el autor original propone la resolución:* El reporte pasa automáticamente a estado `RESUELTO`.
-  2. *Si un vecino (ciudadano no autor) propone la resolución:*
-     - El autor del reporte recibe una notificación prioritaria con los botones **[Aceptar Solución]** o **[Rechazar]**.
-     - **Salvaguarda comunitaria (Autor ausente):** Si el autor no responde, o si otros ciudadanos respaldan la solución, cada apoyo suma al campo `votos_confirmacion` de ese comentario. Al alcanzar **3 votos de confirmación**, el sistema actualiza automáticamente el reporte a `RESUELTO`.
-  3. *Recompensa cívica:* Se otorgan **+50 XP** al usuario que propuso la solución verificada.
+### A. Mecanismo de Cierre y Nueva Tabla `resolucion_reporte`
+* **Criterio de Modelado (Por qué se separó de `comentario`):**
+  - **Principio de Responsabilidad Única (SRP):** Un comentario es un mensaje conversacional libre. Una propuesta de resolución es una entidad transaccional del ciclo de vida del reporte, sujeta a auditoría, estados y quórum de votos.
+  - **Evitar Anti-patrón de Columnas Nulas:** Incluir campos de cierre en `comentario` dejaría el 99% de las filas de comentarios con datos nulos.
+  - **Prevención de Votos Duplicados:** Se crea la tabla relacional `confirmacion_resolucion (id_usuario, id_resolucion)` para garantizar que ningún vecino vote más de una vez por la misma propuesta.
+* **Estructura Implementada:**
+  - Tabla `resolucion_reporte`: vinculada a `reporte` y al usuario proponente, con `url_foto_evidencia`, `descripcion`, `estado` (`PENDIENTE`, `APROBADA_AUTOR`, `APROBADA_COMUNIDAD`, `RECHAZADA`), `votos_confirmacion` y motivo de rechazo.
+  - Tabla `confirmacion_resolucion`: llave primaria compuesta `(id_usuario, id_resolucion)` para trazabilidad de quórum vecinal.
+* **Experiencia en Frontend (UI):**
+  - En la vista de detalle del reporte, la propuesta activa se renderiza como una **tarjeta especial fijada (*pinned card*)** al inicio del hilo de discusión con marco verde, foto de la reparación, y botones dinámicos:
+    - Para el Autor: **[Aceptar Solución]** / **[Rechazar]**.
+    - Para otros Ciudadanos: **[Confirmar Arreglo (+1)]**.
+  - Si el autor aprueba, o si la propuesta alcanza **3 votos de confirmación comunitaria**, el reporte pasa automáticamente a `RESUELTO`.
+  - Recompensa: **+50 XP** al proponente de la solución verificada.
 
-### B. Alcance Geográfico: Criterio Urbano Nacional (DANE)
-* **Descarte de "Piloto Exclusivo en Cali":**
-  - Dado que la aplicación es un prototipo funcional/académico, restringirla rígidamente a Cali limitaría las pruebas y la escalabilidad del proyecto.
-* **Criterio Formal de Inclusión Geográfica:**
-  - VIGÍA cubre las **ciudades urbanas principales de Colombia**, delimitadas por el estándar demográfico del **DANE**:
-    1. **Las 32 Capitales de Departamento** (Cali, Bogotá, Medellín, Barranquilla, Bucaramanga, Cartagena, Manizales, Pereira, Pasto, etc.).
-    2. **Municipios y Ciudades No Capitales con Población Urbana > 100.000 habitantes** o pertenecientes a áreas metropolitanas consolidadas:
-       - Valle del Cauca: Palmira, Tuluá, Buenaventura, Cartago, Jamundí.
-       - Antioquia: Bello, Itagüí, Envigado, Rionegro.
-       - Atlántico: Soledad, Malambo.
-       - Santander: Floridablanca, Girón, Piedecuesta, Barrancabermeja.
-       - Cundinamarca: Soacha, Chía, Zipaquirá.
-* **Delimitación y Exclusiones:**
-  - Se excluyen expresamente autopistas nacionales interdepartamentales (concesiones ANI) y vías terciarias rurales (trochas sin nomenclatura ni barrios).
-  - Coordenadas geográficas validadas dentro del Bounding Box continental de Colombia (Latitud: -4.2° a 13.5°, Longitud: -79.0° a -66.8°).
+---
+
+### B. Catálogo Oficial de Cobertura Urbana DANE y Tabla `ciudad_cobertura`
+* **Definición Inmediata del Catálogo:**  
+  Se crea la tabla maestra `ciudad_cobertura` con coordenadas de centroide urbano (`latitud_centro`, `longitud_centro`) y bandera `es_capital`.
+* **Criterio Demográfico DANE Oficial:**
+  1. **Las 32 Capitales de Departamento:**
+     - Cali, Bogotá, Medellín, Barranquilla, Cartagena, Bucaramanga, Cúcuta, Pereira, Santa Marta, Ibagué, Pasto, Manizales, Neiva, Villavicencio, Armenia, Valledupar, Montería, Sincelejo, Popayán, Tunja, Riohacha, Florencia, Quibdó, Yopal, San Andrés, Mocoa, Arauca, San José del Guaviare, Leticia, Inírida, Mitú, Puerto Carreño.
+  2. **Ciudades y Municipios No Capitales con Población Urbana > 100.000 habitantes o Áreas Metropolitanas:**
+     - *Valle del Cauca:* Palmira, Buenaventura, Tuluá, Cartago, Jamundí, Yumbo.
+     - *Antioquia:* Bello, Itagüí, Envigado, Rionegro.
+     - *Atlántico:* Soledad.
+     - *Santander:* Floridablanca, Barrancabermeja.
+     - *Cundinamarca:* Soacha, Chía, Zipaquirá, Facatativá.
+     - *Boyacá:* Duitama, Sogamoso.
+* **Exclusión Explícita:** Se excluyen autopistas interdepartamentales (concesiones ANI) y vías terciarias rurales (trochas sin nomenclatura ni barrios). Coordenadas delimitadas al Bounding Box de Colombia continental (Latitud: -4.2° a 13.5°, Longitud: -79.0° a -66.8°).
+
+---
 
 ### C. Integridad de Evidencia Fotográfica Principal
 * Se implementa un **índice único parcial** en PostgreSQL:
