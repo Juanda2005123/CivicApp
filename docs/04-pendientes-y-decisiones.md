@@ -38,10 +38,11 @@ El prototipo en Stitch / Figma es un **artefacto conceptual de diseño explorato
 * **Compatibilidad Futura con Login Social (Google / Apple):**
   - La base de datos deja habilitada la columna `proveedor_auth VARCHAR(30) NOT NULL DEFAULT 'LOCAL'` (valores admitidos: `'LOCAL'`, `'GOOGLE'`, `'APPLE'`) y `hash_contrasena NULL` en la tabla `usuario`.
   - Esto permite que en el futuro la adición de botones de login social sea puramente una extensión visual/cliente sin requerir migraciones estructurales de base de datos.
-* **Toma de Datos en Registro (Elección Obligatoria de Ciudad y Detección GPS):**
-  - Se solicitan: Nombre completo, Correo electrónico, Contraseña y **selección obligatoria de ciudad de referencia** (`ciudad_referencia` del catálogo oficial).
-  - **No se guarda Cali por defecto en BD:** el usuario debe elegir su ciudad conscientemente en el dropdown o utilizar la opción interactiva: **"Detectar mi ciudad más cercana por ubicación (GPS)"**, la cual calcula la distancia hacia el catálogo `ciudad_cobertura` y preselecciona la ciudad más próxima.
-  - **No se pide barrio ni comuna en el registro:** evita fricción innecesaria y no restringe al usuario a reportar solo en su zona residencial.
+* **Toma de Datos en Registro (Elección Obligatoria en Dropdown y Detección GPS):**
+  - Se solicitan: Nombre completo, Correo electrónico, Contraseña y **selección obligatoria de ciudad de referencia** (`ciudad_referencia`).
+  - **Dropdown cerrado y validado:** La ciudad se selecciona obligatoriamente a través de un **selector desplegable (Dropdown)** alimentado exclusivamente por la tabla `ciudad_cobertura`. No se permite campo string abierto de texto libre para evitar erratas o nombres no catalogados.
+  - **No se guarda Cali por defecto en BD:** El usuario debe elegir su ciudad conscientemente en el dropdown o presionar la opción interactiva: **"Detectar mi ciudad más cercana por ubicación (GPS)"**, la cual calcula la distancia hacia el catálogo `ciudad_cobertura` y preselecciona la ciudad más próxima.
+  - **No se pide barrio ni comuna en el registro:** Evita fricción innecesaria y no restringe al usuario a reportar solo en su zona residencial.
 * **Permiso de Ubicación en Tiempo de Uso ("When in use"):**
   - Al abrir la app por primera vez, el sistema operativo solicita el permiso para acceder al GPS del dispositivo mientras la app esté abierta.
 * **Planes de Mitigación ante Rechazo de Ubicación y Zonas sin Cobertura:**
@@ -50,10 +51,16 @@ El prototipo en Stitch / Figma es un **artefacto conceptual de diseño explorato
      - La app muestra un banner superior no invasivo: *"Ubicación desactivada: explorando ciudad predeterminada"*.
      - Incluye un botón interactivo: **"Activar ubicación"**, el cual vuelve a solicitar el permiso o abre directamente los ajustes del sistema operativo (`openAppSettings()`) si fue rechazado permanentemente.
      - Sitúa el mapa en la última ciudad conocida del usuario (`usuario.ultima_ciudad`, inicializada con su `ciudad_referencia`).
-  2. *Búsqueda por Ciudades (Disponible para todos los usuarios):*
-     - En el header del mapa existe una barra/selector de ciudades del catálogo oficial.
-     - **Usuario sin GPS:** Si busca otra ciudad (ej. Bogotá estando en Cali), el mapa se desplaza al centro de Bogotá y se actualiza `usuario.ultima_ciudad = 'Bogotá'`. La próxima vez que abra la app sin GPS, arrancará directamente en Bogotá.
-     - **Usuario con GPS activo:** La búsqueda de otra ciudad es una navegación exploratoria temporal; contará con un botón flotante estándar: *"Centrar en mi ubicación"* para volver a su posición física en cualquier momento.
+  2. *Buscador Inteligente de Ciudades (City Switcher en Header para todos los usuarios):*
+     - En el header del mapa existe una barra interactiva para cambiar de ciudad. No despliega una lista masiva de 50+ ciudades de golpe (evitando saturar la pantalla móvil).
+     - **Componente Modal / Bottom Sheet con Fuzzy Search:**
+       - **Fuzzy Search / Typeahead:** Filtrado dinámico mientras el usuario escribe, tolerante a tildes, mayúsculas y pequeñas erratas de tipeo, acotando a los 5-8 resultados más relevantes (`[Ciudad, Departamento]`).
+       - **Sugerencias Iniciales (Antes de escribir / Estado Empty):**
+         - *Recientes:* Hasta 3 ciudades consultadas previamente por el usuario.
+         - *Principales:* Accesos rápidos tipo chip a las 5 ciudades más pobladas de Colombia (Bogotá, Medellín, Cali, Barranquilla, Bucaramanga).
+     - **Comportamiento según estado GPS:**
+       - **Usuario sin GPS:** Al seleccionar una ciudad (ej. Bogotá estando en Cali), el mapa viaja al centroide de Bogotá y se actualiza `usuario.ultima_ciudad = 'Bogotá'`. La próxima vez que abra la app sin GPS, arrancará directamente en Bogotá.
+       - **Usuario con GPS activo:** La búsqueda de otra ciudad es una navegación exploratoria temporal; contará con un botón flotante estándar: *"Centrar en mi ubicación"* para volver a su posición física en cualquier momento.
   3. *Apertura de App con GPS en zona rural / pueblo sin cobertura:*
      - Si el GPS ubica al usuario en una coordenada fuera del catálogo de ciudades urbanas, la app **no salta a pueblos desconocidos ni intenta adivinar**: mantiene en el mapa su **última ciudad urbana registrada** (`usuario.ultima_ciudad`), desplegando un aviso sutil: *"Te encuentras fuera del perímetro urbano cubierto por VIGÍA. Mostrando tu última ciudad activa"*.
   4. *Creación de Reportes sin GPS:* En el Paso 1 del Wizard, el usuario puede mover manualmente el pin en el mapa o buscar una dirección aproximada por texto.

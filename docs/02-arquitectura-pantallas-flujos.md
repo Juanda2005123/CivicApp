@@ -3,11 +3,21 @@
 ## 2.1. Mapa de Pantallas Principales
 
 ### Pantalla 0: Autenticación y Acceso
-* Inicio de sesión y registro mediante correo/contraseña o inicio de sesión social (Google, Apple, Facebook).
+* Inicio de sesión y registro mediante correo/contraseña nativo (con soporte arquitectónico preparado para Social Login).
+* **Formulario de Registro (Onboarding Mínimo):**
+  * Nombre completo, correo electrónico y contraseña.
+  * **Selector Dropdown Cerrado de Ciudad:** Dropdown alimentado por el catálogo `ciudad_cobertura` (no campo de texto libre), con botón auxiliar *"Detectar mi ciudad más cercana por ubicación (GPS)"*.
+* Redirección automática post-autenticación hacia la **Pantalla de Resumen del Perfil (Dashboard Cívico)**.
 * Acceso directo en modo *"Veedor Anónimo / Invitado"* para consulta rápida sin fricción.
 
 ### Pantalla 1: Mapa General de Obras (Home Cartográfico)
-* Mapa interactivo a pantalla completa centrado en la ciudad con pines clasificados por ícono y categoría de daño.
+* Mapa interactivo a pantalla completa centrado en la ciudad activa con pines clasificados por ícono y categoría de daño.
+* **Buscador Inteligente de Ciudades (City Switcher en Header):**
+  * Modal/Bottom Sheet desplegable que no satura la pantalla con las 50+ ciudades de golpe.
+  * **Fuzzy Search / Typeahead:** Filtrado dinámico mientras el usuario escribe, tolerante a tildes y mayúsculas, limitando a 5-8 resultados coincidentes (`[Ciudad, Departamento]`).
+  * **Sugerencias Rápidas Iniciales (Antes de escribir):**
+    * *Ciudades Recientes:* Últimas 3 ciudades visitadas/consultadas por el usuario.
+    * *Ciudades Principales:* Accesos directos de un toque a las 5 grandes capitales (Bogotá, Medellín, Cali, Barranquilla, Bucaramanga).
 * **Barra Unificada de Filtros:**
   * **Categoría:** *Todos, Huecos/Baches, Semáforos, Obras Paradas, Andenes, Fugas de Agua, Señalización*.
   * **Sector/Barrio:** Selector por lista o búsqueda de zonas.
