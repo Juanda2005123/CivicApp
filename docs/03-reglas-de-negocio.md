@@ -37,3 +37,35 @@
   * *Cazador de Baches:* Al publicar 5 reportes en la categoría "Hueco o Bache".
   * *Reporte de Alto Impacto:* Al conseguir que un reporte propio alcance la validación comunitaria (10 upvotes).
   * *Guardián Comunitario:* Al otorgar 50 apoyos (*upvotes*) a reportes de otros vecinos.
+
+## 3.4. Reglas de Resolución de Reportes
+* **RN-11 (Resolución Cívica con Evidencia Fotográfica y Verificación Cruzada):**
+  * Para marcar un reporte en estado `RESUELTO`, es mandatorio presentar evidencia fotográfica reciente (1 foto) que demuestre que el daño vial ha sido reparado o subsanado, junto con una descripción del estado actual.
+  * **Resolución por el Autor Original:** Si el autor del reporte publica la evidencia de subsanación, el reporte pasa directamente a estado `RESUELTO`.
+  * **Resolución por Vecino / Tercero:** Si un ciudadano diferente al autor presenta la foto de resolución en el hilo:
+    * Se notifica de inmediato al autor del reporte para que confirme el cierre con un clic.
+    * Si el autor no responde en un lapso de 48 horas, o si la propuesta de resolución del vecino recibe **3 o más upvotes comunitarios**, el sistema actualiza automáticamente el estado a `RESUELTO`.
+  * **Recompensa Cívica por Verificación:** La resolución exitosa de un reporte otorga un bono de **+50 XP** al usuario que propuso la evidencia aceptada.
+
+## 3.5. Reglas de Alcance Geográfico
+* **RN-12 (Delimitación Territorial y Entornos Urbanos):**
+  * VIGÍA opera exclusivamente sobre la infraestructura vial y espacio público de los perímetros urbanos de las ciudades colombianas habilitadas (ciudad piloto: Cali; soporte nacional extensible a Bogotá, Medellín, Barranquilla, Bucaramanga, etc.).
+  * Quedan excluidas las vías rurales no municipalizadas (trochas) y carreteras de concesión interdepartamental (ANI / Invías).
+  * Las coordenadas registradas deben ubicarse estrictamente dentro del Bounding Box del territorio continental colombiano (Latitud entre -4.2° y 13.5°, Longitud entre -79.0° y -66.8°).
+
+## 3.6. Reglas de Notificaciones del Sistema
+* **RN-13 (Generación y Persistencia de Notificaciones Cívicas):**
+  * El sistema genera y almacena eventos de notificación para los usuarios involucrados en los siguientes casos:
+    1. *Validación Comunitaria:* Cuando un reporte propio alcanza los 10 apoyos.
+    2. *Hitos de Discusión:* Cuando se publica un nuevo comentario en un reporte propio o en un reporte al que el usuario se suscribió mediante seguimiento.
+    3. *Propuesta de Resolución:* Cuando un vecino sugiere que un reporte seguido ha sido solucionado.
+    4. *Progreso de Gamificación:* Al subir de nivel cívico o desbloquear una nueva insignia.
+  * Las notificaciones persisten en la base de datos hasta que el usuario las consulte o las marque como leídas (`leida = TRUE`).
+
+## 3.7. Reglas de Autenticación, Onboarding y Resumen de Perfil
+* **RN-14 (Registro, Onboarding Mínimo y Redirección a Resumen de Perfil):**
+  * **Registro:** Requiere obligatoriamente nombre completo, correo electrónico válido único y contraseña con hash seguro.
+  * **Onboarding Cívico Mínimo:** Al registrarse, el usuario selecciona su ciudad de residencia (por defecto Cali) y su barrio/comuna habitual. Esto inicializa el contexto de geolocalización para el mapa y feed de reportes cercanos.
+  * **Inicio de Sesión:** Validación contra credenciales almacenadas (o proveedor externo compatible si se activa Social Login).
+  * **Redirección Inmediata:** Tras autenticarse exitosamente (registro o login), el sistema dirige al usuario directamente a la **Pantalla de Resumen de Perfil (Dashboard Cívico)**, donde visualiza su avatar, nivel inicial, saldo de XP, ciudad/barrio registrado y resumen de actividades cívicas.
+
