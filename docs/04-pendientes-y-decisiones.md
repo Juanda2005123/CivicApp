@@ -19,7 +19,7 @@ El prototipo en Stitch / Figma es un **artefacto conceptual de diseño explorato
 
 1. **Trazabilidad del Trámite en Detalle:** Los textos de "Oficio a Secretaría", "Radicado legal `#RAD-INF-99120`" y "Plazo legal 72h" del prototipo se interpretan e implementan como **Radicado Cívico Comunitario** (ej. `#VIG-8492`), fecha de reporte y estado de validación ciudadana.
 2. **Entidades Oficiales (Alcaldía / IDU) y estado "En obra":** Se sustituyen funcionalmente por los estados del modelo: `REPORTADO`, `EN_REVISION`, `VALIDADO_COMUNIDAD` y `RESUELTO`.
-3. **Unificación Geográfica (Bogotá vs. Cali):** El prototipo utilizaba datos de prueba en ambas ciudades. La arquitectura formal define soporte para **ciudades principales de Colombia con Cali como ciudad piloto** (ver sección 4.4).
+3. **Unificación Geográfica (Bogotá vs. Cali):** El prototipo utilizaba datos de prueba en ambas ciudades. La arquitectura formal define soporte para **ciudades principales de Colombia** (ver sección 4.4).
 4. **Umbral de Validación Comunitaria:** La meta formal es **10 apoyos (upvotes)** según RN-08 y RN-10 (el prototipo mostraba textos variables como "Meta: 60" o "40+ firmas" por fines ilustrativos).
 5. **Formulario del Wizard:** En la implementación del wizard se incluyen los campos exigidos por el modelo relacional: título, descripción, tipo y severidad (*Baja, Media, Alta, Crítica*).
 6. **Escala de Gamificación en Dashboard:** Rige la escala formal de RN-09: Nivel 1 (0-999 XP), Nivel 2 (1,000-2,499 XP), Nivel 3 (2,500-3,999 XP), Nivel 4 (4,000+ XP).
@@ -31,51 +31,79 @@ El prototipo en Stitch / Figma es un **artefacto conceptual de diseño explorato
 
 ## 4.3. Decisiones sobre Autenticación, Onboarding y Notificaciones
 
-### A. Autenticación y Onboarding Mínimo
-* **Prioridad Absoluta (Entrega Académica):** Autenticación nativa (Correo electrónico + Contraseña hasheada + Nombre completo). Esto garantiza el cumplimiento estricto del enunciado, facilita pruebas inmediatas en emuladores (sin lidiar con dependencias de Google Play Services o SHA-1 keystores) y asegura la calificación sin dependencias de terceros.
-* **Onboarding Mínimo Necesario:** Al registrarse, además de las credenciales, el usuario selecciona su **Ciudad** y **Barrio de residencia / interés**. Esto ubica de inmediato su experiencia en el mapa y feed local.
-* **Flujo Post-Autenticación:** Tras un registro o inicio de sesión exitoso, el usuario es redirigido a la **Pantalla de Resumen de Perfil (Dashboard Cívico)** donde visualiza su identidad cívica, XP inicial (0 XP o bonus de bienvenida), nivel y resumen de actividad.
-* **Soporte para Social Login (Google / Apple):** Se deja el modelo de datos preparado incorporando en `usuario` el campo `proveedor_auth VARCHAR(30) NOT NULL DEFAULT 'LOCAL'` (valores admitidos: `'LOCAL'`, `'GOOGLE'`, `'APPLE'`). De este modo, la adición de botones de login social es puramente opcional en la capa de UI sin requerir alteraciones al backend ni a la base de datos.
+### A. Autenticación Básica Local y Onboarding Basado en Permisos
+* **Enfoque Actual (100% Login Local):** 
+  - La implementación se centra exclusivamente en **autenticación nativa (Correo electrónico + Contraseña hasheada + Nombre completo)**.
+  - Esto garantiza el cumplimiento estricto y verificable del enunciado académico, permite generar usuarios de prueba controlados para evaluación y elimina problemas de dependencias externas.
+* **Compatibilidad Futura con Login Social (Google / Apple):**
+  - La base de datos deja habilitada la columna `proveedor_auth VARCHAR(30) NOT NULL DEFAULT 'LOCAL'` (valores admitidos: `'LOCAL'`, `'GOOGLE'`, `'APPLE'`) y `hash_contrasena NULL` en la tabla `usuario`.
+  - Esto permite que en el futuro la adición de botones de login social sea puramente una extensión visual/cliente sin requerir migraciones estructurales de base de datos.
+* **Onboarding Mínimo Necesario y Permisos de Ubicación (GPS en tiempo de uso):**
+  - **No se exige escribir barrio ni comuna de residencia en el registro:** Forzar campos de texto o dropdowns de miles de barrios introduce fricción innecesaria y limita al usuario (alguien puede reportar baches camino al trabajo o a la universidad fuera de su barrio residencial).
+  - **Ubicación bajo permiso en tiempo de ejecución ("When in use"):** Al abrir la app por primera vez, se solicita el permiso estándar del sistema operativo para acceder a la ubicación mientras la app esté abierta.
+* **Plan de Mitigación ante Permiso de Ubicación Denegado:**
+  - **Principio clave:** *Bajo ninguna circunstancia se bloquea la aplicación si el usuario rechaza compartir su ubicación*.
+  - **Estrategia en 3 Niveles:**
+    1. *Nivel 1 (Permiso Concedido):* El mapa y el feed se centran automáticamente en las coordenadas GPS en vivo del dispositivo móvil.
+    2. *Nivel 2 (Permiso Denegado / Sin GPS en emulador):* La aplicación muestra un banner informativo no invasivo (*"Ubicación desactivada: explorando ciudad predeterminada"*) y centra el mapa en las coordenadas de la ciudad de referencia (`ciudad_preferida` en perfil o un selector de ciudad rápida en el header: *Cali | Bogotá | Medellín | Barranquilla*).
+    3. *Nivel 3 (Creación de Reportes sin GPS):* En el Paso 1 del Wizard, el usuario puede mover manualmente el pin en el mapa o buscar la dirección aproximada mediante una barra de búsqueda de texto georreferenciada.
+* **Flujo Post-Autenticación:**
+  - Tras registrarse o iniciar sesión, el usuario es redirigido directamente a la **Pantalla de Resumen de Perfil (Dashboard Cívico)** cumpliendo el enunciado, donde visualiza su avatar, nivel cívico inicial (*Observador Urbano*), XP y estadísticas personales.
 
-### B. Módulo de Notificaciones: Persistencia Relacional
-* **Decisión:** Implementación de la tabla relacional `notificacion` en PostgreSQL.
-* **Justificación:**
-  - VIGÍA es una plataforma asíncrona: los reportes reciben apoyos y comentarios horas o días después de su creación.
-  - Confiar únicamente en notificaciones push del sistema operativo provocaría la pérdida irrecuperable de alertas si el usuario descarta la notificación en su móvil o si no tiene conexión al momento del envío.
-  - Una tabla en BD alimenta el icono de campana (bandeja de notificaciones) en la app con control de lectura (`leida BOOLEAN`), permitiendo consultar:
-    1. Notificaciones de apoyo ("Tu reporte alcanzó 10 votos y fue validado").
-    2. Notificaciones de seguimiento ("Nuevo comentario con foto en un reporte que sigues").
-    3. Hitos de gamificación ("¡Subiste a Nivel 3 - Guardián Vial!").
-    4. Notificaciones de resolución ("Un vecino reportó que este daño fue solucionado").
-  - Si en etapas posteriores se integra FCM (Firebase Cloud Messaging), el push solo será el canal de entrega hacia el dispositivo, mientras la tabla `notificacion` permanece como almacén central de estado.
-
-### C. Rol de Moderación
-* No se crea un actor "Moderador" con credenciales especiales para esta entrega. La moderación se apoya en:
-  - Ventanas de tiempo estrictas de edición/eliminación (RN-03 y RN-06).
-  - Inmutabilidad de comentarios tras 5 minutos.
-  - Auditoría abierta: cualquier ciudadano puede inspeccionar la evidencia pública.
+### B. Módulo de Notificaciones: Persistencia Relacional y Criterios Push
+* **Aclaración sobre Servicios Push (Firebase / FCM):**
+  - El uso de FCM no es obligatorio ni un requisito del proyecto. Fue citado como el estándar de transporte de la industria, pero **la arquitectura central de VIGÍA se apoya en una tabla relacional interna (`notificacion`) en PostgreSQL**.
+* **¿Por qué la tabla `notificacion` es la solución adecuada?**
+  - VIGÍA es una plataforma asíncrona: un bache publicado hoy puede recibir apoyos, fotos de seguimiento o soluciones días después.
+  - La tabla `notificacion` alimenta el **Centro de Alertas / Campanita** de la app con estado `leida = FALSE / TRUE`.
+* **Criterio de Notificaciones (Push vs. In-App Exclusivas):**
+  - **Notificaciones Prioritarias / Accionables (Candidatas a Push en dispositivo):**
+    1. *Validación Comunitaria:* "¡Tu reporte alcanzó 10 apoyos y fue validado por la comunidad! (+500 XP)".
+    2. *Propuesta de Cierre / Solución:* "Un ciudadano aportó evidencia fotográfica de reparación en tu reporte. Toca para verificar."
+  - **Notificaciones In-App Exclusivas (Baja prioridad / Silenciosas en campanita):**
+    1. *Nuevos apoyos individuales (+1 upvote):* Se acumulan en el contador sin interrumpir al usuario.
+    2. *Nuevos comentarios de debate vecinal en reportes seguidos.*
+    3. *Hitos de Gamificación (Subida de rango / Insignia):* Se presentan mediante un modal / banner de celebración dentro de la app en la sesión activa.
+* **Hoja de Ruta de Implementación:**
+  - **Fase de Arquitectura (Actual):** Modelo relacional definido con tabla `notificacion` y tipos estructurados.
+  - **Fase de Funcionalidad (Sprint de Notificaciones):** Lógica del backend para insertar registros ante eventos y vista de la bandeja en el cliente móvil.
+  - **Integración Push Externa:** Funcionalidad complementaria opcional a evaluar al final del desarrollo.
 
 ---
 
 ## 4.4. Decisiones de Modelo de Datos y Mejoras Resueltas
 
-### A. Mecanismo de Cierre de Reportes (`RESUELTO`)
-* **Problema:** Evitar que los reportes queden abiertos indefinidamente, pero sin permitir cierres arbitrarios o fraudulentos.
-* **Solución Adoptada (Resolución Cívica con Evidencia Fotográfica y Verificación Cruzada):**
-  1. Para solicitar o marcar el cierre de un reporte, es **obligatorio adjuntar una fotografía de evidencia** que demuestre la reparación de la vía, junto con un comentario explicativo.
-  2. **Cierre por el Autor Original:** Si el autor del reporte sube la foto de la reparación, el estado pasa directamente a `RESUELTO`.
-  3. **Cierre por un Vecino (Tercero):** Si un vecino sube la foto de reparación:
-     - El autor recibe una notificación con la evidencia para confirmar la resolución con un clic.
-     - Como salvaguarda ante autores inactivos, si el autor no responde o si el comentario con la foto de reparación alcanza **3 upvotes comunitarios**, el reporte se actualiza automáticamente a `RESUELTO`.
-  4. **Campos en el Modelo:** Se agregan en `reporte` las columnas `fecha_resolucion TIMESTAMPTZ NULL` e `id_usuario_resolucion UUID NULL`.
-  5. **Incentivo de Gamificación:** Quien proponga la resolución verificada recibe **+50 XP** cívicos.
+### A. Mecanismo y Diseño de Cierre de Reportes (`RESUELTO`)
+* **Diferenciación entre Comentario Normal y Propuesta de Resolución:**
+  - Para evitar que una propuesta de reparación se confunda con un comentario de opinión, la UI del Detalle del Reporte incluye un botón específico: **"Reportar como Reparado / Resuelto"**.
+  - Este botón despliega un **Modal de Resolución Cívica** que exige obligatoriamente:
+    1. Una (1) fotografía reciente de la vía reparada/pavimentada (almacenada en `foto_comentario`).
+    2. Un comentario descriptivo de la intervención realizada.
+  - En la base de datos, el registro en la tabla `comentario` se clasifica con `tipo_comentario = 'PROPUESTA_RESOLUCION'`.
+* **Renderizado Visual en el Hilo de Discusión:**
+  - Las propuestas de resolución se muestran con una tarjeta destacada (borde verde, insignia *"Propuesta de Solución"* y foto de la obra).
+* **Flujo de Aprobación Cruzada:**
+  1. *Si el autor original propone la resolución:* El reporte pasa automáticamente a estado `RESUELTO`.
+  2. *Si un vecino (ciudadano no autor) propone la resolución:*
+     - El autor del reporte recibe una notificación prioritaria con los botones **[Aceptar Solución]** o **[Rechazar]**.
+     - **Salvaguarda comunitaria (Autor ausente):** Si el autor no responde, o si otros ciudadanos respaldan la solución, cada apoyo suma al campo `votos_confirmacion` de ese comentario. Al alcanzar **3 votos de confirmación**, el sistema actualiza automáticamente el reporte a `RESUELTO`.
+  3. *Recompensa cívica:* Se otorgan **+50 XP** al usuario que propuso la solución verificada.
 
-### B. Alcance Geográfico: Colombia Urbana con Ciudad Piloto (Cali)
-* **Definición del Alcance:** Plataforma cívica para **entornos urbanos de las principales ciudades de Colombia**, con **Cali como Ciudad Piloto de Lanzamiento**.
-* **Justificación:**
-  - Se descartan vías rurales terciarias, autopistas nacionales y carreteras intermunicipales (concesiones ANI / Invías), ya que no manejan el esquema de barrios/comunas ni la taxonomía de daños urbanos (andenes peatonales, semaforización urbana, fugas de alcantarillado).
-  - El campo `ciudad` en `reporte` y `usuario` tiene por defecto `'Cali'`, pero acepta otras ciudades principales (Bogotá, Medellín, Barranquilla, Bucaramanga) sin romper la integridad relacional.
-  - Se añade validación de coordenadas al polígono general de Colombia (Latitud entre -4.2° y 13.5°, Longitud entre -79.0° y -66.8°).
+### B. Alcance Geográfico: Criterio Urbano Nacional (DANE)
+* **Descarte de "Piloto Exclusivo en Cali":**
+  - Dado que la aplicación es un prototipo funcional/académico, restringirla rígidamente a Cali limitaría las pruebas y la escalabilidad del proyecto.
+* **Criterio Formal de Inclusión Geográfica:**
+  - VIGÍA cubre las **ciudades urbanas principales de Colombia**, delimitadas por el estándar demográfico del **DANE**:
+    1. **Las 32 Capitales de Departamento** (Cali, Bogotá, Medellín, Barranquilla, Bucaramanga, Cartagena, Manizales, Pereira, Pasto, etc.).
+    2. **Municipios y Ciudades No Capitales con Población Urbana > 100.000 habitantes** o pertenecientes a áreas metropolitanas consolidadas:
+       - Valle del Cauca: Palmira, Tuluá, Buenaventura, Cartago, Jamundí.
+       - Antioquia: Bello, Itagüí, Envigado, Rionegro.
+       - Atlántico: Soledad, Malambo.
+       - Santander: Floridablanca, Girón, Piedecuesta, Barrancabermeja.
+       - Cundinamarca: Soacha, Chía, Zipaquirá.
+* **Delimitación y Exclusiones:**
+  - Se excluyen expresamente autopistas nacionales interdepartamentales (concesiones ANI) y vías terciarias rurales (trochas sin nomenclatura ni barrios).
+  - Coordenadas geográficas validadas dentro del Bounding Box continental de Colombia (Latitud: -4.2° a 13.5°, Longitud: -79.0° a -66.8°).
 
 ### C. Integridad de Evidencia Fotográfica Principal
 * Se implementa un **índice único parcial** en PostgreSQL:

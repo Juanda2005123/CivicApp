@@ -23,8 +23,7 @@ CREATE TABLE usuario (
     hash_contrasena VARCHAR(255) NULL,
     proveedor_auth VARCHAR(30) NOT NULL DEFAULT 'LOCAL'
         CHECK (proveedor_auth IN ('LOCAL', 'GOOGLE', 'APPLE')),
-    ciudad_residencia VARCHAR(80) NOT NULL DEFAULT 'Cali',
-    barrio_residencia VARCHAR(100) NULL,
+    ciudad_preferida VARCHAR(80) NULL DEFAULT 'Cali',
     url_foto_perfil VARCHAR(500) NULL,
     puntos_experiencia INT NOT NULL DEFAULT 0 CHECK (puntos_experiencia >= 0),
     fecha_registro TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -131,6 +130,9 @@ CREATE TABLE comentario (
     id_reporte UUID NOT NULL,
     id_usuario UUID NOT NULL,
     contenido TEXT NOT NULL,
+    tipo_comentario VARCHAR(30) NOT NULL DEFAULT 'GENERAL'
+        CHECK (tipo_comentario IN ('GENERAL', 'PROPUESTA_RESOLUCION')),
+    votos_confirmacion INT NOT NULL DEFAULT 0 CHECK (votos_confirmacion >= 0),
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT fk_comentario_reporte 
