@@ -15,7 +15,7 @@ Este documento consolida las decisiones arquitectónicas, de producto y de model
 ---
 
 ## 4.2. Criterio de Coexistencia con el Prototipo Visual
-El prototipo en Stitch / Figma es un **artefacto conceptual de diseño exploratorio**. Para optimizar los tiempos de desarrollo y priorizar el código funcional, **no es necesario rediseñar las pantallas gráficas**; la documentación técnica ([01-planteamiento](file:///c:/Universidad/Noveno%20Semestre/App%20Moviles/Proyecto%20Final%20-%20Vigia/docs/01-planteamiento-problema-solucion-actores.md), [02-arquitectura](file:///c:/Universidad/Noveno%20Semestre/App%20Moviles/Proyecto%20Final%20-%20Vigia/docs/02-arquitectura-pantallas-flujos.md), [03-reglas-de-negocio](file:///c:/Universidad/Noveno%20Semestre/App%20Moviles/Proyecto%20Final%20-%20Vigia/docs/03-reglas-de-negocio.md) y [schema.sql](file:///c:/Universidad/Noveno%20Semestre/App%20Moviles/Proyecto%20Final%20-%20Vigia/data%20model/schema.sql)) rige la implementación formal:
+El prototipo en Stitch / Figma es un **artefacto conceptual de diseño exploratorio**. Para optimizar los tiempos de desarrollo y priorizar el código funcional, **no es necesario rediseñar las pantallas gráficas**; la documentación técnica ([01-planteamiento](file:///c:/Universidad/Noveno%20Semestre/App%20Moviles/Proyecto%20Final%20-%20Vigia/docs/01-planteamiento-problema-solucion-actores.md), [02-arquitectura](file:///c:/Universidad/Noveno%20Semestre/App%20Moviles/Proyecto%20Final%20-%20Vigia/docs/02-arquitectura-pantallas-flujos.md), [03-reglas-de-negocio](file:///c:/Universidad/Noveno%20Semestre/App%20Moviles/Proyecto%20Final%20-%20Vigia/docs/03-reglas-de-negocio.md), [schema.sql](file:///c:/Universidad/Noveno%20Semestre/App%20Moviles/Proyecto%20Final%20-%20Vigia/data%20model/schema.sql) y [seeds.sql](file:///c:/Universidad/Noveno%20Semestre/App%20Moviles/Proyecto%20Final%20-%20Vigia/data%20model/seeds.sql)) rige la implementación formal:
 
 1. **Trazabilidad del Trámite en Detalle:** Los textos de "Oficio a Secretaría", "Radicado legal `#RAD-INF-99120`" y "Plazo legal 72h" del prototipo se interpretan e implementan como **Radicado Cívico Comunitario** (ej. `#VIG-8492`), fecha de reporte y estado de validación ciudadana.
 2. **Entidades Oficiales (Alcaldía / IDU) y estado "En obra":** Se sustituyen funcionalmente por los estados del modelo: `REPORTADO`, `EN_REVISION`, `VALIDADO_COMUNIDAD` y `RESUELTO`.
@@ -34,12 +34,13 @@ El prototipo en Stitch / Figma es un **artefacto conceptual de diseño explorato
 ### A. Autenticación Básica Local y Flujo de Ubicación / Mitigación
 * **Enfoque Actual (100% Login Local):** 
   - La implementación se centra exclusivamente en **autenticación nativa (Correo electrónico + Contraseña hasheada + Nombre completo)**.
-  - Esto garantiza el cumplimiento estricto y verificable del enunciado académico, permite generar usuarios de prueba controlados para evaluación y elimina problemas de dependencias externas.
+  - Esto garantiza el cumplimiento estricto y verificable del enunciado académico, permite generar usuarios de prueba controlados para evaluación y elimina dependencias de terceros.
 * **Compatibilidad Futura con Login Social (Google / Apple):**
   - La base de datos deja habilitada la columna `proveedor_auth VARCHAR(30) NOT NULL DEFAULT 'LOCAL'` (valores admitidos: `'LOCAL'`, `'GOOGLE'`, `'APPLE'`) y `hash_contrasena NULL` en la tabla `usuario`.
   - Esto permite que en el futuro la adición de botones de login social sea puramente una extensión visual/cliente sin requerir migraciones estructurales de base de datos.
-* **Toma de Datos en Registro (Onboarding Mínimo):**
-  - Se solicitan únicamente: Nombre completo, Correo electrónico, Contraseña y un **selector de ciudad de referencia** (`ciudad_referencia`, ej. Cali, Bogotá, Medellín).
+* **Toma de Datos en Registro (Elección Obligatoria de Ciudad y Detección GPS):**
+  - Se solicitan: Nombre completo, Correo electrónico, Contraseña y **selección obligatoria de ciudad de referencia** (`ciudad_referencia` del catálogo oficial).
+  - **No se guarda Cali por defecto en BD:** el usuario debe elegir su ciudad conscientemente en el dropdown o utilizar la opción interactiva: **"Detectar mi ciudad más cercana por ubicación (GPS)"**, la cual calcula la distancia hacia el catálogo `ciudad_cobertura` y preselecciona la ciudad más próxima.
   - **No se pide barrio ni comuna en el registro:** evita fricción innecesaria y no restringe al usuario a reportar solo en su zona residencial.
 * **Permiso de Ubicación en Tiempo de Uso ("When in use"):**
   - Al abrir la app por primera vez, el sistema operativo solicita el permiso para acceder al GPS del dispositivo mientras la app esté abierta.
@@ -48,7 +49,7 @@ El prototipo en Stitch / Figma es un **artefacto conceptual de diseño explorato
   1. *Permiso Denegado:* 
      - La app muestra un banner superior no invasivo: *"Ubicación desactivada: explorando ciudad predeterminada"*.
      - Incluye un botón interactivo: **"Activar ubicación"**, el cual vuelve a solicitar el permiso o abre directamente los ajustes del sistema operativo (`openAppSettings()`) si fue rechazado permanentemente.
-     - Sitúa el mapa en la última ciudad conocida del usuario (`usuario.ultima_ciudad`, por defecto su `ciudad_referencia`).
+     - Sitúa el mapa en la última ciudad conocida del usuario (`usuario.ultima_ciudad`, inicializada con su `ciudad_referencia`).
   2. *Búsqueda por Ciudades (Disponible para todos los usuarios):*
      - En el header del mapa existe una barra/selector de ciudades del catálogo oficial.
      - **Usuario sin GPS:** Si busca otra ciudad (ej. Bogotá estando en Cali), el mapa se desplaza al centro de Bogotá y se actualiza `usuario.ultima_ciudad = 'Bogotá'`. La próxima vez que abra la app sin GPS, arrancará directamente en Bogotá.
@@ -59,11 +60,14 @@ El prototipo en Stitch / Figma es un **artefacto conceptual de diseño explorato
 
 ---
 
-### B. Módulo de Notificaciones: Matriz Formal de Eventos
-* **Momento de Definición:** Se define y documenta **en esta fase de arquitectura** para que todos los módulos futuros (votos, comentarios, resolución) sepan exactamente qué evento disparar y a quién. La programación de la vista de campana se desarrollará en el sprint correspondiente.
+### B. Módulo de Notificaciones: Matriz de Referencia Inicial
+> [!NOTE]
+> **Aviso para desarrolladores / agentes de implementación:**  
+> La siguiente matriz es una **propuesta y ejemplo inicial de arquitectura de referencia**. Está diseñada para orientar a los desarrolladores y agentes al momento de codificar otros módulos (para saber qué llamadas a eventos dejar preparadas). **No es una especificación final e inmutable**; lo más probable y recomendado es que sea refinada, ampliada o modificada cuando se aborde el sprint específico del módulo de notificaciones.
+
 * **Arquitectura:** Se fundamenta en la tabla relacional `notificacion` en PostgreSQL (In-App), con categorización clara entre alertas prioritarias (Push) y silenciosas (In-App).
 
-#### Matriz Oficial de Notificaciones y Eventos del Sistema
+#### Matriz Inicial de Notificaciones y Eventos del Sistema
 
 | Código de Tipo | Evento Disparador (Trigger) | Destinatario | Canal | Título de la Notificación | Contenido / Plantilla del Mensaje |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -79,20 +83,27 @@ El prototipo en Stitch / Figma es un **artefacto conceptual de diseño explorato
 
 ## 4.4. Decisiones de Modelo de Datos y Mejoras Resueltas
 
-### A. Mecanismo de Cierre y Nueva Tabla `resolucion_reporte`
-* **Criterio de Modelado (Por qué se separó de `comentario`):**
-  - **Principio de Responsabilidad Única (SRP):** Un comentario es un mensaje conversacional libre. Una propuesta de resolución es una entidad transaccional del ciclo de vida del reporte, sujeta a auditoría, estados y quórum de votos.
-  - **Evitar Anti-patrón de Columnas Nulas:** Incluir campos de cierre en `comentario` dejaría el 99% de las filas de comentarios con datos nulos.
-  - **Prevención de Votos Duplicados:** Se crea la tabla relacional `confirmacion_resolucion (id_usuario, id_resolucion)` para garantizar que ningún vecino vote más de una vez por la misma propuesta.
-* **Estructura Implementada:**
-  - Tabla `resolucion_reporte`: vinculada a `reporte` y al usuario proponente, con `url_foto_evidencia`, `descripcion`, `estado` (`PENDIENTE`, `APROBADA_AUTOR`, `APROBADA_COMUNIDAD`, `RECHAZADA`), `votos_confirmacion` y motivo de rechazo.
-  - Tabla `confirmacion_resolucion`: llave primaria compuesta `(id_usuario, id_resolucion)` para trazabilidad de quórum vecinal.
-* **Experiencia en Frontend (UI):**
-  - En la vista de detalle del reporte, la propuesta activa se renderiza como una **tarjeta especial fijada (*pinned card*)** al inicio del hilo de discusión con marco verde, foto de la reparación, y botones dinámicos:
-    - Para el Autor: **[Aceptar Solución]** / **[Rechazar]**.
-    - Para otros Ciudadanos: **[Confirmar Arreglo (+1)]**.
-  - Si el autor aprueba, o si la propuesta alcanza **3 votos de confirmación comunitaria**, el reporte pasa automáticamente a `RESUELTO`.
-  - Recompensa: **+50 XP** al proponente de la solución verificada.
+### A. Mecanismo de Cierre, Resolución Concurrente y Quórum
+* **Problema de Concurrencia (¿Qué ocurre si se abren 2 resoluciones a la vez?):**
+  - **Regla estricta:** **Solo puede existir UNA (1) propuesta de resolución en estado `PENDIENTE` por reporte simultáneamente.**
+  - **Justificación:** Permitir múltiples propuestas de cierre activas bifurca y fragmenta la atención comunitaria (unos vecinos votarían en una tarjeta y otros en otra).
+  - **Garantía a nivel de Base de Datos:**
+    ```sql
+    CREATE UNIQUE INDEX idx_resolucion_activa_unica 
+    ON resolucion_reporte (id_reporte) 
+    WHERE estado = 'PENDIENTE';
+    ```
+  - **Comportamiento en UI:** Si un ciudadano intenta presionar "Reportar como resuelto" mientras ya existe una propuesta activa, la aplicación muestra: *"Ya existe una propuesta de solución en proceso de verificación comunitaria. Puedes apoyar la confirmación de la propuesta actual o revisar la evidencia"*, llevándolo a la tarjeta activa.
+
+* **Umbrales de Aprobación (Cierre del Reporte a `RESUELTO`):**
+  1. *Aprobación por el Autor:* Si el autor pulsa **[Aceptar Solución]**, la propuesta pasa a `APROBADA_AUTOR` y el reporte cambia inmediatamente a `RESUELTO`.
+  2. *Aprobación Comunitaria:* Si la propuesta acumula **3 votos de confirmación comunitaria** (`votos_confirmacion >= 3`), pasa a `APROBADA_COMUNIDAD` y el reporte cambia a `RESUELTO`. Se registra en `confirmacion_resolucion` para evitar votos duplicados.
+
+* **Umbrales de Rechazo y Cancelación (Liberación del Candado):**
+  1. *Rechazo por el Autor:* Si el autor inspecciona la foto y constata que la vía sigue dañada o que la evidencia es fraudulenta, presiona **[Rechazar Solución]** con justificación obligatoria (`motivo_rechazo`). La propuesta pasa a `RECHAZADA_AUTOR`.
+  2. *Objeción Comunitaria:* Si los vecinos constatan que la evidencia es inválida, pueden objetar la propuesta. Al acumular **3 objeciones comunitarias** (`votos_objecion >= 3` registradas en `objecion_resolucion`), la propuesta pasa a `RECHAZADA_COMUNIDAD`.
+  3. *Expiración por Timeout:* Si una propuesta permanece 7 días sin alcanzar los 3 votos y sin respuesta del autor, pasa a `EXPIRADA`.
+  - **Liberación:** Al pasar a estado terminal (`RECHAZADA` o `EXPIRADA`), el candado se libera y la comunidad puede radicar una nueva propuesta con evidencia veraz.
 
 ---
 
@@ -113,11 +124,12 @@ El prototipo en Stitch / Figma es un **artefacto conceptual de diseño explorato
 
 ---
 
-### C. Integridad de Evidencia Fotográfica Principal
-* Se implementa un **índice único parcial** en PostgreSQL:
-  ```sql
-  CREATE UNIQUE INDEX idx_foto_principal_unica 
-  ON foto_reporte (id_reporte) 
-  WHERE es_principal = TRUE;
-  ```
-  Esto garantiza a nivel de base de datos que jamás existan dos fotografías marcadas simultáneamente como principales para el mismo reporte.
+### C. Buenas Prácticas: Separación entre DDL (`schema.sql`) y DML (`seeds.sql`)
+* **¿Por qué es superior separar el esquema de los datos semilla?:**
+  1. **Separación de Responsabilidades (DDL vs DML):**
+     - [schema.sql](file:///c:/Universidad/Noveno%20Semestre/App%20Moviles/Proyecto%20Final%20-%20Vigia/data%20model/schema.sql) contiene exclusivamente definiciones estructurales puras (`CREATE TABLE`, llaves foráneas, restricciones de integridad e índices).
+     - [seeds.sql](file:///c:/Universidad/Noveno%20Semestre/App%20Moviles/Proyecto%20Final%20-%20Vigia/data%20model/seeds.sql) contiene los datos maestros de inicialización (`INSERT INTO` de rangos cívicos, categorías, insignias y ciudades de cobertura).
+  2. **Preparación para Herramientas de Migración:**
+     - En el desarrollo móvil y backend (con herramientas como Prisma, TypeORM, Flyway, Supabase Migrations o Drift), mezclar inserts masivos con creación de tablas rompe la idempotencia y dificulta los scripts de migración secuencial (`V1__schema.sql`, `V2__seeds.sql`).
+  3. **Aislamiento en Pruebas Unitarias e Integración:**
+     - Permite levantar bases de datos de testing con un esquema limpio sin arrastrar datos fijos innecesarios cuando se requiere mockear información.

@@ -39,14 +39,20 @@
   * *Guardián Comunitario:* Al otorgar 50 apoyos (*upvotes*) a reportes de otros vecinos.
 
 ## 3.4. Reglas de Resolución de Reportes
-* **RN-11 (Resolución Cívica con Evidencia Fotográfica y Verificación Cruzada):**
+* **RN-11 (Resolución Cívica, Propuesta Única Activa y Verificación Cruzada):**
   * Para marcar un reporte en estado `RESUELTO`, es mandatorio presentar evidencia fotográfica reciente (1 foto) que demuestre que el daño vial ha sido reparado o subsanado, junto con una descripción del estado actual.
   * **Interacción en UI y Entidad Independiente:** La pantalla de detalle cuenta con un botón dedicado *"Reportar como Reparado/Resuelto"* que abre un modal especializado. Este genera un registro en la entidad desacoplada `resolucion_reporte` (con su fotografía en `url_foto_evidencia`).
+  * **Regla de No Bifurcación (Propuesta Única Activa):** Solo puede existir **una (1) propuesta de resolución en estado `PENDIENTE` por reporte simultáneamente** (reforzado por el índice `idx_resolucion_activa_unica`). Si un usuario intenta abrir otra mientras hay una activa, el sistema le indica que ya hay una resolución en curso y lo redirige a ella.
   * **Visualización en Frontend:** La propuesta activa se renderiza como una tarjeta fijada (*pinned card*) destacada con borde verde al inicio de la discusión del reporte.
-  * **Resolución por el Autor Original:** Si el autor del reporte publica la evidencia de subsanación, el reporte pasa directamente a estado `RESUELTO`.
+  * **Resolución por el Autor Original:** Si el autor del reporte publica la evidencia de subsanación, el reporte pasa directamente a estado `RESUELTO` (`APROBADA_AUTOR`).
   * **Resolución por Ciudadano no Autor:** Si un ciudadano diferente al autor presenta la propuesta de resolución:
     * Se notifica de inmediato al autor del reporte con opciones de **[Aceptar Solución]** o **[Rechazar]**.
-    * **Salvaguarda Comunitaria:** Si el autor no responde en 48 horas, o si la propuesta recibe **3 votos de confirmación comunitaria** mediante la tabla `confirmacion_resolucion` (`votos_confirmacion >= 3`), el sistema actualiza automáticamente el estado del reporte a `RESUELTO`.
+    * **Aprobación Comunitaria:** Si la propuesta recibe **3 votos de confirmación comunitaria** mediante la tabla `confirmacion_resolucion` (`votos_confirmacion >= 3`), el sistema actualiza automáticamente el estado del reporte a `RESUELTO` (`APROBADA_COMUNIDAD`).
+  * **Rechazo y Cancelación de la Propuesta:**
+    * *Rechazo por el Autor:* Puede pulsar **[Rechazar]** con justificación obligatoria (`motivo_rechazo`). La propuesta pasa a `RECHAZADA_AUTOR`.
+    * *Objeción Comunitaria:* Si la comunidad detecta evidencia fraudulenta o inválida, con **3 objeciones vecinales** en `objecion_resolucion` (`votos_objecion >= 3`), la propuesta pasa a `RECHAZADA_COMUNIDAD`.
+    * *Expiración:* Si transcurren 7 días sin alcanzar quórum ni respuesta, pasa a `EXPIRADA`.
+    * Al quedar rechazada o expirada, se libera el candado para que cualquier ciudadano pueda publicar una nueva propuesta válida.
   * **Recompensa Cívica por Verificación:** La resolución exitosa de un reporte otorga un bono de **+50 XP** al usuario que propuso la evidencia aceptada.
 
 ## 3.5. Reglas de Alcance Geográfico
@@ -58,8 +64,9 @@
   * Las coordenadas registradas deben ubicarse estrictamente dentro del Bounding Box del territorio continental colombiano (Latitud entre -4.2° y 13.5°, Longitud entre -79.0° y -66.8°).
 
 ## 3.6. Reglas de Notificaciones del Sistema
-* **RN-13 (Generación, Persistencia y Matriz de Notificaciones Cívicas):**
+* **RN-13 (Generación, Persistencia y Matriz Inicial de Notificaciones Cívicas):**
   * El sistema almacena persistentemente en la tabla `notificacion` todas las novedades cívicas del usuario para alimentar el Centro de Alertas (Campanita).
+  * *Nota de referencia técnica:* La matriz de notificaciones definida es una propuesta inicial para guiar la arquitectura y llamadas a eventos en módulos del sistema; está sujeta a refinamiento cuando se implemente el módulo de notificaciones.
   * **Notificaciones Prioritarias / Push:**
     1. *`VALIDACION_COMUNITARIA`:* Cuando un reporte propio alcanza los 10 apoyos.
     2. *`PROPUESTA_RESOLUCION`:* Cuando un vecino sugiere con foto que un reporte del autor ha sido reparado.
@@ -71,7 +78,7 @@
 
 ## 3.7. Reglas de Autenticación, Onboarding y Resumen de Perfil
 * **RN-14 (Registro, Manejo de Ubicación y Redirección a Perfil):**
-  * **Registro:** Requiere obligatoriamente nombre completo, correo electrónico único, contraseña con hash seguro y selector de ciudad de referencia (`ciudad_referencia` del catálogo oficial). No se exige barrio ni comuna para eliminar fricción de onboarding.
+  * **Registro:** Requiere obligatoriamente nombre completo, correo electrónico único, contraseña con hash seguro y selección obligatoria de ciudad (`ciudad_referencia` del catálogo oficial, sin valor por defecto). Incluye la opción de **"Detectar mi ciudad más cercana por ubicación (GPS)"** para preseleccionar la ciudad más próxima a sus coordenadas actuales. No se exige barrio ni comuna para eliminar fricción de onboarding.
   * **Permiso de Ubicación en Tiempo de Uso ("When in use"):** Al iniciar la app, se solicita permiso de GPS del sistema operativo para centrar dinámicamente el mapa y feed en la posición del usuario.
   * **Planes de Mitigación ante Rechazo de Ubicación y Zonas sin Cobertura:**
     1. *Permiso Concedido:* Centrado automático en coordenadas GPS en vivo.
