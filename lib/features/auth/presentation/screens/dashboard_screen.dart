@@ -43,7 +43,7 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
           body: SafeArea(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -147,7 +147,7 @@ class DashboardScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const Spacer(),
+                  const SizedBox(height: 24),
 
                   // Botón Prominente de Deslogueo Seguro
                   ElevatedButton.icon(
