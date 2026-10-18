@@ -31,6 +31,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
     required String nombreCompleto,
     required int ciudadId,
+    String? ciudadNombre,
   }) async {
     try {
       final model = await remoteDataSource.signUp(
@@ -38,6 +39,7 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
         fullName: nombreCompleto,
         cityId: ciudadId,
+        cityName: ciudadNombre,
       );
       return model.toEntity();
     } catch (e) {

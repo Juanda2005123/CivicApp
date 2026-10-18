@@ -99,13 +99,14 @@ class _MockAuthRepository implements AuthRepository {
     required String password,
     required String nombreCompleto,
     required int ciudadId,
+    String? ciudadNombre,
   }) async {
     return Usuario(
       id: 'mock-2',
       email: email,
       nombreCompleto: nombreCompleto,
       ciudadResidenciaId: ciudadId,
-      ciudadNombre: 'Cali (Valle del Cauca)',
+      ciudadNombre: ciudadNombre ?? 'Cali (Valle del Cauca)',
       nivelReputacionId: 1,
       puntosReputacion: 0,
     );

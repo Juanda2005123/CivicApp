@@ -12,12 +12,14 @@ class RegisterUseCase {
     required String password,
     required String nombreCompleto,
     required int ciudadId,
+    String? ciudadNombre,
   }) {
     return repository.register(
       email: email,
       password: password,
       nombreCompleto: nombreCompleto,
       ciudadId: ciudadId,
+      ciudadNombre: ciudadNombre,
     );
   }
 }

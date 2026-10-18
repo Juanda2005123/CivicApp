@@ -15,6 +15,7 @@ abstract class AuthRepository {
     required String password,
     required String nombreCompleto,
     required int ciudadId,
+    String? ciudadNombre,
   });
 
   /// Cierra la sesión activa del ciudadano

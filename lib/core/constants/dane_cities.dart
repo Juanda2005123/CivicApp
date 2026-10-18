@@ -86,9 +86,18 @@ class DaneCitiesCatalog {
     DaneCity(id: 51, nombre: 'Sogamoso', departamento: 'Boyacá', latitud: 5.7145, longitud: -72.9339, esCapital: false),
   ];
 
-  /// Calcula la distancia euclidiana aproximada en km (Fórmula de Haversine)
-  /// para encontrar la ciudad del catálogo más cercana a las coordenadas GPS del ciudadano.
+  /// Calcula la ciudad del catálogo más cercana a las coordenadas GPS del ciudadano.
+  /// Incluye validación del perímetro urbano para evitar falsos positivos en zonas limítrofes
+  /// (por ejemplo, Sur de Cali vs Jamundí).
   static DaneCity findClosestCity(double lat, double lng) {
+    // 1. Verificación de perímetro administrativo para Santiago de Cali:
+    // El municipio de Cali se extiende hacia el sur hasta el Río Jamundí (latitud ~3.29),
+    // cubriendo Pance, Bochalema, Valle del Lili, Ciudad Jardín y las universidades.
+    if (lat >= 3.29 && lat <= 3.52 && lng >= -76.60 && lng <= -76.46) {
+      return cities.firstWhere((c) => c.nombre == 'Cali');
+    }
+
+    // 2. Búsqueda euclidiana con Haversine para el resto del territorio nacional
     DaneCity closest = cities.first;
     double minDistance = double.infinity;
 

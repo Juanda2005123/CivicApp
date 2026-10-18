@@ -54,6 +54,7 @@ class AuthCubit extends Cubit<AuthState> {
     required String password,
     required String nombreCompleto,
     required int ciudadId,
+    String? ciudadNombre,
   }) async {
     emit(const AuthLoading());
     try {
@@ -62,6 +63,7 @@ class AuthCubit extends Cubit<AuthState> {
         password: password,
         nombreCompleto: nombreCompleto,
         ciudadId: ciudadId,
+        ciudadNombre: ciudadNombre,
       );
       emit(Authenticated(user));
     } catch (e) {

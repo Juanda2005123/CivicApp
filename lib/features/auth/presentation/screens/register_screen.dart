@@ -111,10 +111,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return;
       }
 
-      final position = await Geolocator.getCurrentPosition(
+      // 1. Intenta primero obtener la última posición conocida (respuesta instantánea < 100ms)
+      Position? position = await Geolocator.getLastKnownPosition();
+
+      // 2. Si no hay posición previa en caché, consulta el sensor con precisión baja y timeout corto
+      position ??= await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-          timeLimit: Duration(seconds: 8),
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 4),
         ),
       );
 
@@ -150,11 +154,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return;
       }
 
+      final selectedCity = _cities.firstWhere(
+        (c) => c.id == _selectedCityId,
+        orElse: () => _cities.first,
+      );
+
       context.read<AuthCubit>().register(
             email: _emailController.text.trim(),
             password: _passwordController.text,
             nombreCompleto: _nombreController.text.trim(),
             ciudadId: _selectedCityId!,
+            ciudadNombre: selectedCity.nombre,
           );
     }
   }
@@ -230,7 +240,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       enabled: !isLoading,
                       decoration: const InputDecoration(
                         labelText: 'Nombre Completo',
-                        hintText: 'Ej. Juan Camilo Pérez',
+                        hintText: 'Ej. Juan David Quintero',
                         prefixIcon: Icon(Icons.person_outline, color: AppTheme.primaryCivic),
                       ),
                       validator: (value) {
@@ -382,6 +392,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         }
                         if (value.length < 6) {
                           return 'Debe contener al menos 6 caracteres';
+                        }
+                        if (!RegExp(r'[a-z]').hasMatch(value)) {
+                          return 'Debe contener al menos una letra minúscula';
+                        }
+                        if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                          return 'Debe contener al menos una letra mayúscula';
+                        }
+                        if (!RegExp(r'[0-9]').hasMatch(value)) {
+                          return 'Debe contener al menos un número';
                         }
                         return null;
                       },

@@ -32,13 +32,15 @@ class AuthRemoteDataSource {
     required String password,
     required String fullName,
     required int cityId,
+    String? cityName,
   }) async {
     final response = await supabaseClient.auth.signUp(
       email: email.trim(),
       password: password,
       data: {
         'nombre_completo': fullName.trim(),
-        'ciudad_residencia_id': cityId,
+        'ciudad_id': cityId,
+        'ciudad_nombre': cityName ?? 'Cali',
       },
     );
 
@@ -57,6 +59,7 @@ class AuthRemoteDataSource {
         email: user.email ?? email,
         nombreCompleto: fullName,
         ciudadResidenciaId: cityId,
+        ciudadNombre: cityName ?? 'Cali',
         nivelReputacionId: 1,
         nivelReputacionNombre: 'Observador',
         puntosReputacion: 0,
@@ -82,15 +85,25 @@ class AuthRemoteDataSource {
     }
   }
 
-  /// Consulta el perfil en `public.usuario` haciendo JOIN con ciudad y reputación
+  /// Consulta el perfil en `public.usuario` haciendo JOIN con rango_civico
   Future<UsuarioModel> _fetchUserProfile(String userId, String fallbackEmail) async {
     final data = await supabaseClient
         .from('usuario')
-        .select('*, ciudad_cobertura(*), nivel_reputacion(*)')
-        .eq('id', userId)
+        .select('*, rango_civico(*)')
+        .eq('id_usuario', userId)
         .maybeSingle();
 
     if (data == null) {
+      // Intento por correo electrónico si el ID difiere
+      final fallbackData = await supabaseClient
+          .from('usuario')
+          .select('*, rango_civico(*)')
+          .eq('correo_electronico', fallbackEmail)
+          .maybeSingle();
+
+      if (fallbackData != null) {
+        return UsuarioModel.fromJson(fallbackData);
+      }
       throw Exception('Perfil cívico no encontrado en la base de datos.');
     }
 

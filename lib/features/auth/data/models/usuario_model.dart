@@ -16,25 +16,33 @@ class UsuarioModel extends Usuario {
   });
 
   factory UsuarioModel.fromJson(Map<String, dynamic> json) {
-    // Si viene anidada la ciudad o el nivel de reputación desde Supabase
-    final ciudadData = json['ciudad_cobertura'] as Map<String, dynamic>?;
-    final String? ciudadDisplay = ciudadData != null
-        ? "${ciudadData['nombre']} (${ciudadData['departamento']})"
-        : null;
+    // Soporte para rango_civico (schema.sql) o nivel_reputacion
+    final rangoData = (json['rango_civico'] ?? json['nivel_reputacion']) as Map<String, dynamic>?;
+    final String rangoNombre = rangoData?['nombre'] ?? 'Observador';
 
-    final nivelData = json['nivel_reputacion'] as Map<String, dynamic>?;
-    final String nivelNombre = nivelData?['nombre'] ?? 'Observador';
+    // Soporte para ciudad_referencia (schema.sql) o ciudad_cobertura
+    final ciudadData = json['ciudad_cobertura'] as Map<String, dynamic>?;
+    final String ciudadDisplay = ciudadData != null
+        ? "${ciudadData['nombre']} (${ciudadData['departamento']})"
+        : (json['ciudad_referencia'] ?? json['ultima_ciudad'] ?? 'Cali');
+
+    final String userId = (json['id_usuario'] ?? json['id'] ?? '').toString();
+    final String userEmail = (json['correo_electronico'] ?? json['email'] ?? '').toString();
+    final String userNombre = (json['nombre_completo'] ?? 'Ciudadano VIGÍA').toString();
+    final int userRangoId = (json['id_rango'] ?? json['nivel_reputacion_id'] as num?)?.toInt() ?? 1;
+    final int userPuntos = (json['puntos_experiencia'] ?? json['puntos_reputacion'] as num?)?.toInt() ?? 0;
+    final bool userActivo = json['activo'] as bool? ?? true;
 
     return UsuarioModel(
-      id: json['id'] as String,
-      email: json['email'] as String,
-      nombreCompleto: json['nombre_completo'] as String? ?? 'Ciudadano VIGÍA',
+      id: userId,
+      email: userEmail,
+      nombreCompleto: userNombre,
       ciudadResidenciaId: (json['ciudad_residencia_id'] as num?)?.toInt() ?? 1,
       ciudadNombre: ciudadDisplay,
-      nivelReputacionId: (json['nivel_reputacion_id'] as num?)?.toInt() ?? 1,
-      nivelReputacionNombre: nivelNombre,
-      puntosReputacion: (json['puntos_reputacion'] as num?)?.toInt() ?? 0,
-      activo: json['activo'] as bool? ?? true,
+      nivelReputacionId: userRangoId,
+      nivelReputacionNombre: rangoNombre,
+      puntosReputacion: userPuntos,
+      activo: userActivo,
     );
   }
 
