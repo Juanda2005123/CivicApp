@@ -85,28 +85,49 @@ class AuthRemoteDataSource {
     }
   }
 
-  /// Consulta el perfil en `public.usuario` haciendo JOIN con rango_civico
+  /// Consulta el perfil en `public.usuario` haciendo JOIN con rango_civico o fallback plano
   Future<UsuarioModel> _fetchUserProfile(String userId, String fallbackEmail) async {
-    final data = await supabaseClient
-        .from('usuario')
-        .select('*, rango_civico(*)')
-        .eq('id_usuario', userId)
-        .maybeSingle();
-
-    if (data == null) {
-      // Intento por correo electrónico si el ID difiere
-      final fallbackData = await supabaseClient
+    // 1. Intento con JOIN a rango_civico por id_usuario
+    try {
+      final data = await supabaseClient
           .from('usuario')
           .select('*, rango_civico(*)')
+          .eq('id_usuario', userId)
+          .maybeSingle();
+
+      if (data != null) {
+        return UsuarioModel.fromJson(data);
+      }
+    } catch (_) {
+      // Ignora error de JOIN y pasa a consulta directa
+    }
+
+    // 2. Consulta directa sin JOIN por id_usuario
+    try {
+      final flatData = await supabaseClient
+          .from('usuario')
+          .select()
+          .eq('id_usuario', userId)
+          .maybeSingle();
+
+      if (flatData != null) {
+        return UsuarioModel.fromJson(flatData);
+      }
+    } catch (_) {}
+
+    // 3. Consulta por correo_electronico (por si el UUID de auth difiere)
+    try {
+      final byEmail = await supabaseClient
+          .from('usuario')
+          .select()
           .eq('correo_electronico', fallbackEmail)
           .maybeSingle();
 
-      if (fallbackData != null) {
-        return UsuarioModel.fromJson(fallbackData);
+      if (byEmail != null) {
+        return UsuarioModel.fromJson(byEmail);
       }
-      throw Exception('Perfil cívico no encontrado en la base de datos.');
-    }
+    } catch (_) {}
 
-    return UsuarioModel.fromJson(data);
+    throw Exception('Perfil cívico no encontrado en la base de datos.');
   }
 }
