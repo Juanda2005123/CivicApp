@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vigia_app/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:vigia_app/features/auth/data/models/usuario_model.dart';
+import 'package:vigia_app/features/auth/data/models/user_model.dart';
 import 'package:vigia_app/features/auth/data/repositories/auth_repository_impl.dart';
 
 class _FakeAuthRemoteDataSource implements AuthRemoteDataSource {
@@ -26,7 +26,7 @@ class _FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   SupabaseClient get supabaseClient => throw UnimplementedError();
 
   @override
-  Future<UsuarioModel> signInWithPassword({
+  Future<UserModel> signInWithPassword({
     required String email,
     required String password,
   }) async {
@@ -35,7 +35,7 @@ class _FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   }
 
   @override
-  Future<UsuarioModel> signUp({
+  Future<UserModel> signUp({
     required String email,
     required String password,
     required String fullName,
@@ -52,7 +52,7 @@ class _FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   }
 
   @override
-  Future<UsuarioModel?> getCurrentUser() async {
+  Future<UserModel?> getCurrentUser() async {
     if (shouldThrowGenericError) throw Exception('Database unreachable');
     return testModel;
   }
@@ -83,12 +83,12 @@ void main() {
   });
 
   group('AuthRepositoryImpl Data Layer Tests', () {
-    test('login returns domain Usuario entity on success', () async {
+    test('login returns domain User entity on success', () async {
       final user = await repository.login(email: 'test@vigia.co', password: 'Password123');
 
       expect(user.id, 'user-123');
       expect(user.email, 'test@vigia.co');
-      expect(user.nombreCompleto, 'Ciudadano Modelo');
+      expect(user.fullName, 'Ciudadano Modelo');
     });
 
     test('login translates invalid credentials to friendly civic exception', () async {
@@ -97,7 +97,7 @@ void main() {
       expect(
         () => repository.login(email: 'test@vigia.co', password: 'wrong'),
         throwsA(predicate((e) =>
-            e.toString().contains('Credenciales incorrectas. Verifica tu correo y contraseña.'))),
+            e.toString().contains('Invalid credentials. Please verify your email and password.'))),
       );
     });
 
@@ -112,7 +112,7 @@ void main() {
           cityId: 1,
         ),
         throwsA(predicate((e) =>
-            e.toString().contains('Este correo ya está registrado en VIGÍA.'))),
+            e.toString().contains('This email is already registered in VIGÍA.'))),
       );
     });
 
@@ -122,7 +122,7 @@ void main() {
       expect(
         () => repository.login(email: 'test@vigia.co', password: 'Password123'),
         throwsA(predicate((e) =>
-            e.toString().contains('Error de conexión a internet. Revisa tu red.'))),
+            e.toString().contains('Internet connection error. Please check your network connection.'))),
       );
     });
 

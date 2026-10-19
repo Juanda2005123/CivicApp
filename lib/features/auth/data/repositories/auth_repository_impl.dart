@@ -1,16 +1,16 @@
-import '../../domain/entities/usuario.dart';
+import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_data_source.dart';
 
-/// Implementación del repositorio de autenticación en la capa de datos.
-/// Cumple la Inversión de Control (IoC) y desacopla el Dominio de Supabase.
+/// Data layer implementation of the AuthRepository contract.
+/// Enforces Inversion of Control (IoC) and decouples the Domain layer from Supabase.
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
 
   AuthRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<Usuario> login({
+  Future<User> login({
     required String email,
     required String password,
   }) async {
@@ -57,7 +57,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Usuario?> getCurrentUser() async {
+  Future<User?> getCurrentUser() async {
     try {
       final model = await remoteDataSource.getCurrentUser();
       return model?.toEntity();
@@ -69,13 +69,13 @@ class AuthRepositoryImpl implements AuthRepository {
   Exception _handleError(dynamic error) {
     final msg = error.toString().toLowerCase();
     if (msg.contains('invalid login credentials') || msg.contains('invalid_credentials')) {
-      return Exception('Credenciales incorrectas. Verifica tu correo y contraseña.');
+      return Exception('Invalid credentials. Please verify your email and password.');
     }
     if (msg.contains('user already registered') || msg.contains('already registered')) {
-      return Exception('Este correo ya está registrado en VIGÍA.');
+      return Exception('This email is already registered in VIGÍA.');
     }
     if (msg.contains('network') || msg.contains('socketexception') || msg.contains('failed host lookup')) {
-      return Exception('Error de conexión a internet. Revisa tu red.');
+      return Exception('Internet connection error. Please check your network connection.');
     }
     return Exception(error.toString().replaceAll('Exception: ', ''));
   }

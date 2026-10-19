@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/usuario_model.dart';
+import '../models/user_model.dart';
 
 /// Remote data source for civic authentication interacting with Supabase SDK.
 class AuthRemoteDataSource {

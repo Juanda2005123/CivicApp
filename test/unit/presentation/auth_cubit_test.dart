@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vigia_app/features/auth/domain/entities/usuario.dart';
+import 'package:vigia_app/features/auth/domain/entities/user.dart';
 import 'package:vigia_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:vigia_app/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/login_usecase.dart';
