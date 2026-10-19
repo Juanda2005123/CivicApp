@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../features/auth/presentation/screens/dashboard_screen.dart';
-import '../../features/auth/presentation/screens/login_screen.dart';
-import '../../features/auth/presentation/screens/register_screen.dart';
+import '../di/injection_container.dart';
+import '../../features/auth/domain/usecases/get_cities_usecase.dart';
+import '../../features/auth/ui/screens/login_screen.dart';
+import '../../features/auth/ui/screens/register_screen.dart';
+import '../../features/dashboard/ui/screens/dashboard_screen.dart';
 
-/// Centralización de rutas nombradas de VIGÍA (Lecciones 0034 y 0035).
+/// Centralización de rutas nombradas de VIGÍA.
+/// Vincula las capas UI de cada feature.
 class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
@@ -11,7 +14,9 @@ class AppRoutes {
 
   static Map<String, WidgetBuilder> get routes => {
     login: (context) => const LoginScreen(),
-    register: (context) => const RegisterScreen(),
+    register: (context) => RegisterScreen(
+      getCitiesUseCase: sl.isRegistered<GetCitiesUseCase>() ? sl<GetCitiesUseCase>() : null,
+    ),
     dashboard: (context) => const DashboardScreen(),
   };
 }

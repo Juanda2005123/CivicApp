@@ -9,9 +9,9 @@ import 'package:vigia_app/features/auth/domain/usecases/get_current_user_usecase
 import 'package:vigia_app/features/auth/domain/usecases/login_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/register_usecase.dart';
-import 'package:vigia_app/features/auth/presentation/cubit/auth_cubit.dart';
-import 'package:vigia_app/features/auth/presentation/cubit/auth_state.dart';
-import 'package:vigia_app/features/auth/presentation/screens/dashboard_screen.dart';
+import 'package:vigia_app/features/auth/ui/cubit/auth_cubit.dart';
+import 'package:vigia_app/features/auth/ui/cubit/auth_state.dart';
+import 'package:vigia_app/features/dashboard/ui/screens/dashboard_screen.dart';
 
 class _FakeAuthRepository implements AuthRepository {
   bool logoutCalled = false;
