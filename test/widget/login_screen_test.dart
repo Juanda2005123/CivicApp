@@ -14,25 +14,25 @@ import 'package:vigia_app/features/auth/presentation/screens/login_screen.dart';
 
 class _FakeAuthRepository implements AuthRepository {
   @override
-  Future<Usuario> login({required String email, required String password}) async {
-    return Usuario(
+  Future<User> login({required String email, required String password}) async {
+    return User(
       id: 'test-1',
       email: email,
-      nombreCompleto: 'Prueba Login',
-      ciudadResidenciaId: 1,
-      ciudadNombre: 'Cali',
-      nivelReputacionId: 1,
-      puntosReputacion: 0,
+      fullName: 'Prueba Login',
+      residenceCityId: 1,
+      cityName: 'Cali',
+      rankId: 1,
+      reputationPoints: 0,
     );
   }
 
   @override
-  Future<Usuario> register({
+  Future<User> register({
     required String email,
     required String password,
-    required String nombreCompleto,
-    required int ciudadId,
-    String? ciudadNombre,
+    required String fullName,
+    required int cityId,
+    String? cityName,
   }) async {
     throw UnimplementedError();
   }

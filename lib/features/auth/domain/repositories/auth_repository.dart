@@ -1,26 +1,26 @@
-import '../entities/usuario.dart';
+import '../entities/user.dart';
 
-/// Contrato abstracto del Repositorio de Autenticación Cívica (Inversión de Control).
-/// Define las operaciones del negocio sin conocer la tecnología subyacente.
+/// Abstract contract for the Civic Authentication Repository (Inversion of Control).
+/// Defines core business operations independent of external databases or frameworks.
 abstract class AuthRepository {
-  /// Inicia sesión con correo electrónico y contraseña
-  Future<Usuario> login({
+  /// Signs in with email and password
+  Future<User> login({
     required String email,
     required String password,
   });
 
-  /// Registra una nueva cuenta cívica vinculada a su ciudad de cobertura DANE
-  Future<Usuario> register({
+  /// Registers a new citizen account linked to their official DANE coverage city
+  Future<User> register({
     required String email,
     required String password,
-    required String nombreCompleto,
-    required int ciudadId,
-    String? ciudadNombre,
+    required String fullName,
+    required int cityId,
+    String? cityName,
   });
 
-  /// Cierra la sesión activa del ciudadano
+  /// Signs out the active citizen session
   Future<void> logout();
 
-  /// Obtiene la sesión o datos del usuario actualmente autenticado, si existe
-  Future<Usuario?> getCurrentUser();
+  /// Retrieves the currently authenticated citizen, if an active session exists
+  Future<User?> getCurrentUser();
 }

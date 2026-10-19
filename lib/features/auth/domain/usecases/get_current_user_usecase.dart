@@ -1,13 +1,13 @@
-import '../entities/usuario.dart';
+import '../entities/user.dart';
 import '../repositories/auth_repository.dart';
 
-/// Caso de Uso: Recuperar el ciudadano en sesión activa
+/// Use Case: Retrieve active authenticated citizen
 class GetCurrentUserUseCase {
   final AuthRepository repository;
 
   const GetCurrentUserUseCase(this.repository);
 
-  Future<Usuario?> call() {
+  Future<User?> call() {
     return repository.getCurrentUser();
   }
 }

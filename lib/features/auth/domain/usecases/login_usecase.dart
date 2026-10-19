@@ -1,13 +1,13 @@
-import '../entities/usuario.dart';
+import '../entities/user.dart';
 import '../repositories/auth_repository.dart';
 
-/// Caso de Uso: Iniciar sesión cívica
+/// Use Case: Civic Sign In
 class LoginUseCase {
   final AuthRepository repository;
 
   const LoginUseCase(this.repository);
 
-  Future<Usuario> call({
+  Future<User> call({
     required String email,
     required String password,
   }) {

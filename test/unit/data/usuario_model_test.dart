@@ -1,83 +1,83 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vigia_app/features/auth/data/models/usuario_model.dart';
-import 'package:vigia_app/features/auth/domain/entities/usuario.dart';
+import 'package:vigia_app/features/auth/data/models/user_model.dart';
+import 'package:vigia_app/features/auth/domain/entities/user.dart';
 
 void main() {
-  group('UsuarioModel Serialization & Mapping', () {
-    test('Correctly maps JSON from schema.sql columns to UsuarioModel and Usuario Entity', () {
+  group('UserModel Serialization & Mapping', () {
+    test('Correctly maps JSON from English schema.sql columns to UserModel and User Entity', () {
       final json = {
-        'id_usuario': '9d26be1f-8511-4314-8ab2-960dd82d13f0',
-        'correo_electronico': 'juanm@fgmail.com',
-        'nombre_completo': 'Juan David Quintero',
-        'id_rango': 1,
-        'ciudad_referencia': 'Cali',
-        'ultima_ciudad': 'Cali',
-        'puntos_experiencia': 150,
-        'activo': true,
+        'id_user': '9d26be1f-8511-4314-8ab2-960dd82d13f0',
+        'email': 'juanm@fgmail.com',
+        'full_name': 'Juan David Quintero',
+        'id_rank': 1,
+        'reference_city': 'Cali',
+        'last_city': 'Cali',
+        'experience_points': 150,
+        'is_active': true,
       };
 
-      final model = UsuarioModel.fromJson(json);
+      final model = UserModel.fromJson(json);
 
       expect(model.id, '9d26be1f-8511-4314-8ab2-960dd82d13f0');
       expect(model.email, 'juanm@fgmail.com');
-      expect(model.nombreCompleto, 'Juan David Quintero');
-      expect(model.nivelReputacionId, 1);
-      expect(model.nivelReputacionNombre, 'Observador');
-      expect(model.ciudadNombre, 'Cali');
-      expect(model.puntosReputacion, 150);
-      expect(model.activo, true);
+      expect(model.fullName, 'Juan David Quintero');
+      expect(model.rankId, 1);
+      expect(model.rankName, 'Urban Observer');
+      expect(model.cityName, 'Cali');
+      expect(model.reputationPoints, 150);
+      expect(model.isActive, true);
 
       final entity = model.toEntity();
-      expect(entity, isA<Usuario>());
+      expect(entity, isA<User>());
       expect(entity.id, model.id);
       expect(entity.email, model.email);
     });
 
-    test('Correctly handles nested joins from rango_civico and ciudad_cobertura', () {
+    test('Correctly handles nested joins from civic_rank and coverage_city in English', () {
       final json = {
-        'id_usuario': 'uuid-1234',
-        'correo_electronico': 'ciudadano@vigia.co',
-        'nombre_completo': 'María Camila Gómez',
-        'ciudad_residencia_id': 1,
-        'id_rango': 2,
-        'puntos_experiencia': 500,
-        'activo': true,
-        'rango_civico': {
-          'id': 2,
-          'nombre': 'Inspector Comunitario',
+        'id_user': 'uuid-1234',
+        'email': 'citizen@vigia.co',
+        'full_name': 'Maria Camila Gomez',
+        'residence_city_id': 1,
+        'id_rank': 2,
+        'experience_points': 500,
+        'is_active': true,
+        'civic_rank': {
+          'id_rank': 2,
+          'name': 'Active Neighbor',
         },
-        'ciudad_cobertura': {
-          'id': 1,
-          'nombre': 'Cali',
-          'departamento': 'Valle del Cauca',
+        'coverage_city': {
+          'id_city': 1,
+          'name': 'Cali',
+          'department': 'Valle del Cauca',
         },
       };
 
-      final model = UsuarioModel.fromJson(json);
+      final model = UserModel.fromJson(json);
 
-      expect(model.nivelReputacionNombre, 'Inspector Comunitario');
-      expect(model.ciudadNombre, 'Cali (Valle del Cauca)');
-      expect(model.puntosReputacion, 500);
+      expect(model.rankName, 'Active Neighbor');
+      expect(model.cityName, 'Cali (Valle del Cauca)');
+      expect(model.reputationPoints, 500);
     });
 
-    test('toJson generates expected map for storage', () {
-      const model = UsuarioModel(
+    test('toJson generates expected map matching user_profile table', () {
+      const model = UserModel(
         id: 'user-abc',
         email: 'test@vigia.co',
-        nombreCompleto: 'Test User',
-        ciudadResidenciaId: 1,
-        ciudadNombre: 'Cali',
-        nivelReputacionId: 1,
-        puntosReputacion: 0,
-        activo: true,
+        fullName: 'Test User',
+        residenceCityId: 1,
+        cityName: 'Cali',
+        rankId: 1,
+        reputationPoints: 0,
+        isActive: true,
       );
 
       final json = model.toJson();
 
-      expect(json['id'], 'user-abc');
+      expect(json['id_user'], 'user-abc');
       expect(json['email'], 'test@vigia.co');
-      expect(json['nombre_completo'], 'Test User');
-      expect(json['activo'], true);
+      expect(json['full_name'], 'Test User');
+      expect(json['is_active'], true);
     });
   });
 }

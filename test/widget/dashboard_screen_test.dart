@@ -17,16 +17,16 @@ class _FakeAuthRepository implements AuthRepository {
   bool logoutCalled = false;
 
   @override
-  Future<Usuario> login({required String email, required String password}) =>
+  Future<User> login({required String email, required String password}) =>
       throw UnimplementedError();
 
   @override
-  Future<Usuario> register({
+  Future<User> register({
     required String email,
     required String password,
-    required String nombreCompleto,
-    required int ciudadId,
-    String? ciudadNombre,
+    required String fullName,
+    required int cityId,
+    String? cityName,
   }) =>
       throw UnimplementedError();
 
@@ -36,7 +36,7 @@ class _FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<Usuario?> getCurrentUser() async => null;
+  Future<User?> getCurrentUser() async => null;
 }
 
 Widget createDashboardTestWidget(AuthCubit cubit) {
@@ -56,15 +56,15 @@ void main() {
   late _FakeAuthRepository repository;
   late AuthCubit authCubit;
 
-  final testCitizen = const Usuario(
+  final testCitizen = const User(
     id: 'user-777',
     email: 'juand@vigia.co',
-    nombreCompleto: 'Juan David Quintero',
-    ciudadResidenciaId: 1,
-    ciudadNombre: 'Cali (Valle del Cauca)',
-    nivelReputacionId: 1,
-    nivelReputacionNombre: 'Observador',
-    puntosReputacion: 0,
+    fullName: 'Juan David Quintero',
+    residenceCityId: 1,
+    cityName: 'Cali (Valle del Cauca)',
+    rankId: 1,
+    rankName: 'Observador',
+    reputationPoints: 0,
   );
 
   setUp(() {

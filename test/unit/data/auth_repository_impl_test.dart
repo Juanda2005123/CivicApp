@@ -10,16 +10,16 @@ class _FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   bool shouldThrowNetworkError = false;
   bool shouldThrowGenericError = false;
 
-  final testModel = const UsuarioModel(
+  final testModel = const UserModel(
     id: 'user-123',
     email: 'test@vigia.co',
-    nombreCompleto: 'Ciudadano Modelo',
-    ciudadResidenciaId: 1,
-    ciudadNombre: 'Cali',
-    nivelReputacionId: 1,
-    nivelReputacionNombre: 'Observador',
-    puntosReputacion: 0,
-    activo: true,
+    fullName: 'Ciudadano Modelo',
+    residenceCityId: 1,
+    cityName: 'Cali',
+    rankId: 1,
+    rankName: 'Urban Observer',
+    reputationPoints: 0,
+    isActive: true,
   );
 
   @override
@@ -108,8 +108,8 @@ void main() {
         () => repository.register(
           email: 'dup@vigia.co',
           password: 'Password123',
-          nombreCompleto: 'Duplicado',
-          ciudadId: 1,
+          fullName: 'Duplicado',
+          cityId: 1,
         ),
         throwsA(predicate((e) =>
             e.toString().contains('Este correo ya está registrado en VIGÍA.'))),

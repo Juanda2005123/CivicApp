@@ -18,21 +18,21 @@ class _FakeAuthRepository implements AuthRepository {
       throw UnimplementedError();
 
   @override
-  Future<Usuario> register({
+  Future<User> register({
     required String email,
     required String password,
-    required String nombreCompleto,
-    required int ciudadId,
-    String? ciudadNombre,
+    required String fullName,
+    required int cityId,
+    String? cityName,
   }) async {
-    return Usuario(
+    return User(
       id: 'reg-1',
       email: email,
-      nombreCompleto: nombreCompleto,
-      ciudadResidenciaId: ciudadId,
-      ciudadNombre: ciudadNombre ?? 'Cali',
-      nivelReputacionId: 1,
-      puntosReputacion: 0,
+      fullName: fullName,
+      residenceCityId: cityId,
+      cityName: cityName ?? 'Cali',
+      rankId: 1,
+      reputationPoints: 0,
     );
   }
 

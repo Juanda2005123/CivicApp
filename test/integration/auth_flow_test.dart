@@ -8,38 +8,38 @@ class _FakeIntegrationAuthRepository implements AuthRepository {
   Usuario? _currentUser;
 
   @override
-  Future<Usuario> login({required String email, required String password}) async {
-    final user = Usuario(
+  Future<User> login({required String email, required String password}) async {
+    final user = User(
       id: 'integration-user-1',
       email: email,
-      nombreCompleto: 'Juan David Quintero',
-      ciudadResidenciaId: 1,
-      ciudadNombre: 'Cali (Valle del Cauca)',
-      nivelReputacionId: 1,
-      nivelReputacionNombre: 'Observador',
-      puntosReputacion: 0,
+      fullName: 'Juan David Quintero',
+      residenceCityId: 1,
+      cityName: 'Cali (Valle del Cauca)',
+      rankId: 1,
+      rankName: 'Urban Observer',
+      reputationPoints: 0,
     );
     _currentUser = user;
     return user;
   }
 
   @override
-  Future<Usuario> register({
+  Future<User> register({
     required String email,
     required String password,
-    required String nombreCompleto,
-    required int ciudadId,
-    String? ciudadNombre,
+    required String fullName,
+    required int cityId,
+    String? cityName,
   }) async {
-    final user = Usuario(
+    final user = User(
       id: 'integration-user-2',
       email: email,
-      nombreCompleto: nombreCompleto,
-      ciudadResidenciaId: ciudadId,
-      ciudadNombre: ciudadNombre ?? 'Cali (Valle del Cauca)',
-      nivelReputacionId: 1,
-      nivelReputacionNombre: 'Observador',
-      puntosReputacion: 0,
+      fullName: fullName,
+      residenceCityId: cityId,
+      cityName: cityName ?? 'Cali (Valle del Cauca)',
+      rankId: 1,
+      rankName: 'Observador',
+      reputationPoints: 0,
     );
     _currentUser = user;
     return user;

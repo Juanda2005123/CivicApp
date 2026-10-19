@@ -48,12 +48,15 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Registra una nueva cuenta cívica con su ciudad de cobertura DANE
+  /// Registers a new citizen account with their official DANE coverage city
   Future<void> register({
     required String email,
     required String password,
-    required String nombreCompleto,
-    required int ciudadId,
+    String? fullName,
+    String? nombreCompleto,
+    int? cityId,
+    int? ciudadId,
+    String? cityName,
     String? ciudadNombre,
   }) async {
     emit(const AuthLoading());
@@ -61,9 +64,9 @@ class AuthCubit extends Cubit<AuthState> {
       final user = await registerUseCase(
         email: email,
         password: password,
-        nombreCompleto: nombreCompleto,
-        ciudadId: ciudadId,
-        ciudadNombre: ciudadNombre,
+        fullName: fullName ?? nombreCompleto ?? '',
+        cityId: cityId ?? ciudadId ?? 1,
+        cityName: cityName ?? ciudadNombre,
       );
       emit(Authenticated(user));
     } catch (e) {

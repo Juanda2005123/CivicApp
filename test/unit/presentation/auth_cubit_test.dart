@@ -11,29 +11,30 @@ import 'package:vigia_app/features/auth/presentation/cubit/auth_state.dart';
 class _MockRepoForCubit implements AuthRepository {
   bool shouldFail = false;
 
-  final testUser = const Usuario(
+  final testUser = const User(
     id: 'test-id',
     email: 'test@vigia.co',
-    nombreCompleto: 'Prueba Cubit',
-    ciudadResidenciaId: 1,
-    ciudadNombre: 'Cali',
-    nivelReputacionId: 1,
-    puntosReputacion: 0,
+    fullName: 'Prueba Cubit',
+    residenceCityId: 1,
+    cityName: 'Cali',
+    rankId: 1,
+    rankName: 'Urban Observer',
+    reputationPoints: 0,
   );
 
   @override
-  Future<Usuario> login({required String email, required String password}) async {
+  Future<User> login({required String email, required String password}) async {
     if (shouldFail) throw Exception('Credenciales incorrectas');
     return testUser;
   }
 
   @override
-  Future<Usuario> register({
+  Future<User> register({
     required String email,
     required String password,
-    required String nombreCompleto,
-    required int ciudadId,
-    String? ciudadNombre,
+    required String fullName,
+    required int cityId,
+    String? cityName,
   }) async {
     if (shouldFail) throw Exception('Correo duplicado');
     return testUser;

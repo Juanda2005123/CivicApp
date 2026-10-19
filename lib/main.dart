@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import 'core/config/app_env.dart';
 import 'core/constants/app_routes.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/data/datasources/auth_remote_data_source.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
-import 'features/auth/domain/entities/usuario.dart';
+import 'features/auth/domain/entities/user.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'features/auth/domain/usecases/login_usecase.dart';
@@ -81,34 +81,34 @@ class VigiaApp extends StatelessWidget {
 /// Repositorio de respaldo para pruebas locales cuando no hay red configurada
 class _MockAuthRepository implements AuthRepository {
   @override
-  Future<Usuario> login({required String email, required String password}) async {
-    return Usuario(
+  Future<User> login({required String email, required String password}) async {
+    return User(
       id: 'mock-1',
       email: email,
-      nombreCompleto: 'Ciudadano VIGÍA (Offline)',
-      ciudadResidenciaId: 1,
-      ciudadNombre: 'Cali (Valle del Cauca)',
-      nivelReputacionId: 1,
-      puntosReputacion: 0,
+      fullName: 'Ciudadano VIGÍA (Offline)',
+      residenceCityId: 1,
+      cityName: 'Cali (Valle del Cauca)',
+      rankId: 1,
+      reputationPoints: 0,
     );
   }
 
   @override
-  Future<Usuario> register({
+  Future<User> register({
     required String email,
     required String password,
-    required String nombreCompleto,
-    required int ciudadId,
-    String? ciudadNombre,
+    required String fullName,
+    required int cityId,
+    String? cityName,
   }) async {
-    return Usuario(
+    return User(
       id: 'mock-2',
       email: email,
-      nombreCompleto: nombreCompleto,
-      ciudadResidenciaId: ciudadId,
-      ciudadNombre: ciudadNombre ?? 'Cali (Valle del Cauca)',
-      nivelReputacionId: 1,
-      puntosReputacion: 0,
+      fullName: fullName,
+      residenceCityId: cityId,
+      cityName: cityName ?? 'Cali (Valle del Cauca)',
+      rankId: 1,
+      reputationPoints: 0,
     );
   }
 
@@ -116,5 +116,5 @@ class _MockAuthRepository implements AuthRepository {
   Future<void> logout() async {}
 
   @override
-  Future<Usuario?> getCurrentUser() async => null;
+  Future<User?> getCurrentUser() async => null;
 }

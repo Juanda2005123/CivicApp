@@ -26,20 +26,20 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Usuario> register({
+  Future<User> register({
     required String email,
     required String password,
-    required String nombreCompleto,
-    required int ciudadId,
-    String? ciudadNombre,
+    required String fullName,
+    required int cityId,
+    String? cityName,
   }) async {
     try {
       final model = await remoteDataSource.signUp(
         email: email,
         password: password,
-        fullName: nombreCompleto,
-        cityId: ciudadId,
-        cityName: ciudadNombre,
+        fullName: fullName,
+        cityId: cityId,
+        cityName: cityName,
       );
       return model.toEntity();
     } catch (e) {
