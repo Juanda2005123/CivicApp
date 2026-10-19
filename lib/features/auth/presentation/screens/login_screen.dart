@@ -5,7 +5,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 
-/// Pantalla de Inicio de Sesión Cívico integrada con Supabase y BLoC/Cubit.
+/// Civic Login Screen integrated with Supabase and BLoC/Cubit.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -47,14 +47,16 @@ class _LoginScreenState extends State<LoginScreen> {
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is Authenticated) {
-          // Navegación post-login exitoso con purga de historial hacia el Dashboard
+          // Successful post-login navigation to Dashboard
           Navigator.pushReplacementNamed(
             context,
             AppRoutes.dashboard,
             arguments: {
-              'nombre': state.usuario.nombreCompleto,
-              'email': state.usuario.email,
-              'ciudad': state.usuario.ciudadNombre ?? 'Cali (Valle del Cauca)',
+              'fullName': state.user.fullName,
+              'email': state.user.email,
+              'cityName': state.user.cityName ?? 'Cali (Valle del Cauca)',
+              'nombre': state.user.fullName,
+              'ciudad': state.user.cityName ?? 'Cali (Valle del Cauca)',
             },
           );
         } else if (state is AuthError) {
@@ -81,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Escudo Cívico
+                      // Civic Badge
                       Center(
                         child: Container(
                           width: 76,
@@ -100,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Título y Subtítulo
+                      // Title & Subtitle
                       const Text(
                         'VIGÍA',
                         textAlign: TextAlign.center,
@@ -113,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        'Plataforma de Auditoría Vial y Veeduría Ciudadana',
+                        'Civic Road Infrastructure Auditing Platform',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13,
@@ -122,35 +124,35 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 28),
 
-                      // Campo Correo Electrónico
+                      // Email Field
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         enabled: !isLoading,
                         decoration: const InputDecoration(
-                          labelText: 'Correo Electrónico',
-                          hintText: 'ejemplo@correo.com',
+                          labelText: 'Email Address',
+                          hintText: 'example@email.com',
                           prefixIcon: Icon(Icons.email_outlined, color: AppTheme.primaryCivic),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Ingresa tu correo electrónico';
+                            return 'Please enter your email address';
                           }
                           if (!value.contains('@') || !value.contains('.')) {
-                            return 'Ingresa un correo electrónico válido';
+                            return 'Please enter a valid email address';
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 16),
 
-                      // Campo Contraseña
+                      // Password Field
                       TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
                         enabled: !isLoading,
                         decoration: InputDecoration(
-                          labelText: 'Contraseña',
+                          labelText: 'Password',
                           hintText: '••••••••',
                           prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.primaryCivic),
                           suffixIcon: IconButton(
@@ -167,17 +169,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Ingresa tu contraseña';
+                            return 'Please enter your password';
                           }
                           if (value.length < 6) {
-                            return 'La contraseña debe tener al menos 6 caracteres';
+                            return 'Password must be at least 6 characters';
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 24),
 
-                      // Botón Iniciar Sesión con indicador de carga
+                      // Log In Button with Loading Indicator
                       ElevatedButton(
                         onPressed: isLoading ? null : _handleLogin,
                         child: isLoading
@@ -189,16 +191,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text('Iniciar Sesión'),
+                            : const Text('Log In'),
                       ),
                       const SizedBox(height: 16),
 
-                      // Enlace a Registro
+                      // Link to Register
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Text(
-                            '¿No tienes cuenta cívica? ',
+                            "Don't have a civic account? ",
                             style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                           ),
                           GestureDetector(
@@ -208,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     Navigator.pushNamed(context, AppRoutes.register);
                                   },
                             child: const Text(
-                              'Regístrate aquí',
+                              'Register here',
                               style: TextStyle(
                                 color: AppTheme.primaryCivic,
                                 fontWeight: FontWeight.bold,

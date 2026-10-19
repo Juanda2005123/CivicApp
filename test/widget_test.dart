@@ -6,9 +6,9 @@ void main() {
     await tester.pumpWidget(const VigiaApp());
     await tester.pumpAndSettle();
 
-    // Verifica que se renderice el título de la aplicación y el botón de login
+    // Verifies application title and login elements render correctly
     expect(find.text('VIGÍA'), findsOneWidget);
-    expect(find.text('Iniciar Sesión'), findsOneWidget);
-    expect(find.text('Regístrate aquí'), findsOneWidget);
+    expect(find.text('Log In'), findsOneWidget);
+    expect(find.text('Register here'), findsOneWidget);
   });
 }

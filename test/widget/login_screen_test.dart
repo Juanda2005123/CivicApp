@@ -82,22 +82,22 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('VIGÍA'), findsOneWidget);
-      expect(find.text('Plataforma de Auditoría Vial y Veeduría Ciudadana'), findsOneWidget);
+      expect(find.text('Civic Road Infrastructure Auditing Platform'), findsOneWidget);
       expect(find.byType(TextFormField), findsNWidgets(2));
-      expect(find.text('Iniciar Sesión'), findsOneWidget);
-      expect(find.text('Regístrate aquí'), findsOneWidget);
+      expect(find.text('Log In'), findsOneWidget);
+      expect(find.text('Register here'), findsOneWidget);
     });
 
     testWidgets('triggers validation errors when submitting empty form', (tester) async {
       await tester.pumpWidget(createLoginTestWidget(authCubit));
       await tester.pumpAndSettle();
 
-      // Click Iniciar Sesión button without typing
-      await tester.tap(find.text('Iniciar Sesión'));
+      // Click Log In button without typing
+      await tester.tap(find.text('Log In'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Ingresa tu correo electrónico'), findsOneWidget);
-      expect(find.text('Ingresa tu contraseña'), findsOneWidget);
+      expect(find.text('Please enter your email address'), findsOneWidget);
+      expect(find.text('Please enter your password'), findsOneWidget);
     });
 
     testWidgets('validates invalid email format and short password', (tester) async {
@@ -108,11 +108,11 @@ void main() {
       await tester.enterText(find.byType(TextFormField).at(0), 'correo_invalido');
       await tester.enterText(find.byType(TextFormField).at(1), '123');
 
-      await tester.tap(find.text('Iniciar Sesión'));
+      await tester.tap(find.text('Log In'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Ingresa un correo electrónico válido'), findsOneWidget);
-      expect(find.text('La contraseña debe tener al menos 6 caracteres'), findsOneWidget);
+      expect(find.text('Please enter a valid email address'), findsOneWidget);
+      expect(find.text('Password must be at least 6 characters'), findsOneWidget);
     });
 
     testWidgets('toggles password visibility when clicking eye icon', (tester) async {
@@ -128,11 +128,11 @@ void main() {
       expect(find.byIcon(Icons.visibility_off_outlined), findsOneWidget);
     });
 
-    testWidgets('clicking Regístrate aquí navigates to register route', (tester) async {
+    testWidgets('clicking Register here navigates to register route', (tester) async {
       await tester.pumpWidget(createLoginTestWidget(authCubit));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Regístrate aquí'));
+      await tester.tap(find.text('Register here'));
       await tester.pumpAndSettle();
 
       expect(find.text('Register Screen Mock'), findsOneWidget);

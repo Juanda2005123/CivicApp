@@ -5,38 +5,38 @@ import '../../../../core/theme/app_theme.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 
-/// Pantalla de Dashboard Cívico Inicial (Confirmación de Datos y Logout Seguro).
+/// Initial Civic Dashboard Screen (Data Confirmation and Secure Logout).
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Recuperar argumentos transmitidos por ruta en caso de fallback
+    // Retrieve route arguments if passed as fallback
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
 
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, state) {
-        String nombre = args?['nombre'] ?? 'Ciudadano VIGÍA';
-        String email = args?['email'] ?? 'ciudadano@vigia.gov.co';
-        String ciudad = args?['ciudad'] ?? 'Cali (Valle del Cauca)';
-        String rango = 'Observador (Rango 1)';
-        int puntos = 0;
+        String fullName = args?['fullName'] ?? args?['nombre'] ?? 'Civic Citizen';
+        String email = args?['email'] ?? 'citizen@vigia.co';
+        String cityName = args?['cityName'] ?? args?['ciudad'] ?? 'Cali (Valle del Cauca)';
+        String rank = 'Urban Observer (Rank 1)';
+        int points = 0;
 
         if (state is Authenticated) {
-          nombre = state.usuario.nombreCompleto;
-          email = state.usuario.email;
-          ciudad = state.usuario.ciudadNombre ?? ciudad;
-          rango = "${state.usuario.nivelReputacionNombre} (Rango ${state.usuario.nivelReputacionId})";
-          puntos = state.usuario.puntosReputacion;
+          fullName = state.user.fullName;
+          email = state.user.email;
+          cityName = state.user.cityName ?? cityName;
+          rank = "${state.user.rankName} (Rank ${state.user.rankId})";
+          points = state.user.reputationPoints;
         }
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Panel Cívico VIGÍA'),
+            title: const Text('VIGÍA Civic Dashboard'),
             automaticallyImplyLeading: false,
             actions: [
               IconButton(
-                tooltip: 'Cerrar Sesión',
+                tooltip: 'Log Out',
                 icon: const Icon(Icons.logout),
                 onPressed: () => _handleLogout(context),
               ),
@@ -48,7 +48,7 @@ class DashboardScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Encabezado de Éxito
+                  // Success Header
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -72,7 +72,7 @@ class DashboardScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '¡Te has logueado con éxito!',
+                                'Successfully logged in!',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -81,7 +81,7 @@ class DashboardScreen extends StatelessWidget {
                               ),
                               SizedBox(height: 2),
                               Text(
-                                'Sesión cívica activa y datos confirmados.',
+                                'Active civic session and confirmed credentials.',
                                 style: TextStyle(fontSize: 12, color: Color(0xFF166534)),
                               ),
                             ],
@@ -92,7 +92,7 @@ class DashboardScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Tarjeta de Perfil Cívico
+                  // Civic Profile Card
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(20.0),
@@ -100,7 +100,7 @@ class DashboardScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Resumen del Perfil Cívico',
+                            'Civic Profile Summary',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -111,36 +111,36 @@ class DashboardScreen extends StatelessWidget {
 
                           _buildInfoRow(
                             icon: Icons.person_outline,
-                            label: 'Nombre Completo',
-                            value: nombre,
+                            label: 'Full Name',
+                            value: fullName,
                           ),
                           const SizedBox(height: 14),
 
                           _buildInfoRow(
                             icon: Icons.email_outlined,
-                            label: 'Correo Electrónico',
+                            label: 'Email Address',
                             value: email,
                           ),
                           const SizedBox(height: 14),
 
                           _buildInfoRow(
                             icon: Icons.location_on_outlined,
-                            label: 'Ciudad de Residencia',
-                            value: ciudad,
+                            label: 'Residence City',
+                            value: cityName,
                           ),
                           const SizedBox(height: 14),
 
                           _buildInfoRow(
                             icon: Icons.military_tech_outlined,
-                            label: 'Rango Cívico',
-                            value: rango,
+                            label: 'Civic Rank',
+                            value: rank,
                           ),
                           const SizedBox(height: 14),
 
                           _buildInfoRow(
                             icon: Icons.stars_outlined,
-                            label: 'Puntos de Reputación',
-                            value: '$puntos pts',
+                            label: 'Reputation Points',
+                            value: '$points pts',
                           ),
                         ],
                       ),
@@ -149,7 +149,7 @@ class DashboardScreen extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  // Botón Prominente de Deslogueo Seguro
+                  // Prominent Secure Logout Button
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFDC2626),
@@ -157,7 +157,7 @@ class DashboardScreen extends StatelessWidget {
                     ),
                     onPressed: () => _handleLogout(context),
                     icon: const Icon(Icons.logout, size: 20),
-                    label: const Text('Salir / Desloguearse'),
+                    label: const Text('Log Out'),
                   ),
                 ],
               ),

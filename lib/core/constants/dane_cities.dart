@@ -23,6 +23,13 @@ class DaneCity {
   });
 
   String get displayName => '$nombre ($departamento)';
+  String get name => nombre;
+  String get department => departamento;
+  double get latitude => latitud;
+  double get longitude => longitud;
+  bool get isCapital => esCapital;
+  String get type => tipo;
+  double? get radiusKm => radioKm;
 
   @override
   bool operator ==(Object other) =>

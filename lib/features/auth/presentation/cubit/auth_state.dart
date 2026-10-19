@@ -1,8 +1,8 @@
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/usuario.dart';
+import '../../domain/entities/user.dart';
 
-/// Jerarquía sellada (Dart 3 sealed class) para estados de autenticación cívica.
-/// Garantiza exhaustividad en tiempo de compilación según lo enseñado en las Lecciones 0045-0048.
+/// Dart 3 sealed class hierarchy for civic authentication states.
+/// Guarantees compile-time exhaustiveness matching Clean Architecture presentation standards.
 sealed class AuthState extends Equatable {
   const AuthState();
 
@@ -10,32 +10,35 @@ sealed class AuthState extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Estado inicial previo a cualquier verificación
+/// Initial state prior to any verification or auth checks
 class AuthInitial extends AuthState {
   const AuthInitial();
 }
 
-/// Estado de carga mientras se procesa la solicitud asíncrona
+/// Loading state while processing asynchronous requests
 class AuthLoading extends AuthState {
   const AuthLoading();
 }
 
-/// Estado autenticado con la sesión cívica activa y datos del ciudadano
+/// Authenticated state with active civic session and citizen profile data
 class Authenticated extends AuthState {
-  final Usuario usuario;
+  final User user;
 
-  const Authenticated(this.usuario);
+  /// Backward-compatible alias for user
+  User get usuario => user;
+
+  const Authenticated(this.user);
 
   @override
-  List<Object?> get props => [usuario];
+  List<Object?> get props => [user];
 }
 
-/// Estado cuando no hay ninguna sesión activa o se cerró sesión
+/// Unauthenticated state when no session exists or user logged out
 class AuthUnauthenticated extends AuthState {
   const AuthUnauthenticated();
 }
 
-/// Estado de error con mensaje tipado para la interfaz de usuario
+/// Error state containing a user-facing typed message
 class AuthError extends AuthState {
   final String message;
 

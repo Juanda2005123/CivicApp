@@ -38,7 +38,7 @@ class _FakeIntegrationAuthRepository implements AuthRepository {
       residenceCityId: cityId,
       cityName: cityName ?? 'Cali (Valle del Cauca)',
       rankId: 1,
-      rankName: 'Observador',
+      rankName: 'Urban Observer',
       reputationPoints: 0,
     );
     _currentUser = user;
@@ -71,13 +71,13 @@ void main() {
 
     // Verify initial Login Screen
     expect(find.text('VIGÍA'), findsOneWidget);
-    expect(find.text('Iniciar Sesión'), findsOneWidget);
+    expect(find.text('Log In'), findsOneWidget);
 
     // 2. Navigate to Register Screen
-    await tester.tap(find.text('Regístrate aquí'));
+    await tester.tap(find.text('Register here'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Registro de Ciudadano'), findsOneWidget);
+    expect(find.text('Citizen Registration'), findsOneWidget);
 
     // 3. Fill Registration Form
     await tester.enterText(find.byType(TextFormField).at(0), 'Juan David Quintero');
@@ -97,36 +97,36 @@ void main() {
     await tester.pumpAndSettle();
 
     // 4. Submit Registration
-    final registerBtn = find.text('Crear Cuenta Cívica');
+    final registerBtn = find.text('Create Civic Account');
     await tester.ensureVisible(registerBtn);
     await tester.tap(registerBtn);
     await tester.pumpAndSettle();
 
     // Verify Dashboard is displayed with citizen details
-    expect(find.text('Panel Cívico VIGÍA'), findsOneWidget);
-    expect(find.text('¡Te has logueado con éxito!'), findsOneWidget);
+    expect(find.text('VIGÍA Civic Dashboard'), findsOneWidget);
+    expect(find.text('Successfully logged in!'), findsOneWidget);
     expect(find.text('Juan David Quintero'), findsOneWidget);
     expect(find.text('juand@vigia.co'), findsOneWidget);
-    expect(find.text('Observador (Rango 1)'), findsOneWidget);
+    expect(find.text('Urban Observer (Rank 1)'), findsOneWidget);
 
     // 5. Logout
-    final logoutBtn = find.text('Salir / Desloguearse');
+    final logoutBtn = find.text('Log Out');
     await tester.ensureVisible(logoutBtn);
     await tester.tap(logoutBtn);
     await tester.pumpAndSettle();
 
     // Verify redirected to Login Screen and backstack is clean
     expect(find.text('VIGÍA'), findsOneWidget);
-    expect(find.text('Iniciar Sesión'), findsOneWidget);
+    expect(find.text('Log In'), findsOneWidget);
 
     // 6. Login again with valid credentials
     await tester.enterText(find.byType(TextFormField).at(0), 'juand@vigia.co');
     await tester.enterText(find.byType(TextFormField).at(1), 'Password123');
-    await tester.tap(find.text('Iniciar Sesión'));
+    await tester.tap(find.text('Log In'));
     await tester.pumpAndSettle();
 
     // Verify landed safely on Dashboard again
-    expect(find.text('Panel Cívico VIGÍA'), findsOneWidget);
-    expect(find.text('¡Te has logueado con éxito!'), findsOneWidget);
+    expect(find.text('VIGÍA Civic Dashboard'), findsOneWidget);
+    expect(find.text('Successfully logged in!'), findsOneWidget);
   });
 }

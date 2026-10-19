@@ -63,7 +63,7 @@ void main() {
     residenceCityId: 1,
     cityName: 'Cali (Valle del Cauca)',
     rankId: 1,
-    rankName: 'Observador',
+    rankName: 'Urban Observer',
     reputationPoints: 0,
   );
 
@@ -88,15 +88,15 @@ void main() {
       await tester.pumpWidget(createDashboardTestWidget(authCubit));
       await tester.pumpAndSettle();
 
-      expect(find.text('Panel Cívico VIGÍA'), findsOneWidget);
-      expect(find.text('¡Te has logueado con éxito!'), findsOneWidget);
-      expect(find.text('Resumen del Perfil Cívico'), findsOneWidget);
+      expect(find.text('VIGÍA Civic Dashboard'), findsOneWidget);
+      expect(find.text('Successfully logged in!'), findsOneWidget);
+      expect(find.text('Civic Profile Summary'), findsOneWidget);
       expect(find.text('Juan David Quintero'), findsOneWidget);
       expect(find.text('juand@vigia.co'), findsOneWidget);
       expect(find.text('Cali (Valle del Cauca)'), findsOneWidget);
-      expect(find.text('Observador (Rango 1)'), findsOneWidget);
+      expect(find.text('Urban Observer (Rank 1)'), findsOneWidget);
       expect(find.text('0 pts'), findsOneWidget);
-      expect(find.text('Salir / Desloguearse'), findsOneWidget);
+      expect(find.text('Log Out'), findsOneWidget);
     });
 
     testWidgets('tapping logout button triggers cubit logout and navigates to login', (tester) async {
@@ -105,7 +105,7 @@ void main() {
       await tester.pumpWidget(createDashboardTestWidget(authCubit));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Salir / Desloguearse'));
+      await tester.tap(find.text('Log Out'));
       await tester.pumpAndSettle();
 
       expect(repository.logoutCalled, isTrue);

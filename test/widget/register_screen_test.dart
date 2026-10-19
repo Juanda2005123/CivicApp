@@ -83,12 +83,12 @@ void main() {
       await tester.pumpWidget(createRegisterTestWidget(authCubit));
       await tester.pumpAndSettle();
 
-      expect(find.text('Registro de Ciudadano'), findsOneWidget);
-      expect(find.text('Únete a la Veeduría Cívica'), findsOneWidget);
-      expect(find.text('Ej. Juan David Quintero'), findsOneWidget);
-      expect(find.text('Ciudad de Residencia (Cobertura DANE)'), findsOneWidget);
-      expect(find.text('Detectar ciudad más cercana por GPS'), findsOneWidget);
-      expect(find.text('Crear Cuenta Cívica'), findsOneWidget);
+      expect(find.text('Citizen Registration'), findsOneWidget);
+      expect(find.text('Join Civic Oversight'), findsOneWidget);
+      expect(find.text('e.g. Juan David Quintero'), findsOneWidget);
+      expect(find.text('Residence City (DANE Coverage)'), findsOneWidget);
+      expect(find.text('Detect nearest city via GPS'), findsOneWidget);
+      expect(find.text('Create Civic Account'), findsOneWidget);
     });
 
     testWidgets('validates full name requiring at least two words', (tester) async {
@@ -101,11 +101,11 @@ void main() {
 
       // Enter only a single word
       await tester.enterText(find.byType(TextFormField).at(0), 'Juan');
-      await tester.ensureVisible(find.text('Crear Cuenta Cívica'));
-      await tester.tap(find.text('Crear Cuenta Cívica'));
+      await tester.ensureVisible(find.text('Create Civic Account'));
+      await tester.tap(find.text('Create Civic Account'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Ingresa al menos un nombre y un apellido'), findsOneWidget);
+      expect(find.text('Please enter at least a first and last name'), findsOneWidget);
     });
 
     testWidgets('enforces strict password complexity rules (uppercase, lowercase, number)', (tester) async {
@@ -117,35 +117,35 @@ void main() {
       await tester.pumpAndSettle();
 
       final passwordField = find.byType(TextFormField).at(2);
-      final submitButton = find.text('Crear Cuenta Cívica');
+      final submitButton = find.text('Create Civic Account');
 
       // 1. Too short
       await tester.enterText(passwordField, 'Ab1');
       await tester.ensureVisible(submitButton);
       await tester.tap(submitButton);
       await tester.pumpAndSettle();
-      expect(find.text('Debe contener al menos 6 caracteres'), findsOneWidget);
+      expect(find.text('Must contain at least 6 characters'), findsOneWidget);
 
       // 2. Missing uppercase
       await tester.enterText(passwordField, 'abcdef1');
       await tester.ensureVisible(submitButton);
       await tester.tap(submitButton);
       await tester.pumpAndSettle();
-      expect(find.text('Debe contener al menos una letra mayúscula'), findsOneWidget);
+      expect(find.text('Must contain at least one uppercase letter'), findsOneWidget);
 
       // 3. Missing lowercase
       await tester.enterText(passwordField, 'ABCDEF1');
       await tester.ensureVisible(submitButton);
       await tester.tap(submitButton);
       await tester.pumpAndSettle();
-      expect(find.text('Debe contener al menos una letra minúscula'), findsOneWidget);
+      expect(find.text('Must contain at least one lowercase letter'), findsOneWidget);
 
       // 4. Missing number
       await tester.enterText(passwordField, 'Abcdefg');
       await tester.ensureVisible(submitButton);
       await tester.tap(submitButton);
       await tester.pumpAndSettle();
-      expect(find.text('Debe contener al menos un número'), findsOneWidget);
+      expect(find.text('Must contain at least one number'), findsOneWidget);
     });
 
     testWidgets('validates password confirmation match', (tester) async {
@@ -158,7 +158,7 @@ void main() {
 
       final passwordField = find.byType(TextFormField).at(2);
       final confirmField = find.byType(TextFormField).at(3);
-      final submitButton = find.text('Crear Cuenta Cívica');
+      final submitButton = find.text('Create Civic Account');
 
       await tester.enterText(passwordField, 'Password123');
       await tester.enterText(confirmField, 'Different123');
@@ -167,7 +167,7 @@ void main() {
       await tester.tap(submitButton);
       await tester.pumpAndSettle();
 
-      expect(find.text('Las contraseñas no coinciden'), findsOneWidget);
+      expect(find.text('Passwords do not match'), findsOneWidget);
     });
   });
 }

@@ -5,7 +5,7 @@ import '../../domain/usecases/logout_usecase.dart';
 import '../../domain/usecases/register_usecase.dart';
 import 'auth_state.dart';
 
-/// Cubit que administra el ciclo de vida de la sesión cívica.
+/// Cubit managing the civic authentication lifecycle and session states.
 class AuthCubit extends Cubit<AuthState> {
   final LoginUseCase loginUseCase;
   final RegisterUseCase registerUseCase;
@@ -19,7 +19,7 @@ class AuthCubit extends Cubit<AuthState> {
     required this.getCurrentUserUseCase,
   }) : super(const AuthInitial());
 
-  /// Verifica si existe una sesión activa persistida
+  /// Checks if a persisted active civic session exists
   Future<void> checkAuthStatus() async {
     emit(const AuthLoading());
     try {
@@ -34,7 +34,7 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Inicia sesión con credenciales
+  /// Authenticates citizen using email and password
   Future<void> login({
     required String email,
     required String password,
@@ -74,13 +74,13 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Cierra la sesión activa
+  /// Terminates active session and clears persisted tokens
   Future<void> logout() async {
     emit(const AuthLoading());
     try {
       await logoutUseCase();
     } catch (_) {
-      // Ignora errores de red al cerrar sesión local
+      // Ignore network errors when clearing local credentials
     } finally {
       emit(const AuthUnauthenticated());
     }
