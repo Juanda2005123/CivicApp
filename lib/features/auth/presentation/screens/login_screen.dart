@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/civic_background.dart';
+import '../../../../core/widgets/civic_brand_header.dart';
+import '../../../../core/widgets/liquid_glass_button.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 
-/// Civic Login Screen integrated with Supabase and BLoC/Cubit.
+/// Premium light Login Screen — Apple-inspired Liquid Glass design.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -47,7 +50,6 @@ class _LoginScreenState extends State<LoginScreen> {
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is Authenticated) {
-          // Successful post-login navigation to Dashboard
           Navigator.pushReplacementNamed(
             context,
             AppRoutes.dashboard,
@@ -62,9 +64,22 @@ class _LoginScreenState extends State<LoginScreen> {
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.redAccent,
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: AppTheme.statusError, size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      state.message,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: AppTheme.dark900,
               behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              margin: const EdgeInsets.all(16),
             ),
           );
         }
@@ -73,154 +88,149 @@ class _LoginScreenState extends State<LoginScreen> {
         final isLoading = state is AuthLoading;
 
         return Scaffold(
-          body: SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Civic Badge
-                      Center(
-                        child: Container(
-                          width: 76,
-                          height: 76,
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryLight,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: AppTheme.primaryCivic, width: 2),
-                          ),
-                          child: const Icon(
-                            Icons.remove_red_eye_rounded,
-                            size: 42,
-                            color: AppTheme.primaryCivic,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+          body: CivicBackground(
+            child: SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                  child: GlassCard(
+                    maxWidth: 420,
+                    padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 24),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const CivicBrandHeader(compact: true),
+                          const SizedBox(height: 18),
 
-                      // Title & Subtitle
-                      const Text(
-                        'VIGÍA',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2.0,
-                          color: AppTheme.primaryCivic,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Civic Road Infrastructure Auditing Platform',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppTheme.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 28),
-
-                      // Email Field
-                      TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        enabled: !isLoading,
-                        decoration: const InputDecoration(
-                          labelText: 'Email Address',
-                          hintText: 'example@email.com',
-                          prefixIcon: Icon(Icons.email_outlined, color: AppTheme.primaryCivic),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter your email address';
-                          }
-                          if (!value.contains('@') || !value.contains('.')) {
-                            return 'Please enter a valid email address';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Password Field
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: _obscurePassword,
-                        enabled: !isLoading,
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          hintText: '••••••••',
-                          prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.primaryCivic),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                              color: AppTheme.textSecondary,
+                          // Email Field
+                          TextFormField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            enabled: !isLoading,
+                            style: const TextStyle(
+                              color: AppTheme.textPrimary,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
+                            decoration: InputDecoration(
+                              labelText: 'Email Address',
+                              hintText: 'example@email.com',
+                              prefixIcon: Icon(Icons.email_outlined, size: 20, color: AppTheme.slate500),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Please enter your email address';
+                              }
+                              if (!value.contains('@') || !value.contains('.')) {
+                                return 'Please enter a valid email address';
+                              }
+                              return null;
                             },
                           ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your password';
-                          }
-                          if (value.length < 6) {
-                            return 'Password must be at least 6 characters';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 24),
+                          const SizedBox(height: 12),
 
-                      // Log In Button with Loading Indicator
-                      ElevatedButton(
-                        onPressed: isLoading ? null : _handleLogin,
-                        child: isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                          // Password Field
+                          TextFormField(
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (_) => _handleLogin(),
+                            enabled: !isLoading,
+                            style: const TextStyle(
+                              color: AppTheme.textPrimary,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              hintText: '••••••••',
+                              prefixIcon: Icon(Icons.lock_outline, size: 20, color: AppTheme.slate500),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                  color: AppTheme.slate500,
+                                  size: 20,
                                 ),
-                              )
-                            : const Text('Log In'),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Link to Register
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            "Don't have a civic account? ",
-                            style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-                          ),
-                          GestureDetector(
-                            onTap: isLoading
-                                ? null
-                                : () {
-                                    Navigator.pushNamed(context, AppRoutes.register);
-                                  },
-                            child: const Text(
-                              'Register here',
-                              style: TextStyle(
-                                color: AppTheme.primaryCivic,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
                               ),
                             ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your password';
+                              }
+                              if (value.length < 6) {
+                                return 'Password must be at least 6 characters';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Apple Liquid Glass Login Button
+                          LiquidGlassButton(
+                            onPressed: isLoading ? null : _handleLogin,
+                            isLoading: isLoading,
+                            label: 'Log In',
+                            height: 50,
+                          ),
+                          const SizedBox(height: 18),
+
+                          // Subtle Apple Divider
+                          Row(
+                            children: [
+                              Expanded(child: Divider(color: AppTheme.borderLight, thickness: 1)),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                child: Text(
+                                  'o',
+                                  style: TextStyle(color: AppTheme.slate400, fontSize: 13),
+                                ),
+                              ),
+                              Expanded(child: Divider(color: AppTheme.borderLight, thickness: 1)),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Register link
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              const Text(
+                                "Don't have a civic account? ",
+                                style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                              ),
+                              GestureDetector(
+                                onTap: isLoading
+                                    ? null
+                                    : () {
+                                        Navigator.pushNamed(context, AppRoutes.register);
+                                      },
+                                child: const Text(
+                                  'Register here',
+                                  style: TextStyle(
+                                    color: AppTheme.accent,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),

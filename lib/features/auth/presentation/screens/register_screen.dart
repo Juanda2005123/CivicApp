@@ -6,11 +6,13 @@ import '../../../../core/config/app_env.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/constants/dane_cities.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/civic_background.dart';
+import '../../../../core/widgets/liquid_glass_button.dart';
 import '../../data/datasources/city_remote_data_source.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 
-/// Civic Registration Screen integrated with Supabase, BLoC, and live DANE catalog.
+/// Premium light Register Screen — Apple-inspired frosted glass design.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -29,12 +31,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  // City catalog (Option B: Live Supabase with offline fallback)
+  // Live password criteria
+  bool _hasMinLength = false;
+  bool _hasLowercase = false;
+  bool _hasUppercase = false;
+  bool _hasNumber = false;
+
+  // City catalog
   late final CityRemoteDataSource _cityDataSource;
   List<DaneCity> _cities = DaneCitiesCatalog.cities;
   int? _selectedCityId;
 
-  // GPS sensor state for assisted onboarding (RN-14)
+  // GPS state
   bool _isDetectingGps = false;
   String? _gpsMessage;
   bool _gpsSuccess = false;
@@ -44,7 +52,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.initState();
     _fullNameController = TextEditingController();
     _emailController = TextEditingController();
-    _passwordController = TextEditingController();
+    _passwordController = TextEditingController()..addListener(_updatePasswordStrength);
     _confirmPasswordController = TextEditingController();
 
     _cityDataSource = CityRemoteDataSource(
@@ -53,31 +61,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _loadCities();
   }
 
+  void _updatePasswordStrength() {
+    final text = _passwordController.text;
+    setState(() {
+      _hasMinLength = text.length >= 6;
+      _hasLowercase = RegExp(r'[a-z]').hasMatch(text);
+      _hasUppercase = RegExp(r'[A-Z]').hasMatch(text);
+      _hasNumber = RegExp(r'[0-9]').hasMatch(text);
+    });
+  }
+
   Future<void> _loadCities() async {
     final list = await _cityDataSource.getCities();
-    if (mounted) {
-      setState(() {
-        _cities = list;
-      });
-    }
+    if (mounted) setState(() => _cities = list);
   }
 
   @override
   void dispose() {
     _fullNameController.dispose();
     _emailController.dispose();
+    _passwordController.removeListener(_updatePasswordStrength);
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  /// GPS-assisted detection to auto-select the nearest coverage city
   Future<void> _detectNearestCity() async {
     setState(() {
       _isDetectingGps = true;
       _gpsMessage = null;
     });
-
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
@@ -88,7 +101,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         });
         return;
       }
-
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -101,7 +113,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           return;
         }
       }
-
       if (permission == LocationPermission.deniedForever) {
         setState(() {
           _isDetectingGps = false;
@@ -110,23 +121,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
         });
         return;
       }
-
-      // 1. Try last known position first (instant response < 100ms)
       Position? position = await Geolocator.getLastKnownPosition();
-
-      // 2. Fall back to low accuracy with short timeout if cache is empty
       position ??= await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.low,
           timeLimit: Duration(seconds: 4),
         ),
       );
-
-      final closest = DaneCitiesCatalog.findClosestCity(
-        position.latitude,
-        position.longitude,
-      );
-
+      final closest = DaneCitiesCatalog.findClosestCity(position.latitude, position.longitude);
       setState(() {
         _isDetectingGps = false;
         _selectedCityId = closest.id;
@@ -146,19 +148,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_formKey.currentState?.validate() ?? false) {
       if (_selectedCityId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select your residence city.'),
-            backgroundColor: Colors.redAccent,
+          SnackBar(
+            content: const Text('Please select your residence city.'),
+            backgroundColor: AppTheme.dark900,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
         return;
       }
-
       final selectedCity = _cities.firstWhere(
         (c) => c.id == _selectedCityId,
         orElse: () => _cities.first,
       );
-
       context.read<AuthCubit>().register(
             email: _emailController.text.trim(),
             password: _passwordController.text,
@@ -178,7 +180,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             (c) => c.id == _selectedCityId,
             orElse: () => _cities.first,
           );
-
           Navigator.pushReplacementNamed(
             context,
             AppRoutes.dashboard,
@@ -193,9 +194,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.redAccent,
+              content: Text(state.message, style: const TextStyle(color: Colors.white)),
+              backgroundColor: AppTheme.dark900,
               behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
           );
         }
@@ -204,285 +206,400 @@ class _RegisterScreenState extends State<RegisterScreen> {
         final isLoading = state is AuthLoading;
 
         return Scaffold(
+          extendBodyBehindAppBar: true,
           appBar: AppBar(
             title: const Text('Citizen Registration'),
+            backgroundColor: Colors.transparent,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
+              icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: AppTheme.textPrimary),
               onPressed: isLoading ? null : () => Navigator.pop(context),
             ),
           ),
-          body: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Join Civic Oversight',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      "Audit your city's road infrastructure and participate in community pothole resolution.",
-                      style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Full Name Field
-                    TextFormField(
-                      controller: _fullNameController,
-                      keyboardType: TextInputType.name,
-                      textCapitalization: TextCapitalization.words,
-                      enabled: !isLoading,
-                      decoration: const InputDecoration(
-                        labelText: 'Full Name',
-                        hintText: 'e.g. Juan David Quintero',
-                        prefixIcon: Icon(Icons.person_outline, color: AppTheme.primaryCivic),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your full name';
-                        }
-                        if (value.trim().split(' ').length < 2) {
-                          return 'Please enter at least a first and last name';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Email Address Field
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      enabled: !isLoading,
-                      decoration: const InputDecoration(
-                        labelText: 'Email Address',
-                        hintText: 'citizen@example.com',
-                        prefixIcon: Icon(Icons.email_outlined, color: AppTheme.primaryCivic),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter an email address';
-                        }
-                        if (!value.contains('@') || !value.contains('.')) {
-                          return 'Please enter a valid email address';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Official DANE Coverage Dropdown
-                    DropdownButtonFormField<int>(
-                      key: ValueKey(_selectedCityId),
-                      initialValue: _selectedCityId,
-                      decoration: const InputDecoration(
-                        labelText: 'Residence City (DANE Coverage)',
-                        prefixIcon: Icon(Icons.location_city_outlined, color: AppTheme.primaryCivic),
-                      ),
-                      hint: const Text('Select your city'),
-                      isExpanded: true,
-                      items: _cities.map((city) {
-                        return DropdownMenuItem<int>(
-                          value: city.id,
-                          child: Text(
-                            city.displayName,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontWeight: city.isCapital ? FontWeight.w600 : FontWeight.normal,
+          body: CivicBackground(
+            child: SafeArea(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                child: GlassCard(
+                  maxWidth: 500,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Header
+                        Row(
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFEEF2FF),
+                                    Color(0xFFE0E7FF),
+                                  ],
+                                ),
+                                border: Border.all(
+                                  color: const Color(0xFFC7D2FE),
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.person_add_alt_1_rounded,
+                                color: AppTheme.accent,
+                                size: 22,
+                              ),
                             ),
+                            const SizedBox(width: 14),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Join Civic Oversight',
+                                    style: TextStyle(
+                                      fontSize: 19,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppTheme.textPrimary,
+                                      letterSpacing: -0.3,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    "Audit your city's road infrastructure and participate in community pothole resolution.",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppTheme.textSecondary,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 22),
+                        const Divider(color: AppTheme.borderLight, height: 1),
+                        const SizedBox(height: 18),
+
+                        // Full Name
+                        TextFormField(
+                          controller: _fullNameController,
+                          keyboardType: TextInputType.name,
+                          textCapitalization: TextCapitalization.words,
+                          textInputAction: TextInputAction.next,
+                          enabled: !isLoading,
+                          style: const TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
                           ),
-                        );
-                      }).toList(),
-                      onChanged: isLoading
-                          ? null
-                          : (value) {
-                              setState(() {
-                                _selectedCityId = value;
-                              });
-                            },
-                      validator: (value) {
-                        if (value == null) {
-                          return 'Please select a coverage city';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 10),
+                          decoration: InputDecoration(
+                            labelText: 'Full Name',
+                            hintText: 'e.g. Juan David Quintero',
+                            prefixIcon: Icon(Icons.person_outline, size: 20, color: AppTheme.slate500),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Please enter your full name';
+                            }
+                            if (value.trim().split(' ').length < 2) {
+                              return 'Please enter at least a first and last name';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 14),
 
-                    // GPS Assisted Button
-                    OutlinedButton.icon(
-                      onPressed: (isLoading || _isDetectingGps) ? null : _detectNearestCity,
-                      icon: _isDetectingGps
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.my_location, size: 18),
-                      label: Text(
-                        _isDetectingGps ? 'Detecting location...' : 'Detect nearest city via GPS',
-                        style: const TextStyle(fontSize: 13),
-                      ),
-                    ),
+                        // Email
+                        TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          enabled: !isLoading,
+                          style: const TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: 'Email Address',
+                            hintText: 'citizen@example.com',
+                            prefixIcon: Icon(Icons.email_outlined, size: 20, color: AppTheme.slate500),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Please enter an email address';
+                            }
+                            if (!value.contains('@') || !value.contains('.')) {
+                              return 'Please enter a valid email address';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 14),
 
-                    if (_gpsMessage != null) ...[
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: _gpsSuccess ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: _gpsSuccess ? const Color(0xFF86EFAC) : const Color(0xFFFECACA),
+                        // City Selector Dropdown — exact text match: 'Residence City (DANE Coverage)'
+                        DropdownButtonFormField<int>(
+                          key: ValueKey(_selectedCityId),
+                          initialValue: _selectedCityId,
+                          dropdownColor: Colors.white,
+                          style: const TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: 'Residence City (DANE Coverage)',
+                            prefixIcon: Icon(Icons.location_city_outlined, size: 20, color: AppTheme.slate500),
+                          ),
+                          hint: const Text('Select your city', style: TextStyle(color: AppTheme.slate400)),
+                          isExpanded: true,
+                          items: _cities.map((city) {
+                            return DropdownMenuItem<int>(
+                              value: city.id,
+                              child: Text(
+                                city.displayName,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontWeight: city.isCapital ? FontWeight.w600 : FontWeight.normal,
+                                  color: AppTheme.textPrimary,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: isLoading ? null : (value) => setState(() => _selectedCityId = value),
+                          validator: (value) => value == null ? 'Please select a coverage city' : null,
+                        ),
+                        const SizedBox(height: 10),
+
+                        // GPS Button
+                        SizedBox(
+                          height: 42,
+                          child: OutlinedButton.icon(
+                            onPressed: (isLoading || _isDetectingGps) ? null : _detectNearestCity,
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(
+                                color: _gpsSuccess
+                                    ? AppTheme.statusSuccessBorder
+                                    : AppTheme.borderLight,
+                              ),
+                              backgroundColor: _gpsSuccess
+                                    ? AppTheme.statusSuccessBg
+                                    : Colors.white,
+                            ),
+                            icon: _isDetectingGps
+                                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                                : Icon(
+                                    _gpsSuccess ? Icons.check_circle_outline : Icons.my_location,
+                                    size: 16,
+                                    color: _gpsSuccess ? AppTheme.statusSuccess : AppTheme.accent,
+                                  ),
+                            label: Text(
+                              _isDetectingGps ? 'Detecting location...' : 'Detect nearest city via GPS',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: _gpsSuccess ? AppTheme.statusSuccess : AppTheme.accent,
+                              ),
+                            ),
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              _gpsSuccess ? Icons.check_circle_outline : Icons.info_outline,
-                              size: 16,
-                              color: _gpsSuccess ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                        if (_gpsMessage != null) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: _gpsSuccess
+                                  ? AppTheme.statusSuccessBg
+                                  : AppTheme.statusErrorBg,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: _gpsSuccess
+                                    ? AppTheme.statusSuccessBorder
+                                    : AppTheme.statusErrorBorder,
+                              ),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _gpsMessage!,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _gpsSuccess ? Icons.check_circle_outline : Icons.info_outline,
+                                  size: 14,
+                                  color: _gpsSuccess ? AppTheme.statusSuccess : AppTheme.statusError,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _gpsMessage!,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: _gpsSuccess ? AppTheme.statusSuccess : AppTheme.statusError,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 18),
+
+                        // Password
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          textInputAction: TextInputAction.next,
+                          enabled: !isLoading,
+                          style: const TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            hintText: 'Minimum 6 characters',
+                            prefixIcon: Icon(Icons.lock_outline, size: 20, color: AppTheme.slate500),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                color: AppTheme.slate500,
+                                size: 20,
+                              ),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Please enter a password';
+                            if (value.length < 6) return 'Must contain at least 6 characters';
+                            if (!RegExp(r'[a-z]').hasMatch(value)) return 'Must contain at least one lowercase letter';
+                            if (!RegExp(r'[A-Z]').hasMatch(value)) return 'Must contain at least one uppercase letter';
+                            if (!RegExp(r'[0-9]').hasMatch(value)) return 'Must contain at least one number';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Live password chips
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            _buildChip('6+ caracteres', _hasMinLength),
+                            _buildChip('Mayúscula (A-Z)', _hasUppercase),
+                            _buildChip('Minúscula (a-z)', _hasLowercase),
+                            _buildChip('Número (0-9)', _hasNumber),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Confirm Password
+                        TextFormField(
+                          controller: _confirmPasswordController,
+                          obscureText: _obscureConfirmPassword,
+                          textInputAction: TextInputAction.done,
+                          onFieldSubmitted: (_) => _handleRegister(),
+                          enabled: !isLoading,
+                          style: const TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: 'Confirm Password',
+                            hintText: 'Repeat your password',
+                            prefixIcon: Icon(Icons.lock_reset_outlined, size: 20, color: AppTheme.slate500),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                color: AppTheme.slate500,
+                                size: 20,
+                              ),
+                              onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                            ),
+                          ),
+                          validator: (value) => value != _passwordController.text ? 'Passwords do not match' : null,
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Apple Liquid Glass Submit Button
+                        LiquidGlassButton(
+                          onPressed: isLoading ? null : _handleRegister,
+                          isLoading: isLoading,
+                          label: 'Create Civic Account',
+                          height: 50,
+                        ),
+                        const SizedBox(height: 18),
+
+                        // Link to Login
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const Text(
+                              'Already have an account? ',
+                              style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                            ),
+                            GestureDetector(
+                              onTap: isLoading ? null : () => Navigator.pop(context),
+                              child: const Text(
+                                'Log In',
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  color: _gpsSuccess ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
+                                  color: AppTheme.accent,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
                                 ),
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-
-                    // Password Field
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      enabled: !isLoading,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        hintText: 'Minimum 6 characters',
-                        prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.primaryCivic),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                            color: AppTheme.textSecondary,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a password';
-                        }
-                        if (value.length < 6) {
-                          return 'Must contain at least 6 characters';
-                        }
-                        if (!RegExp(r'[a-z]').hasMatch(value)) {
-                          return 'Must contain at least one lowercase letter';
-                        }
-                        if (!RegExp(r'[A-Z]').hasMatch(value)) {
-                          return 'Must contain at least one uppercase letter';
-                        }
-                        if (!RegExp(r'[0-9]').hasMatch(value)) {
-                          return 'Must contain at least one number';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Confirm Password Field
-                    TextFormField(
-                      controller: _confirmPasswordController,
-                      obscureText: _obscureConfirmPassword,
-                      enabled: !isLoading,
-                      decoration: InputDecoration(
-                        labelText: 'Confirm Password',
-                        hintText: 'Repeat your password',
-                        prefixIcon: const Icon(Icons.lock_reset_outlined, color: AppTheme.primaryCivic),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                            color: AppTheme.textSecondary,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureConfirmPassword = !_obscureConfirmPassword;
-                            });
-                          },
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value != _passwordController.text) {
-                          return 'Passwords do not match';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 28),
-
-                    // Submit Button with spinner
-                    ElevatedButton(
-                      onPressed: isLoading ? null : _handleRegister,
-                      child: isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Create Civic Account'),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Link to Login
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Already have an account? ',
-                          style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-                        ),
-                        GestureDetector(
-                          onTap: isLoading ? null : () => Navigator.pop(context),
-                          child: const Text(
-                            'Log In',
-                            style: TextStyle(
-                              color: AppTheme.primaryCivic,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildChip(String label, bool satisfied) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: satisfied
+            ? AppTheme.statusSuccessBg
+            : const Color(0xFFF1F5F9), // Slate 100
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: satisfied
+              ? AppTheme.statusSuccessBorder
+              : const Color(0xFFE2E8F0), // Slate 200
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            satisfied ? Icons.check_circle : Icons.circle_outlined,
+            size: 11,
+            color: satisfied ? AppTheme.statusSuccess : AppTheme.slate400,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: satisfied ? FontWeight.w600 : FontWeight.normal,
+              color: satisfied ? AppTheme.statusSuccess : AppTheme.slate600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

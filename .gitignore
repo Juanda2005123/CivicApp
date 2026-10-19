@@ -51,3 +51,8 @@ app.*.map.json
 .env
 .env.*
 !.env.example
+
+# Temporary scratch and clones
+/temp/
+/scratch/
+*.tmp
