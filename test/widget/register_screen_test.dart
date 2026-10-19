@@ -14,7 +14,7 @@ import 'package:vigia_app/features/auth/presentation/screens/register_screen.dar
 
 class _FakeAuthRepository implements AuthRepository {
   @override
-  Future<Usuario> login({required String email, required String password}) =>
+  Future<User> login({required String email, required String password}) =>
       throw UnimplementedError();
 
   @override
@@ -40,7 +40,7 @@ class _FakeAuthRepository implements AuthRepository {
   Future<void> logout() async {}
 
   @override
-  Future<Usuario?> getCurrentUser() async => null;
+  Future<User?> getCurrentUser() async => null;
 }
 
 Widget createRegisterTestWidget(AuthCubit cubit) {

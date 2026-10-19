@@ -1,6 +1,6 @@
 import 'dart:math';
 
-/// Representación inmutable de una ciudad de cobertura oficial DANE para VIGÍA.
+/// Immutable representation of an official DANE coverage city for VIGÍA.
 class DaneCity {
   final int id;
   final String nombre;
@@ -9,7 +9,7 @@ class DaneCity {
   final double longitud;
   final bool esCapital;
   final String tipo; // 'satellite' | 'capital' | 'independent'
-  final double? radioKm; // Radio de influencia calibrado
+  final double? radioKm; // Calibrated radius of influence
 
   const DaneCity({
     required this.id,
@@ -40,8 +40,8 @@ class DaneCity {
   int get hashCode => id.hashCode;
 }
 
-/// Catálogo canónico de cobertura urbana según RN-12 (32 Capitales + Ciudades > 100k hab).
-/// Incluye calibración jerárquica de conurbaciones metropolitanas.
+/// Canonical urban coverage catalog per RN-12 (32 Capital cities + Municipalities > 100k pop).
+/// Includes hierarchical calibration for metropolitan conurbations.
 class DaneCitiesCatalog {
   static const List<DaneCity> cities = [
     // --- CONURBACIÓN CALI ---
@@ -121,7 +121,7 @@ class DaneCitiesCatalog {
       );
     }).toList();
 
-    // FASE 1: Evaluar municipios satélite (radio estricto confinado a su casco urbano)
+    // PHASE 1: Evaluate satellite municipalities (strict radius confined to urban core)
     for (final item in distances) {
       if (item.city.tipo == 'satellite' && item.city.radioKm != null) {
         if (item.distanceKm <= item.city.radioKm!) {
@@ -130,7 +130,7 @@ class DaneCitiesCatalog {
       }
     }
 
-    // FASE 2: Evaluar capitales metropolitanas (radio amplio de absorción de conurbación)
+    // PHASE 2: Evaluate metropolitan capitals (wide absorption radius for conurbation)
     for (final item in distances) {
       if (item.city.tipo == 'capital' && item.city.radioKm != null) {
         if (item.distanceKm <= item.city.radioKm!) {
@@ -139,7 +139,7 @@ class DaneCitiesCatalog {
       }
     }
 
-    // FASE 3: Fallback general por proximidad (ciudades independientes o zonas periurbanas)
+    // PHASE 3: General proximity fallback (independent cities or peri-urban areas)
     distances.sort((a, b) => a.distanceKm.compareTo(b.distanceKm));
     return distances.first.city;
   }

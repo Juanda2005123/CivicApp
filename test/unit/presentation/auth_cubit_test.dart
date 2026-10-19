@@ -14,7 +14,7 @@ class _MockRepoForCubit implements AuthRepository {
   final testUser = const User(
     id: 'test-id',
     email: 'test@vigia.co',
-    fullName: 'Prueba Cubit',
+    fullName: 'Cubit Test Citizen',
     residenceCityId: 1,
     cityName: 'Cali',
     rankId: 1,
@@ -24,7 +24,7 @@ class _MockRepoForCubit implements AuthRepository {
 
   @override
   Future<User> login({required String email, required String password}) async {
-    if (shouldFail) throw Exception('Credenciales incorrectas');
+    if (shouldFail) throw Exception('Invalid credentials');
     return testUser;
   }
 
@@ -36,7 +36,7 @@ class _MockRepoForCubit implements AuthRepository {
     required int cityId,
     String? cityName,
   }) async {
-    if (shouldFail) throw Exception('Correo duplicado');
+    if (shouldFail) throw Exception('Duplicate email');
     return testUser;
   }
 
@@ -44,7 +44,7 @@ class _MockRepoForCubit implements AuthRepository {
   Future<void> logout() async {}
 
   @override
-  Future<Usuario?> getCurrentUser() async {
+  Future<User?> getCurrentUser() async {
     return shouldFail ? null : testUser;
   }
 }
@@ -107,8 +107,8 @@ void main() {
       await cubit.register(
         email: 'test@vigia.co',
         password: 'Password123',
-        nombreCompleto: 'Prueba Cubit',
-        ciudadId: 1,
+        fullName: 'Cubit Test Citizen',
+        cityId: 1,
       );
     });
 

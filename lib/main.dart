@@ -17,10 +17,10 @@ import 'features/auth/presentation/cubit/auth_cubit.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Carga de variables de entorno
+  // Load environment variables
   await AppEnv.init();
 
-  // Inicialización de Supabase con URL y Publishable Key
+  // Initialize Supabase with URL and Publishable Key
   if (AppEnv.isSupabaseConfigured) {
     try {
       await Supabase.initialize(
@@ -28,7 +28,7 @@ Future<void> main() async {
         publishableKey: AppEnv.supabaseAnonKey,
       );
     } catch (e) {
-      debugPrint('Error al inicializar Supabase: $e');
+      debugPrint('Error initializing Supabase: $e');
     }
   }
 
@@ -68,7 +68,7 @@ class VigiaApp extends StatelessWidget {
         )..checkAuthStatus();
       },
       child: MaterialApp(
-        title: 'VIGÍA - Auditoría Vial',
+        title: 'VIGÍA - Civic Road Audit',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         initialRoute: AppRoutes.login,
@@ -78,14 +78,14 @@ class VigiaApp extends StatelessWidget {
   }
 }
 
-/// Repositorio de respaldo para pruebas locales cuando no hay red configurada
+/// Fallback mock repository for offline execution when credentials are not supplied
 class _MockAuthRepository implements AuthRepository {
   @override
   Future<User> login({required String email, required String password}) async {
     return User(
       id: 'mock-1',
       email: email,
-      fullName: 'Ciudadano VIGÍA (Offline)',
+      fullName: 'VIGÍA Citizen (Offline)',
       residenceCityId: 1,
       cityName: 'Cali (Valle del Cauca)',
       rankId: 1,

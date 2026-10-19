@@ -13,7 +13,7 @@ class _FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   final testModel = const UserModel(
     id: 'user-123',
     email: 'test@vigia.co',
-    fullName: 'Ciudadano Modelo',
+    fullName: 'Civic Model Citizen',
     residenceCityId: 1,
     cityName: 'Cali',
     rankId: 1,
@@ -88,7 +88,7 @@ void main() {
 
       expect(user.id, 'user-123');
       expect(user.email, 'test@vigia.co');
-      expect(user.fullName, 'Ciudadano Modelo');
+      expect(user.fullName, 'Civic Model Citizen');
     });
 
     test('login translates invalid credentials to friendly civic exception', () async {

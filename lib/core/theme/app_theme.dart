@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-/// Tema visual cívico unificado para VIGÍA.
+/// Unified civic visual theme for VIGÍA.
 class AppTheme {
-  static const Color primaryCivic = Color(0xFF0F766E); // Teal cívico institucional
+  static const Color primaryCivic = Color(0xFF0F766E); // Institutional civic teal
   static const Color primaryDark = Color(0xFF115E59);
   static const Color primaryLight = Color(0xFFCCFBF1);
-  static const Color accentAlert = Color(0xFFD97706); // Ámbar de alerta vial
+  static const Color accentAlert = Color(0xFFD97706); // Road hazard amber
   static const Color backgroundLight = Color(0xFFF8FAFC);
   static const Color surfaceLight = Colors.white;
   static const Color textPrimary = Color(0xFF0F172A);

@@ -1,6 +1,6 @@
 import '../repositories/auth_repository.dart';
 
-/// Caso de Uso: Cerrar sesión cívica
+/// Use Case: Terminate active civic session.
 class LogoutUseCase {
   final AuthRepository repository;
 

@@ -21,7 +21,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  late final TextEditingController _nombreController;
+  late final TextEditingController _fullNameController;
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
   late final TextEditingController _confirmPasswordController;
@@ -42,7 +42,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void initState() {
     super.initState();
-    _nombreController = TextEditingController();
+    _fullNameController = TextEditingController();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
@@ -64,7 +64,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
-    _nombreController.dispose();
+    _fullNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -162,7 +162,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       context.read<AuthCubit>().register(
             email: _emailController.text.trim(),
             password: _passwordController.text,
-            fullName: _nombreController.text.trim(),
+            fullName: _fullNameController.text.trim(),
             cityId: _selectedCityId!,
             cityName: selectedCity.name,
           );
@@ -236,7 +236,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     // Full Name Field
                     TextFormField(
-                      controller: _nombreController,
+                      controller: _fullNameController,
                       keyboardType: TextInputType.name,
                       textCapitalization: TextCapitalization.words,
                       enabled: !isLoading,

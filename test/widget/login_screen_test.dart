@@ -18,7 +18,7 @@ class _FakeAuthRepository implements AuthRepository {
     return User(
       id: 'test-1',
       email: email,
-      fullName: 'Prueba Login',
+      fullName: 'Login Test Citizen',
       residenceCityId: 1,
       cityName: 'Cali',
       rankId: 1,
@@ -41,7 +41,7 @@ class _FakeAuthRepository implements AuthRepository {
   Future<void> logout() async {}
 
   @override
-  Future<Usuario?> getCurrentUser() async => null;
+  Future<User?> getCurrentUser() async => null;
 }
 
 Widget createLoginTestWidget(AuthCubit cubit) {

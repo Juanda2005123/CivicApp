@@ -5,7 +5,7 @@ import 'package:vigia_app/features/auth/domain/repositories/auth_repository.dart
 import 'package:vigia_app/main.dart';
 
 class _FakeIntegrationAuthRepository implements AuthRepository {
-  Usuario? _currentUser;
+  User? _currentUser;
 
   @override
   Future<User> login({required String email, required String password}) async {
@@ -51,7 +51,7 @@ class _FakeIntegrationAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<Usuario?> getCurrentUser() async {
+  Future<User?> getCurrentUser() async {
     return _currentUser;
   }
 }
