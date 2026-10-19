@@ -141,6 +141,38 @@ class AuthRemoteDataSource {
       }
     } catch (_) {}
 
+    // 5. Self-healing fallback: If auth session exists in Supabase but user_profile record is missing
+    try {
+      final user = supabaseClient.auth.currentUser;
+      final fullName = user?.userMetadata?['full_name'] ??
+          user?.userMetadata?['nombre_completo'] ??
+          'Citizen VIGÍA';
+      final cityName = user?.userMetadata?['city_name'] ??
+          user?.userMetadata?['ciudad_nombre'] ??
+          'Cali';
+
+      await supabaseClient.from('user_profile').upsert({
+        'id_user': userId,
+        'email': fallbackEmail,
+        'full_name': fullName,
+        'id_rank': 1,
+        'reference_city': cityName,
+        'last_city': cityName,
+        'experience_points': 0,
+        'is_active': true,
+      });
+
+      final recovered = await supabaseClient
+          .from('user_profile')
+          .select('*, civic_rank(*)')
+          .eq('id_user', userId)
+          .maybeSingle();
+
+      if (recovered != null) {
+        return UserModel.fromJson(recovered);
+      }
+    } catch (_) {}
+
     throw Exception('Civic profile not found in database.');
   }
 }

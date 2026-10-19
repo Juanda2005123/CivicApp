@@ -320,3 +320,196 @@ CREATE UNIQUE INDEX idx_single_primary_photo ON incident_photo (id_incident) WHE
 
 -- Partial Unique Index: ensures at most 1 active pending resolution proposal per incident report (No-Bifurcation Rule)
 CREATE UNIQUE INDEX idx_single_active_resolution ON incident_resolution (id_incident) WHERE status = 'PENDING';
+
+-- =============================================================================
+-- AUTOMATIC AUTH SYNCHRONIZATION TRIGGER (Supabase auth.users -> user_profile)
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.user_profile (
+    id_user,
+    id_rank,
+    full_name,
+    email,
+    auth_provider,
+    reference_city,
+    last_city,
+    experience_points,
+    is_active
+  )
+  VALUES (
+    new.id,
+    1,
+    COALESCE(
+      new.raw_user_meta_data->>'full_name',
+      new.raw_user_meta_data->>'nombre_completo',
+      'Citizen VIGÍA'
+    ),
+    COALESCE(new.email, ''),
+    'LOCAL',
+    COALESCE(
+      new.raw_user_meta_data->>'city_name',
+      new.raw_user_meta_data->>'ciudad_nombre',
+      'Cali'
+    ),
+    COALESCE(
+      new.raw_user_meta_data->>'city_name',
+      new.raw_user_meta_data->>'ciudad_nombre',
+      'Cali'
+    ),
+    0,
+    TRUE
+  )
+  ON CONFLICT (id_user) DO NOTHING;
+  RETURN new;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- =============================================================================
+-- SUPABASE POSTGREST ROLE PERMISSIONS (GRANT)
+-- =============================================================================
+
+GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO postgres, anon, authenticated, service_role;
+
+-- =============================================================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- =============================================================================
+
+-- Master Catalogs (Read-only for public and authenticated citizens)
+ALTER TABLE public.civic_rank ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.coverage_city ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.incident_category ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.civic_badge ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read access on civic_rank" ON public.civic_rank;
+CREATE POLICY "Public read access on civic_rank"
+  ON public.civic_rank FOR SELECT TO authenticated, anon USING (true);
+
+DROP POLICY IF EXISTS "Public read access on coverage_city" ON public.coverage_city;
+CREATE POLICY "Public read access on coverage_city"
+  ON public.coverage_city FOR SELECT TO authenticated, anon USING (true);
+
+DROP POLICY IF EXISTS "Public read access on incident_category" ON public.incident_category;
+CREATE POLICY "Public read access on incident_category"
+  ON public.incident_category FOR SELECT TO authenticated, anon USING (true);
+
+DROP POLICY IF EXISTS "Public read access on civic_badge" ON public.civic_badge;
+CREATE POLICY "Public read access on civic_badge"
+  ON public.civic_badge FOR SELECT TO authenticated, anon USING (true);
+
+-- User Profile Policies
+ALTER TABLE public.user_profile ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read access on user_profile" ON public.user_profile;
+CREATE POLICY "Public read access on user_profile"
+  ON public.user_profile FOR SELECT TO authenticated, anon USING (true);
+
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.user_profile;
+CREATE POLICY "Users can insert own profile"
+  ON public.user_profile FOR INSERT TO authenticated WITH CHECK (auth.uid() = id_user);
+
+DROP POLICY IF EXISTS "Users can update own profile" ON public.user_profile;
+CREATE POLICY "Users can update own profile"
+  ON public.user_profile FOR UPDATE TO authenticated USING (auth.uid() = id_user);
+
+-- User Badges Policies
+ALTER TABLE public.user_badge ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read access on user_badge" ON public.user_badge;
+CREATE POLICY "Public read access on user_badge"
+  ON public.user_badge FOR SELECT TO authenticated, anon USING (true);
+
+-- Road Incidents Policies
+ALTER TABLE public.road_incident ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read access on road_incident" ON public.road_incident;
+CREATE POLICY "Public read access on road_incident"
+  ON public.road_incident FOR SELECT TO authenticated, anon USING (true);
+
+DROP POLICY IF EXISTS "Authenticated users can create road_incident" ON public.road_incident;
+CREATE POLICY "Authenticated users can create road_incident"
+  ON public.road_incident FOR INSERT TO authenticated WITH CHECK (auth.uid() = id_reporter_user);
+
+DROP POLICY IF EXISTS "Reporters can update own road_incident" ON public.road_incident;
+CREATE POLICY "Reporters can update own road_incident"
+  ON public.road_incident FOR UPDATE TO authenticated USING (auth.uid() = id_reporter_user);
+
+-- Incident Photos Policies
+ALTER TABLE public.incident_photo ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read access on incident_photo" ON public.incident_photo;
+CREATE POLICY "Public read access on incident_photo"
+  ON public.incident_photo FOR SELECT TO authenticated, anon USING (true);
+
+DROP POLICY IF EXISTS "Authenticated users can insert incident_photo" ON public.incident_photo;
+CREATE POLICY "Authenticated users can insert incident_photo"
+  ON public.incident_photo FOR INSERT TO authenticated WITH CHECK (true);
+
+-- Comments Policies
+ALTER TABLE public.incident_comment ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read access on incident_comment" ON public.incident_comment;
+CREATE POLICY "Public read access on incident_comment"
+  ON public.incident_comment FOR SELECT TO authenticated, anon USING (true);
+
+DROP POLICY IF EXISTS "Authenticated users can create comments" ON public.incident_comment;
+CREATE POLICY "Authenticated users can create comments"
+  ON public.incident_comment FOR INSERT TO authenticated WITH CHECK (auth.uid() = id_user);
+
+-- Upvotes Policies
+ALTER TABLE public.incident_upvote ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read access on incident_upvote" ON public.incident_upvote;
+CREATE POLICY "Public read access on incident_upvote"
+  ON public.incident_upvote FOR SELECT TO authenticated, anon USING (true);
+
+DROP POLICY IF EXISTS "Authenticated users can upvote" ON public.incident_upvote;
+CREATE POLICY "Authenticated users can upvote"
+  ON public.incident_upvote FOR INSERT TO authenticated WITH CHECK (auth.uid() = id_user);
+
+DROP POLICY IF EXISTS "Authenticated users can remove upvote" ON public.incident_upvote;
+CREATE POLICY "Authenticated users can remove upvote"
+  ON public.incident_upvote FOR DELETE TO authenticated USING (auth.uid() = id_user);
+
+-- Follows Policies
+ALTER TABLE public.incident_follow ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can read own follows" ON public.incident_follow;
+CREATE POLICY "Users can read own follows"
+  ON public.incident_follow FOR SELECT TO authenticated USING (auth.uid() = id_user);
+
+DROP POLICY IF EXISTS "Users can create follow" ON public.incident_follow;
+CREATE POLICY "Users can create follow"
+  ON public.incident_follow FOR INSERT TO authenticated WITH CHECK (auth.uid() = id_user);
+
+DROP POLICY IF EXISTS "Users can remove follow" ON public.incident_follow;
+CREATE POLICY "Users can remove follow"
+  ON public.incident_follow FOR DELETE TO authenticated USING (auth.uid() = id_user);
+
+-- Notifications Policies
+ALTER TABLE public.notification ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can read own notifications" ON public.notification;
+CREATE POLICY "Users can read own notifications"
+  ON public.notification FOR SELECT TO authenticated USING (auth.uid() = id_user);
+
+DROP POLICY IF EXISTS "Users can update own notifications" ON public.notification;
+CREATE POLICY "Users can update own notifications"
+  ON public.notification FOR UPDATE TO authenticated USING (auth.uid() = id_user);
