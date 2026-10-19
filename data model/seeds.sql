@@ -1,39 +1,39 @@
 -- =============================================================================
--- VIGÍA - PLATAFORMA DE AUDITORÍA Y CONTROL CIUDADANO VIAL
--- DATOS SEMILLA (DML) - CATÁLOGOS MAESTROS Y COBERTURA OFICIAL DANE
--- MOTOR: PostgreSQL 14+
+-- VIGÍA - CIVIC ROAD AUDITING & CITIZEN OVERSIGHT PLATFORM
+-- INITIAL SEED DATA (DML) - MASTER CATALOGS & OFFICIAL DANE URBAN COVERAGE
+-- ENGINE: PostgreSQL 14+
 -- =============================================================================
 
--- 1. RANGOS CÍVICOS (RN-09)
-INSERT INTO rango_civico (nombre, xp_minimo, url_icono) VALUES
-    ('Observador Urbano', 0, NULL),
-    ('Vecino Activo', 1000, NULL),
-    ('Guardián Vial', 2500, NULL),
-    ('Veedor Maestro', 4000, NULL)
-ON CONFLICT (nombre) DO NOTHING;
+-- 1. CIVIC PROGRESSION RANKS (RN-09)
+INSERT INTO civic_rank (name, min_xp, icon_url) VALUES
+    ('Urban Observer', 0, NULL),
+    ('Active Neighbor', 1000, NULL),
+    ('Road Guardian', 2500, NULL),
+    ('Master Overseer', 4000, NULL)
+ON CONFLICT (name) DO NOTHING;
 
--- 2. CATEGORÍAS DE REPORTE (Taxonomía Vial Urbana)
-INSERT INTO categoria_reporte (nombre, icono, descripcion) VALUES
-    ('Hueco o Bache', 'warning', 'Huecos, baches o hundimientos en la calzada.'),
-    ('Semáforo', 'traffic', 'Semáforos dañados, apagados o desincronizados.'),
-    ('Obra Paralizada', 'construction', 'Obras viales detenidas o abandonadas.'),
-    ('Andén', 'directions_walk', 'Andenes deteriorados u obstruidos para el peatón.'),
-    ('Fuga de Agua', 'water_drop', 'Fugas de agua potable o aguas residuales en la vía.'),
-    ('Señalización', 'signpost', 'Señales de tránsito ausentes, dañadas o ilegibles.'),
-    ('Otro', 'more_horiz', 'Otras incidencias viales no clasificadas.')
-ON CONFLICT (nombre) DO NOTHING;
+-- 2. ROAD INCIDENT CATEGORIES (Urban Infrastructure Taxonomy)
+INSERT INTO incident_category (name, icon, description) VALUES
+    ('Pothole or Road Hazard', 'warning', 'Potholes, cracks, craters, or pavement depressions.'),
+    ('Traffic Light', 'traffic', 'Damaged, unlit, or desynchronized traffic signals.'),
+    ('Abandoned Public Work', 'construction', 'Halted, abandoned, or delayed public road construction.'),
+    ('Damaged Sidewalk', 'directions_walk', 'Deteriorated, broken, or obstructed pedestrian walkways.'),
+    ('Water Leak', 'water_drop', 'Potable water main breaks or wastewater leaks on the road.'),
+    ('Road Signage', 'signpost', 'Missing, damaged, obstructed, or illegible traffic signs.'),
+    ('Other', 'more_horiz', 'Other unclassified public infrastructure hazards.')
+ON CONFLICT (name) DO NOTHING;
 
--- 3. INSIGNIAS CÍVICAS (RN-10)
-INSERT INTO insignia (codigo_clave, nombre, descripcion, url_icono) VALUES
-    ('PRIMER_PASO_CIVICO', 'Primer Paso Cívico', 'Publicaste tu primer reporte.', 'https://example.com/insignias/primer_paso_civico.png'),
-    ('VOZ_ACTIVA', 'Voz Activa', 'Realizaste 10 comentarios en discusiones comunitarias.', 'https://example.com/insignias/voz_activa.png'),
-    ('CAZADOR_DE_BACHES', 'Cazador de Baches', 'Publicaste 5 reportes en la categoría Hueco o Bache.', 'https://example.com/insignias/cazador_de_baches.png'),
-    ('REPORTE_DE_ALTO_IMPACTO', 'Reporte de Alto Impacto', 'Uno de tus reportes alcanzó 10 apoyos.', 'https://example.com/insignias/reporte_de_alto_impacto.png'),
-    ('GUARDIAN_COMUNITARIO', 'Guardián Comunitario', 'Otorgaste 50 apoyos a reportes de otros vecinos.', 'https://example.com/insignias/guardian_comunitario.png')
-ON CONFLICT (codigo_clave) DO NOTHING;
+-- 3. CIVIC BADGES (RN-10)
+INSERT INTO civic_badge (key_code, name, description, icon_url) VALUES
+    ('FIRST_CIVIC_STEP', 'First Civic Step', 'Published your first road incident report.', 'https://example.com/badges/first_step.png'),
+    ('ACTIVE_VOICE', 'Active Voice', 'Posted 10 constructive comments in community discussions.', 'https://example.com/badges/active_voice.png'),
+    ('POTHOLE_HUNTER', 'Pothole Hunter', 'Reported 5 road hazards in the Pothole category.', 'https://example.com/badges/pothole_hunter.png'),
+    ('HIGH_IMPACT_REPORT', 'High Impact Report', 'One of your reports achieved community validation with 10 upvotes.', 'https://example.com/badges/high_impact.png'),
+    ('COMMUNITY_GUARDIAN', 'Community Guardian', 'Granted 50 upvotes to back fellow citizens reports.', 'https://example.com/badges/community_guardian.png')
+ON CONFLICT (key_code) DO NOTHING;
 
--- 4. CIUDADES DE COBERTURA URBANA (32 Capitales + Ciudades > 100k hab DANE)
-INSERT INTO ciudad_cobertura (nombre, departamento, latitud_centro, longitud_centro, es_capital) VALUES
+-- 4. OFFICIAL DANE URBAN COVERAGE CITIES (32 Capitals + Municipalities > 100k Inhabitants)
+INSERT INTO coverage_city (name, department, center_latitude, center_longitude, is_capital) VALUES
     ('Cali', 'Valle del Cauca', 3.45160000, -76.53200000, TRUE),
     ('Bogotá', 'Bogotá D.C.', 4.71100000, -74.07210000, TRUE),
     ('Medellín', 'Antioquia', 6.24420000, -75.58120000, TRUE),
@@ -66,7 +66,7 @@ INSERT INTO ciudad_cobertura (nombre, departamento, latitud_centro, longitud_cen
     ('Inírida', 'Guainía', 3.86530000, -67.92390000, TRUE),
     ('Mitú', 'Vaupés', 1.25280000, -70.23330000, TRUE),
     ('Puerto Carreño', 'Vichada', 6.18900000, -67.48590000, TRUE),
-    -- Municipios no capitales > 100k hab / Áreas Metropolitanas
+    -- Non-capital metropolitan municipalities & cities > 100k hab
     ('Palmira', 'Valle del Cauca', 3.53940000, -76.30360000, FALSE),
     ('Buenaventura', 'Valle del Cauca', 3.88010000, -77.03120000, FALSE),
     ('Tuluá', 'Valle del Cauca', 4.08470000, -76.19540000, FALSE),
@@ -86,4 +86,4 @@ INSERT INTO ciudad_cobertura (nombre, departamento, latitud_centro, longitud_cen
     ('Facatativá', 'Cundinamarca', 4.81420000, -74.35420000, FALSE),
     ('Duitama', 'Boyacá', 5.82450000, -73.03410000, FALSE),
     ('Sogamoso', 'Boyacá', 5.71450000, -72.93390000, FALSE)
-ON CONFLICT (nombre, departamento) DO NOTHING;
+ON CONFLICT (name, department) DO NOTHING;
