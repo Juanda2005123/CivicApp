@@ -1,6 +1,6 @@
 # VIGÍA: sistema de diseño, dirección E "Sello comunitario"
 
-Rama: `design/design-system-proposal`. Estado: **propuesta documentada, lista para aprobar**. No se ha modificado código de la app.
+Rama: `design/design-system-proposal`. Estado: **implementado** en la app (tokens, tema claro y oscuro, widgets compartidos, splash, login, registro, resumen del perfil, ícono y splash nativo). Pendiente: lo que depende de funciones que aún no existen (gravedad, tarjetas de reporte, mapa, sello de validación) y la prueba en dispositivo.
 
 Maquetas navegables (se abren en cualquier navegador, son archivos autónomos):
 - [`mockups/screens.html`](mockups/screens.html): splash, login (claro, oscuro, errores), registro (vacío, con errores, completo), resumen del perfil (claro, oscuro, error de carga).

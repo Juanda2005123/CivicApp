@@ -342,11 +342,13 @@ Status after the `feature/auth-course-alignment` branch (audit of Juan David's S
 
 **Resolved there** (kept here so nobody reintroduces them): the Cubit became Blocs with events; screens no longer touch use cases, `geolocator` or the DANE catalog; route arguments and Spanish aliases are gone; registration follows the course flow (`SignUpUseCase`: Auth account, then `user_profile` row; the `handle_new_user` trigger is removed by `data model/migrations/001_drop_handle_new_user.sql`); the five-step fallback chain and the empty `catch (_)` blocks are gone; `ProfileModel` uses the real columns; business rules live in `PasswordPolicy`/`RegistrationRules`/use cases; mocks left production DI; the Dart SDK constraint is `^3.12.2`.
 
+**Resolved by the design system branch:** hex colors and magic numbers left the screens (tokens in `lib/core/theme/`), the UI is fully in Spanish, glass/photo/gradients are gone, and `.antigravity/rules` is superseded by §6b.
+
 **Still open**
-1. **Design tokens.** About a dozen hex colors are written directly in screens and `PasswordStrengthChips` (e.g. `Color(0xFFF1F5F9)`, the dashboard's greens and red) instead of coming from `AppTheme`. Part of the redesign phase.
-2. **Mixed UI language.** The UI is English but has Spanish strings (the password chips "6+ caracteres", "Mayúscula (A-Z)"…, the "VEEDURÍA VIAL" tag, the "o" divider). Pick one language for the whole UI.
-3. **Account without profile.** If `createProfile` fails after `signUp`, `SignUpUseCase` signs the user out and explains it, but the Auth account remains and the next login fails with "profile not found". A repair path (e.g. a "complete your profile" step) is not implemented.
-4. **City by name.** The profile stores the city **name** (`reference_city`), as `schema.sql` defines; there is no city id column. A schema change would be needed if features must join on the city.
-5. **`CityRepositoryImpl`** merges the remote `coverage_city` rows with the embedded catalog to add the conurbation calibration. If the table later stores the radii, the local copy becomes only a fallback.
-6. **Network errors** outside Auth/PostgREST (e.g. the HTTP client failing) reach the Bloc as raw exceptions; only `AuthRetryableFetchException` is translated.
-7. `.antigravity/rules/*.md` are web-centric (Tailwind/ARIA/Three.js). §6b translates their intent; rewriting them for Flutter would be a worthwhile cleanup.
+1. **Account without profile.** If `createProfile` fails after `signUp`, `SignUpUseCase` signs the user out and explains it, but the Auth account remains and the next login fails with "No encontramos tu perfil." A repair path (e.g. a "complete your profile" step) is not implemented (decided: documented limitation).
+2. **City by name.** The profile stores the city **name** (`reference_city`), as `schema.sql` defines; there is no city id column. A schema change would be needed if features must join on the city.
+3. **`CityRepositoryImpl`** merges the remote `coverage_city` rows with the embedded catalog to add the conurbation calibration. If the table later stores the radii, the local copy becomes only a fallback.
+4. **Network errors** outside Auth/PostgREST (e.g. the HTTP client failing) reach the Bloc as raw exceptions; only `AuthRetryableFetchException` is translated.
+5. **Design system pieces not built yet** because their features do not exist: severity chips and colors, report cards, map markers and the validation seal (specified in `docs/design/03-design-system.md`). Build them from the document when the feature arrives.
+6. **Rank names come from the database** (`civic_rank.name`): projects created before the Spanish interface need `data model/migrations/002_spanish_rank_names.sql`.
+7. The old web rules in `.antigravity/rules/` and `GEMINI.md` mentions are obsolete; the folder can be deleted once the team agrees.
