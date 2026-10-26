@@ -37,7 +37,7 @@ void main() {
         'is_active': true,
       });
 
-      expect(model.rankName, 'Urban Observer');
+      expect(model.rankName, 'Observador Urbano');
     });
 
     test('toInsertJson sets every NOT NULL column of user_profile', () {

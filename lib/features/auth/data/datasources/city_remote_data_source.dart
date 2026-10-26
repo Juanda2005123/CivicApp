@@ -13,7 +13,7 @@ class CityRemoteDataSource {
       final rows = await _client.from('coverage_city').select().order('name');
       return rows.map(_toCity).toList();
     } on PostgrestException catch (e) {
-      throw Exception('Could not load the coverage cities: ${e.message}');
+      throw Exception('No pudimos cargar las ciudades: ${e.message}');
     }
   }
 

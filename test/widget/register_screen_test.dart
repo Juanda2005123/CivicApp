@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/core/constants/app_routes.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
+import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/features/auth/domain/entities/city.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import 'package:vigia_app/features/auth/domain/usecases/detect_nearest_city_usecase.dart';
@@ -37,7 +38,7 @@ Widget createRegisterTestWidget(RegisterBloc bloc) {
   return BlocProvider<RegisterBloc>.value(
     value: bloc..add(RegisterStarted()),
     child: MaterialApp(
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.light,
       home: const RegisterScreen(),
       routes: {
         AppRoutes.dashboard: (context) => const Scaffold(body: Text('Dashboard Screen Mock')),
@@ -45,6 +46,8 @@ Widget createRegisterTestWidget(RegisterBloc bloc) {
     ),
   );
 }
+
+final createButton = find.widgetWithText(PrimaryButton, 'Crear cuenta');
 
 void main() {
   late FakeAuthRepository auth;
@@ -81,10 +84,10 @@ void main() {
   });
 
   Future<void> fillValidForm(WidgetTester tester) async {
-    await tester.enterText(find.byType(TextFormField).at(0), 'Ana Gomez');
-    await tester.enterText(find.byType(TextFormField).at(1), 'ana@example.com');
-    await tester.enterText(find.byType(TextFormField).at(2), 'Abc123');
-    await tester.enterText(find.byType(TextFormField).at(3), 'Abc123');
+    await tester.enterText(find.byType(TextField).at(0), 'Ana Gomez');
+    await tester.enterText(find.byType(TextField).at(1), 'ana@example.com');
+    await tester.enterText(find.byType(TextField).at(2), 'Abc123');
+    await tester.enterText(find.byType(TextField).at(3), 'Abc123');
   }
 
   group('RegisterScreen Widget Tests', () {
@@ -94,12 +97,12 @@ void main() {
       await tester.pumpWidget(createRegisterTestWidget(bloc = newBloc()));
       await tester.pumpAndSettle();
 
-      expect(find.text('Citizen Registration'), findsOneWidget);
-      expect(find.text('Join Civic Oversight'), findsOneWidget);
-      expect(find.text('e.g. Juan David Quintero'), findsOneWidget);
-      expect(find.text('Residence City (DANE Coverage)'), findsOneWidget);
-      expect(find.text('Detect nearest city via GPS'), findsOneWidget);
-      expect(find.text('Create Civic Account'), findsOneWidget);
+      expect(find.widgetWithText(AppBar, 'Crear cuenta'), findsOneWidget);
+      expect(find.textContaining('Únete a la veeduría'), findsOneWidget);
+      expect(find.text('Ej. Juan David Quintero'), findsOneWidget);
+      expect(find.text('Ciudad de residencia'), findsOneWidget);
+      expect(find.text('Detectar mi ciudad por GPS'), findsOneWidget);
+      expect(createButton, findsOneWidget);
     });
 
     testWidgets('validates full name requiring at least two words', (tester) async {
@@ -107,12 +110,12 @@ void main() {
       await tester.pumpWidget(createRegisterTestWidget(bloc = newBloc()));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextFormField).at(0), 'Juan');
-      await tester.ensureVisible(find.text('Create Civic Account'));
-      await tester.tap(find.text('Create Civic Account'));
+      await tester.enterText(find.byType(TextField).at(0), 'Juan');
+      await tester.ensureVisible(createButton);
+      await tester.tap(createButton);
       await tester.pumpAndSettle();
 
-      expect(find.text('Please enter at least a first and last name'), findsOneWidget);
+      expect(find.text('Escribe tu nombre y apellido'), findsOneWidget);
     });
 
     testWidgets('enforces strict password complexity rules (uppercase, lowercase, number)', (tester) async {
@@ -120,14 +123,14 @@ void main() {
       await tester.pumpWidget(createRegisterTestWidget(bloc = newBloc()));
       await tester.pumpAndSettle();
 
-      final passwordField = find.byType(TextFormField).at(2);
-      final submitButton = find.text('Create Civic Account');
+      final passwordField = find.byType(TextField).at(2);
+      final submitButton = createButton;
 
       final cases = {
-        'Ab1': 'Must contain at least 6 characters',
-        'abcdef1': 'Must contain at least one uppercase letter',
-        'ABCDEF1': 'Must contain at least one lowercase letter',
-        'Abcdefg': 'Must contain at least one number',
+        'Ab1': 'Usa al menos 6 caracteres',
+        'abcdef1': 'Incluye una letra mayúscula',
+        'ABCDEF1': 'Incluye una letra minúscula',
+        'Abcdefg': 'Incluye un número',
       };
       for (final entry in cases.entries) {
         await tester.enterText(passwordField, entry.key);
@@ -143,13 +146,13 @@ void main() {
       await tester.pumpWidget(createRegisterTestWidget(bloc = newBloc()));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextFormField).at(2), 'Password123');
-      await tester.enterText(find.byType(TextFormField).at(3), 'Different123');
-      await tester.ensureVisible(find.text('Create Civic Account'));
-      await tester.tap(find.text('Create Civic Account'));
+      await tester.enterText(find.byType(TextField).at(2), 'Password123');
+      await tester.enterText(find.byType(TextField).at(3), 'Different123');
+      await tester.ensureVisible(createButton);
+      await tester.tap(createButton);
       await tester.pumpAndSettle();
 
-      expect(find.text('Passwords do not match'), findsOneWidget);
+      expect(find.text('Las contraseñas no coinciden'), findsOneWidget);
     });
 
     testWidgets('the live checklist follows the password rules', (tester) async {
@@ -157,12 +160,12 @@ void main() {
       await tester.pumpWidget(createRegisterTestWidget(bloc = newBloc()));
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.check_circle), findsNothing);
+      expect(find.byIcon(Icons.check_circle_outline), findsNothing);
 
-      await tester.enterText(find.byType(TextFormField).at(2), 'Abc123');
+      await tester.enterText(find.byType(TextField).at(2), 'Abc123');
       await tester.pump();
 
-      expect(find.byIcon(Icons.check_circle), findsNWidgets(4));
+      expect(find.byIcon(Icons.check_circle_outline), findsNWidgets(4));
     });
 
     testWidgets('the GPS button selects the nearest city through the bloc', (tester) async {
@@ -170,10 +173,10 @@ void main() {
       await tester.pumpWidget(createRegisterTestWidget(bloc = newBloc()));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Detect nearest city via GPS'));
+      await tester.tap(find.text('Detectar mi ciudad por GPS'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Detected nearest city: Cali (Valle del Cauca)'), findsOneWidget);
+      expect(find.text('Ciudad detectada: Cali (Valle del Cauca)'), findsOneWidget);
       expect(bloc.state.selectedCity, _cali);
     });
 
@@ -184,7 +187,7 @@ void main() {
       await tester.pumpWidget(createRegisterTestWidget(bloc = newBloc()));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Detect nearest city via GPS'));
+      await tester.tap(find.text('Detectar mi ciudad por GPS'));
       await tester.pumpAndSettle();
 
       expect(find.text('Permission denied.'), findsOneWidget);
@@ -197,10 +200,10 @@ void main() {
       await tester.pumpAndSettle();
 
       await fillValidForm(tester);
-      await tester.tap(find.text('Detect nearest city via GPS'));
+      await tester.tap(find.text('Detectar mi ciudad por GPS'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Create Civic Account'));
-      await tester.tap(find.text('Create Civic Account'));
+      await tester.ensureVisible(createButton);
+      await tester.tap(createButton);
       await tester.pumpAndSettle();
 
       expect(auth.calls, ['auth.signUp', 'profile.create']);
@@ -210,18 +213,18 @@ void main() {
 
     testWidgets('a repeated email shows the error and stays on the form', (tester) async {
       useTallScreen(tester);
-      auth.signUpError = Exception('This email is already registered in VIGÍA.');
+      auth.signUpError = Exception('Ese correo ya está registrado en VIGÍA.');
       await tester.pumpWidget(createRegisterTestWidget(bloc = newBloc()));
       await tester.pumpAndSettle();
 
       await fillValidForm(tester);
-      await tester.tap(find.text('Detect nearest city via GPS'));
+      await tester.tap(find.text('Detectar mi ciudad por GPS'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Create Civic Account'));
-      await tester.tap(find.text('Create Civic Account'));
+      await tester.ensureVisible(createButton);
+      await tester.tap(createButton);
       await tester.pumpAndSettle();
 
-      expect(find.text('This email is already registered in VIGÍA.'), findsOneWidget);
+      expect(find.text('Ese correo ya está registrado en VIGÍA.'), findsOneWidget);
       expect(find.text('Dashboard Screen Mock'), findsNothing);
       expect(profiles.stored, isEmpty);
     });

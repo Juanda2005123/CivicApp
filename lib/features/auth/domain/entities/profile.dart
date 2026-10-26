@@ -17,7 +17,7 @@ class Profile extends Equatable {
     required this.fullName,
     required this.cityName,
     this.rankId = 1,
-    this.rankName = 'Urban Observer',
+    this.rankName = 'Observador Urbano',
     this.experiencePoints = 0,
     this.isActive = true,
   });

@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/core/constants/app_routes.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
+import 'package:vigia_app/core/widgets/dotted_spinner.dart';
 import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
 import 'package:vigia_app/features/auth/domain/entities/profile.dart';
 import 'package:vigia_app/features/auth/domain/usecases/get_current_profile_usecase.dart';
@@ -19,7 +20,7 @@ Widget createDashboardTestWidget(ProfileBloc bloc) {
   return BlocProvider<ProfileBloc>.value(
     value: bloc..add(ProfileStarted()),
     child: MaterialApp(
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.light,
       home: const DashboardScreen(),
       routes: {
         AppRoutes.login: (context) => const Scaffold(body: Text('Login Screen Mock')),
@@ -45,7 +46,7 @@ void main() {
     email: 'juand@vigia.co',
     fullName: 'Juan David Quintero',
     cityName: 'Cali',
-    rankName: 'Urban Observer',
+    rankName: 'Observador Urbano',
   );
 
   setUp(() {
@@ -60,15 +61,15 @@ void main() {
       await tester.pumpWidget(createDashboardTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
-      expect(find.text('VIGÍA Civic Dashboard'), findsOneWidget);
-      expect(find.text('Successfully logged in!'), findsOneWidget);
-      expect(find.text('Civic Profile Summary'), findsOneWidget);
+      expect(find.text('Mi perfil'), findsOneWidget);
+      expect(find.text('Sesión activa'), findsOneWidget);
+      expect(find.text('Rango cívico'), findsOneWidget);
       expect(find.text('Juan David Quintero'), findsOneWidget);
       expect(find.text('juand@vigia.co'), findsOneWidget);
       expect(find.text('Cali'), findsOneWidget);
-      expect(find.text('Urban Observer (Rank 1)'), findsOneWidget);
+      expect(find.text('Nivel 1 · Observador Urbano'), findsOneWidget);
       expect(find.text('0 pts'), findsOneWidget);
-      expect(find.text('Log Out'), findsOneWidget);
+      expect(find.text('Cerrar sesión'), findsOneWidget);
     });
 
     testWidgets('shows a progress indicator while the profile loads', (tester) async {
@@ -76,13 +77,13 @@ void main() {
       await tester.pumpWidget(createDashboardTestWidget(newBloc()));
       await tester.pump();
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.text('Civic Profile Summary'), findsNothing);
+      expect(find.byType(DottedSpinner), findsOneWidget);
+      expect(find.text('Rango cívico'), findsNothing);
 
       gate.complete();
       await tester.pumpAndSettle();
 
-      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.byType(DottedSpinner), findsNothing);
       expect(find.text('Juan David Quintero'), findsOneWidget);
     });
 
@@ -90,7 +91,8 @@ void main() {
       await tester.pumpWidget(createDashboardTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Log Out'));
+      await tester.ensureVisible(find.text('Cerrar sesión'));
+      await tester.tap(find.text('Cerrar sesión'));
       await tester.pumpAndSettle();
 
       expect(auth.calls, contains('auth.signOut'));
@@ -99,14 +101,14 @@ void main() {
     });
 
     testWidgets('a profile that cannot load shows the message and a retry button', (tester) async {
-      profiles.getError = Exception('Could not load the profile: permission denied');
+      profiles.getError = Exception('No pudimos cargar tu perfil: permission denied');
       await tester.pumpWidget(createDashboardTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
-      expect(find.text('Could not load the profile: permission denied'), findsOneWidget);
+      expect(find.text('No pudimos cargar tu perfil: permission denied'), findsOneWidget);
 
       profiles.getError = null;
-      await tester.tap(find.text('Try again'));
+      await tester.tap(find.text('Reintentar'));
       await tester.pumpAndSettle();
 
       expect(find.text('Juan David Quintero'), findsOneWidget);

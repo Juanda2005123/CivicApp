@@ -38,7 +38,7 @@ class ProfileModel extends Profile {
       fullName: json['full_name'] as String,
       cityName: (json['reference_city'] ?? json['last_city']) as String,
       rankId: json['id_rank'] as int,
-      rankName: (rank?['name'] as String?) ?? 'Urban Observer',
+      rankName: (rank?['name'] as String?) ?? 'Observador Urbano',
       experiencePoints: json['experience_points'] as int,
       isActive: json['is_active'] as bool,
     );

@@ -91,7 +91,7 @@ void main() {
 
       expect(states.map((s) => s.gpsStatus), [GpsStatus.detecting, GpsStatus.success]);
       expect(states.last.selectedCity, _cali);
-      expect(states.last.gpsMessage, 'Detected nearest city: Cali (Valle del Cauca)');
+      expect(states.last.gpsMessage, 'Ciudad detectada: Cali (Valle del Cauca)');
     });
 
     test('emits the location error message when the position is unavailable', () async {
@@ -111,7 +111,7 @@ void main() {
       final states = await emittedStates(bloc, submit());
 
       expect(states.single.status, RegisterStatus.failure);
-      expect(states.single.errorMessage, 'Please select your residence city.');
+      expect(states.single.errorMessage, 'Elige tu ciudad.');
       expect(auth.calls, isEmpty);
     });
 
@@ -133,7 +133,7 @@ void main() {
 
       final failed = await emittedStates(bloc, submit(password: 'abc'));
       expect(failed.last.status, RegisterStatus.failure);
-      expect(failed.last.errorMessage, contains('at least 6 characters'));
+      expect(failed.last.errorMessage, contains('al menos 6'));
 
       final retried = await emittedStates(bloc, submit());
       expect(retried.first.status, RegisterStatus.loading);
@@ -142,14 +142,14 @@ void main() {
     });
 
     test('emits the Auth error message, for example a repeated email', () async {
-      auth.signUpError = Exception('This email is already registered in VIGÍA.');
+      auth.signUpError = Exception('Ese correo ya está registrado en VIGÍA.');
       await emittedStates(bloc, RegisterStarted());
       await emittedStates(bloc, CitySelected(1));
 
       final states = await emittedStates(bloc, submit());
 
       expect(states.last.status, RegisterStatus.failure);
-      expect(states.last.errorMessage, 'This email is already registered in VIGÍA.');
+      expect(states.last.errorMessage, 'Ese correo ya está registrado en VIGÍA.');
     });
   });
 }

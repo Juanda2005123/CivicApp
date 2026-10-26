@@ -24,7 +24,7 @@ class SignUpUseCase {
     final problem = RegistrationRules.validateFullName(fullName) ??
         RegistrationRules.validateEmail(email) ??
         PasswordPolicy.validate(password) ??
-        (cityName.trim().isEmpty ? 'Please select your residence city' : null);
+        (cityName.trim().isEmpty ? 'Elige tu ciudad' : null);
     if (problem != null) throw Exception(problem);
 
     final user = await _auth.signUp(email: email.trim(), password: password);
@@ -42,8 +42,8 @@ class SignUpUseCase {
       // session behind and tell the citizen what happened.
       await _auth.signOut();
       throw Exception(
-        'Your account was created but your profile could not be saved. '
-        'Please log in to try again.',
+        'Tu cuenta se creó pero no pudimos guardar tu perfil. '
+        'Ingresa para intentarlo de nuevo.',
       );
     }
     return profile;

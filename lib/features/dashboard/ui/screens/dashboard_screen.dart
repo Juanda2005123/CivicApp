@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:vigia_app/core/constants/app_routes.dart';
-import 'package:vigia_app/core/theme/app_theme.dart';
-import 'package:vigia_app/features/auth/domain/entities/profile.dart';
-import 'package:vigia_app/features/dashboard/ui/bloc/profile_bloc.dart';
-import 'package:vigia_app/features/dashboard/ui/bloc/profile_event.dart';
-import 'package:vigia_app/features/dashboard/ui/bloc/profile_state.dart';
+
+import '../../../../core/constants/app_routes.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_status_chip.dart';
+import '../../../../core/widgets/dotted_spinner.dart';
+import '../../../../core/widgets/rank_seal.dart';
+import '../../../auth/domain/entities/profile.dart';
+import '../bloc/profile_bloc.dart';
+import '../bloc/profile_event.dart';
+import '../bloc/profile_state.dart';
 
 /// Citizen profile summary (Sprint 1 landing screen) with secure logout.
 /// It only draws the [ProfileState]; nothing arrives through route arguments.
@@ -18,21 +24,17 @@ class DashboardScreen extends StatelessWidget {
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
         if (state.status == ProfileStatus.signedOut) {
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            AppRoutes.login,
-            (route) => false,
-          );
+          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (route) => false);
         }
       },
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text('VIGÍA Civic Dashboard'),
+            title: const Text('Mi perfil'),
             automaticallyImplyLeading: false,
             actions: [
               IconButton(
-                tooltip: 'Log Out',
+                tooltip: 'Cerrar sesión',
                 icon: const Icon(Icons.logout),
                 onPressed: () => context.read<ProfileBloc>().add(SignOutRequested()),
               ),
@@ -48,148 +50,118 @@ class DashboardScreen extends StatelessWidget {
     final profile = state.profile;
 
     if (state.status == ProfileStatus.failure && profile == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                state.errorMessage ?? 'Could not load your profile.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppTheme.textSecondary),
-              ),
-              const SizedBox(height: 16),
-              OutlinedButton(
-                onPressed: () => context.read<ProfileBloc>().add(ProfileStarted()),
-                child: const Text('Try again'),
-              ),
-            ],
-          ),
-        ),
+      return _LoadError(
+        message: state.errorMessage ?? 'No pudimos cargar tu perfil.',
+        onRetry: () => context.read<ProfileBloc>().add(ProfileStarted()),
       );
     }
 
     if (profile == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: DottedSpinner(size: 40, semanticLabel: 'Cargando tu perfil'));
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Success Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF86EFAC)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFDCFCE7),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.check, color: Color(0xFF16A34A), size: 28),
-                ),
-                const SizedBox(width: 14),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Successfully logged in!',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF15803D),
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Active civic session and confirmed credentials.',
-                        style: TextStyle(fontSize: 12, color: Color(0xFF166534)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.screen),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: AppSpacing.maxContentWidth),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _IdentityCard(profile: profile),
+              const SizedBox(height: AppSpacing.lg),
+              _DetailsCard(profile: profile),
+              const SizedBox(height: AppSpacing.xl),
+              OutlinedButton.icon(
+                onPressed: () => context.read<ProfileBloc>().add(SignOutRequested()),
+                icon: const Icon(Icons.logout, size: AppSizes.icon),
+                label: const Text('Cerrar sesión'),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-
-          // Civic Profile Card
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: _ProfileSummary(profile: profile),
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Prominent Secure Logout Button
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-            onPressed: () => context.read<ProfileBloc>().add(SignOutRequested()),
-            icon: const Icon(Icons.logout, size: 20),
-            label: const Text('Log Out'),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _ProfileSummary extends StatelessWidget {
+class _IdentityCard extends StatelessWidget {
   final Profile profile;
 
-  const _ProfileSummary({required this.profile});
+  const _IdentityCard({required this.profile});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Civic Profile Summary',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textPrimary,
-          ),
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl - 4),
+        child: Row(
+          children: [
+            RankSeal(
+              level: profile.rankId,
+              size: 72,
+              semanticLabel: 'Nivel ${profile.rankId}, ${profile.rankName}',
+            ),
+            const SizedBox(width: AppSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    profile.fullName,
+                    style: theme.textTheme.headlineSmall?.copyWith(fontSize: 22, height: 28 / 22),
+                  ),
+                  const SizedBox(height: AppSpacing.xs / 2),
+                  Text(profile.rankName, style: theme.textTheme.labelMedium),
+                  const SizedBox(height: AppSpacing.sm),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: AppStatusChip(label: 'Sesión activa'),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        const Divider(height: 24),
-        _InfoRow(icon: Icons.person_outline, label: 'Full Name', value: profile.fullName),
-        const SizedBox(height: 14),
-        _InfoRow(icon: Icons.email_outlined, label: 'Email Address', value: profile.email),
-        const SizedBox(height: 14),
-        _InfoRow(
-          icon: Icons.location_on_outlined,
-          label: 'Residence City',
-          value: profile.cityName,
-        ),
-        const SizedBox(height: 14),
-        _InfoRow(
-          icon: Icons.military_tech_outlined,
-          label: 'Civic Rank',
-          value: '${profile.rankName} (Rank ${profile.rankId})',
-        ),
-        const SizedBox(height: 14),
-        _InfoRow(
-          icon: Icons.stars_outlined,
-          label: 'Reputation Points',
-          value: '${profile.experiencePoints} pts',
-        ),
-      ],
+      ),
+    );
+  }
+}
+
+class _DetailsCard extends StatelessWidget {
+  final Profile profile;
+
+  const _DetailsCard({required this.profile});
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = [
+      _InfoRow(
+        icon: Icons.star_outline,
+        label: 'Puntos de reputación',
+        value: '${profile.experiencePoints} pts',
+        mono: true,
+      ),
+      _InfoRow(icon: Icons.mail_outline, label: 'Correo electrónico', value: profile.email),
+      _InfoRow(icon: Icons.location_on_outlined, label: 'Ciudad de residencia', value: profile.cityName),
+      _InfoRow(
+        icon: Icons.military_tech_outlined,
+        label: 'Rango cívico',
+        value: 'Nivel ${profile.rankId} · ${profile.rankName}',
+      ),
+    ];
+
+    return Card(
+      child: Column(
+        children: [
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0) const Divider(),
+            rows[i],
+          ],
+        ],
+      ),
     );
   }
 }
@@ -198,37 +170,75 @@ class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final bool mono;
 
-  const _InfoRow({required this.icon, required this.label, required this.value});
+  const _InfoRow({required this.icon, required this.label, required this.value, this.mono = false});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 20, color: AppTheme.primaryCivic),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md + 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 22, color: context.semantic.accent),
+          const SizedBox(width: AppSpacing.md + 2),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSpacing.xs / 2),
+                Text(
+                  value,
+                  style: mono
+                      ? AppTextStyles.data(size: 18, line: 24)
+                      : theme.textTheme.bodyLarge?.copyWith(fontWeight: null),
+                ),
+              ],
+            ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoadError extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _LoadError({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+            const SizedBox(height: AppSpacing.lg),
+            Text('No pudimos cargar tu perfil', style: theme.textTheme.titleMedium),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            OutlinedButton(onPressed: onRetry, child: const Text('Reintentar')),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

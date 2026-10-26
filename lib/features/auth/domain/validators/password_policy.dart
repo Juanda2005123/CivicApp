@@ -31,12 +31,12 @@ class PasswordPolicy {
 
   /// Returns the first broken rule as a message, or `null` when valid.
   static String? validate(String? password) {
-    if (password == null || password.isEmpty) return 'Please enter a password';
+    if (password == null || password.isEmpty) return 'Escribe una contraseña';
     final checks = evaluate(password);
-    if (!checks.hasMinLength) return 'Must contain at least $minLength characters';
-    if (!checks.hasLowercase) return 'Must contain at least one lowercase letter';
-    if (!checks.hasUppercase) return 'Must contain at least one uppercase letter';
-    if (!checks.hasNumber) return 'Must contain at least one number';
+    if (!checks.hasMinLength) return 'Usa al menos $minLength caracteres';
+    if (!checks.hasLowercase) return 'Incluye una letra minúscula';
+    if (!checks.hasUppercase) return 'Incluye una letra mayúscula';
+    if (!checks.hasNumber) return 'Incluye un número';
     return null;
   }
 }

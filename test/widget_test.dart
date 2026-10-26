@@ -19,7 +19,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('VIGÍA'), findsOneWidget);
-    expect(find.text('Log In'), findsOneWidget);
-    expect(find.text('Register here'), findsOneWidget);
+    expect(find.text('Ingresar'), findsOneWidget);
+    expect(find.text('Regístrate'), findsOneWidget);
   });
 }

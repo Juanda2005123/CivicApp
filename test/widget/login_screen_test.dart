@@ -13,7 +13,7 @@ Widget createLoginTestWidget(LoginBloc bloc) {
   return BlocProvider<LoginBloc>.value(
     value: bloc,
     child: MaterialApp(
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.light,
       home: const LoginScreen(),
       routes: {
         AppRoutes.register: (context) => const Scaffold(body: Text('Register Screen Mock')),
@@ -49,21 +49,21 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('VIGÍA'), findsOneWidget);
-      expect(find.text('Civic Road Infrastructure Auditing Platform'), findsOneWidget);
-      expect(find.byType(TextFormField), findsNWidgets(2));
-      expect(find.text('Log In'), findsOneWidget);
-      expect(find.text('Register here'), findsOneWidget);
+      expect(find.text('Tu voz, con evidencia.'), findsOneWidget);
+      expect(find.byType(TextField), findsNWidgets(2));
+      expect(find.text('Ingresar'), findsOneWidget);
+      expect(find.text('Regístrate'), findsOneWidget);
     });
 
     testWidgets('triggers validation errors when submitting empty form', (tester) async {
       await tester.pumpWidget(createLoginTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Log In'));
+      await tester.tap(find.text('Ingresar'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Please enter an email address'), findsOneWidget);
-      expect(find.text('Please enter your password'), findsOneWidget);
+      expect(find.text('Escribe tu correo'), findsOneWidget);
+      expect(find.text('Escribe tu contraseña'), findsOneWidget);
       expect(auth.calls, isEmpty);
     });
 
@@ -71,14 +71,14 @@ void main() {
       await tester.pumpWidget(createLoginTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextFormField).at(0), 'correo_invalido');
-      await tester.enterText(find.byType(TextFormField).at(1), '123');
+      await tester.enterText(find.byType(TextField).at(0), 'correo_invalido');
+      await tester.enterText(find.byType(TextField).at(1), '123');
 
-      await tester.tap(find.text('Log In'));
+      await tester.tap(find.text('Ingresar'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Please enter a valid email address'), findsOneWidget);
-      expect(find.text('Password must be at least 6 characters'), findsOneWidget);
+      expect(find.text('Escribe un correo válido'), findsOneWidget);
+      expect(find.text('La contraseña debe tener al menos 6 caracteres'), findsOneWidget);
     });
 
     testWidgets('toggles password visibility when clicking eye icon', (tester) async {
@@ -98,7 +98,7 @@ void main() {
       await tester.pumpWidget(createLoginTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Register here'));
+      await tester.tap(find.text('Regístrate'));
       await tester.pumpAndSettle();
 
       expect(find.text('Register Screen Mock'), findsOneWidget);
@@ -108,9 +108,9 @@ void main() {
       await tester.pumpWidget(createLoginTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextFormField).at(0), 'ana@example.com');
-      await tester.enterText(find.byType(TextFormField).at(1), 'Abc123');
-      await tester.tap(find.text('Log In'));
+      await tester.enterText(find.byType(TextField).at(0), 'ana@example.com');
+      await tester.enterText(find.byType(TextField).at(1), 'Abc123');
+      await tester.tap(find.text('Ingresar'));
       await tester.pumpAndSettle();
 
       expect(auth.calls, ['auth.signIn', 'profile.get']);
@@ -118,17 +118,17 @@ void main() {
     });
 
     testWidgets('invalid credentials show the error and stay on the login', (tester) async {
-      auth.signInError = Exception('Invalid credentials. Please verify your email and password.');
+      auth.signInError = Exception('Correo o contraseña incorrectos. Revisa tus datos e inténtalo de nuevo.');
       await tester.pumpWidget(createLoginTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextFormField).at(0), 'ana@example.com');
-      await tester.enterText(find.byType(TextFormField).at(1), 'Abc123');
-      await tester.tap(find.text('Log In'));
+      await tester.enterText(find.byType(TextField).at(0), 'ana@example.com');
+      await tester.enterText(find.byType(TextField).at(1), 'Abc123');
+      await tester.tap(find.text('Ingresar'));
       await tester.pumpAndSettle();
 
       expect(
-        find.text('Invalid credentials. Please verify your email and password.'),
+        find.text('Correo o contraseña incorrectos. Revisa tus datos e inténtalo de nuevo.'),
         findsOneWidget,
       );
       expect(find.text('Dashboard Screen Mock'), findsNothing);

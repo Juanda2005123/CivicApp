@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../core/constants/app_routes.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/civic_background.dart';
-import '../../../../core/widgets/civic_brand_header.dart';
-import '../../../../core/widgets/liquid_glass_button.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_notice.dart';
+import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/brand_backdrop.dart';
+import '../../../../core/widgets/brand_mark.dart';
+import '../../../../core/widgets/primary_button.dart';
 import '../../domain/validators/password_policy.dart';
 import '../../domain/validators/registration_rules.dart';
 import '../bloc/login_bloc.dart';
 import '../bloc/login_event.dart';
 import '../bloc/login_state.dart';
 
-/// Premium light Login Screen — Apple-inspired Liquid Glass design.
+/// Login: email and password. It only draws the [LoginState] and turns input
+/// into events; navigation is a reaction to the state.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -52,178 +57,110 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return BlocConsumer<LoginBloc, LoginState>(
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
         if (state.status == LoginStatus.success) {
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            AppRoutes.dashboard,
-            (route) => false,
-          );
-        } else if (state.status == LoginStatus.failure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.error_outline, color: AppTheme.statusError, size: 18),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      state.errorMessage ?? 'Could not log in. Please try again.',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: AppTheme.dark900,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              margin: const EdgeInsets.all(16),
-            ),
-          );
+          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.dashboard, (route) => false);
         }
       },
       builder: (context, state) {
         final isLoading = state.status == LoginStatus.loading;
 
         return Scaffold(
-          body: CivicBackground(
+          body: BrandBackdrop(
             child: SafeArea(
               child: Center(
                 child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
-                  child: GlassCard(
-                    maxWidth: 420,
-                    padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 24),
+                  padding: const EdgeInsets.all(AppSpacing.screen),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: AppSpacing.maxContentWidth),
                     child: Form(
                       key: _formKey,
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const CivicBrandHeader(compact: true),
-                          const SizedBox(height: 18),
-
-                          // Email Field
-                          TextFormField(
+                          const Center(child: BrandMark(tagline: 'Tu voz, con evidencia.')),
+                          const SizedBox(height: AppSpacing.xl + 4),
+                          Text('Ingresa a tu cuenta', style: theme.textTheme.headlineSmall),
+                          if (state.status == LoginStatus.failure) ...[
+                            const SizedBox(height: AppSpacing.field),
+                            AppNotice(
+                              kind: NoticeKind.error,
+                              message: state.errorMessage ?? 'No pudimos iniciar tu sesión. Inténtalo de nuevo.',
+                            ),
+                          ],
+                          const SizedBox(height: AppSpacing.field),
+                          AppTextField(
+                            label: 'Correo electrónico',
+                            hint: 'nombre@correo.com',
                             controller: _emailController,
+                            prefixIcon: Icons.mail_outline,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
+                            autofillHints: const [AutofillHints.email],
                             enabled: !isLoading,
-                            style: const TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            decoration: InputDecoration(
-                              labelText: 'Email Address',
-                              hintText: 'example@email.com',
-                              prefixIcon: Icon(Icons.email_outlined, size: 20, color: AppTheme.slate500),
-                            ),
                             validator: RegistrationRules.validateEmail,
                           ),
-                          const SizedBox(height: 12),
-
-                          // Password Field
-                          TextFormField(
+                          const SizedBox(height: AppSpacing.field),
+                          AppTextField(
+                            label: 'Contraseña',
+                            hint: 'Tu contraseña',
                             controller: _passwordController,
+                            prefixIcon: Icons.lock_outline,
                             obscureText: _obscurePassword,
                             textInputAction: TextInputAction.done,
-                            onFieldSubmitted: (_) => _handleLogin(),
+                            autofillHints: const [AutofillHints.password],
                             enabled: !isLoading,
-                            style: const TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              hintText: '••••••••',
-                              prefixIcon: Icon(Icons.lock_outline, size: 20, color: AppTheme.slate500),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility_outlined
-                                      : Icons.visibility_off_outlined,
-                                  color: AppTheme.slate500,
-                                  size: 20,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscurePassword = !_obscurePassword;
-                                  });
-                                },
+                            onFieldSubmitted: (_) => _handleLogin(),
+                            suffix: IconButton(
+                              tooltip: _obscurePassword ? 'Mostrar contraseña' : 'Ocultar contraseña',
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
                               ),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                             ),
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your password';
-                              }
+                              if (value == null || value.isEmpty) return 'Escribe tu contraseña';
                               if (value.length < PasswordPolicy.minLength) {
-                                return 'Password must be at least ${PasswordPolicy.minLength} characters';
+                                return 'La contraseña debe tener al menos ${PasswordPolicy.minLength} caracteres';
                               }
                               return null;
                             },
                           ),
-                          const SizedBox(height: 20),
-
-                          // Apple Liquid Glass Login Button
-                          LiquidGlassButton(
-                            onPressed: isLoading ? null : _handleLogin,
+                          const SizedBox(height: AppSpacing.xl - 2),
+                          PrimaryButton(
+                            label: 'Ingresar',
+                            loadingLabel: 'Ingresando…',
                             isLoading: isLoading,
-                            label: 'Log In',
-                            height: 50,
+                            onPressed: _handleLogin,
                           ),
-                          const SizedBox(height: 18),
-
-                          // Subtle Apple Divider
-                          Row(
-                            children: [
-                              Expanded(child: Divider(color: AppTheme.borderLight, thickness: 1)),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 14),
-                                child: Text(
-                                  'o',
-                                  style: TextStyle(color: AppTheme.slate400, fontSize: 13),
-                                ),
-                              ),
-                              Expanded(child: Divider(color: AppTheme.borderLight, thickness: 1)),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Register link
+                          const SizedBox(height: AppSpacing.md),
                           Wrap(
                             alignment: WrapAlignment.center,
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              const Text(
-                                "Don't have a civic account? ",
-                                style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
-                              ),
+                              Text('¿Aún no tienes cuenta?', style: theme.textTheme.bodyMedium),
                               TextButton(
                                 onPressed: isLoading
                                     ? null
-                                    : () {
-                                        Navigator.pushNamed(context, AppRoutes.register);
-                                      },
-                                style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                                  minimumSize: Size.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                child: const Text(
-                                  'Register here',
-                                  style: TextStyle(
-                                    color: AppTheme.accent,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                ),
+                                    : () => Navigator.pushNamed(context, AppRoutes.register),
+                                child: const Text('Regístrate'),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          Text(
+                            'VEEDURÍA VIAL CIUDADANA',
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.data(size: 10, line: 14).copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              letterSpacing: 1,
+                            ),
                           ),
                         ],
                       ),

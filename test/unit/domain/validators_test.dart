@@ -14,11 +14,11 @@ void main() {
     });
 
     test('validate returns the first broken rule', () {
-      expect(PasswordPolicy.validate(null), 'Please enter a password');
-      expect(PasswordPolicy.validate('Ab1'), contains('at least 6 characters'));
-      expect(PasswordPolicy.validate('ABCDEF1'), contains('lowercase'));
-      expect(PasswordPolicy.validate('abcdef1'), contains('uppercase'));
-      expect(PasswordPolicy.validate('Abcdefg'), contains('number'));
+      expect(PasswordPolicy.validate(null), 'Escribe una contraseña');
+      expect(PasswordPolicy.validate('Ab1'), contains('al menos 6'));
+      expect(PasswordPolicy.validate('ABCDEF1'), contains('minúscula'));
+      expect(PasswordPolicy.validate('abcdef1'), contains('mayúscula'));
+      expect(PasswordPolicy.validate('Abcdefg'), contains('número'));
       expect(PasswordPolicy.validate('Abc123'), isNull);
     });
   });

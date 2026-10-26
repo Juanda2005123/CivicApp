@@ -31,9 +31,11 @@ class VigiaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'VIGÍA - Civic Road Audit',
+      title: 'VIGÍA · Veeduría vial ciudadana',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.system,
       initialRoute: AppRoutes.splash,
       routes: AppRoutes.routes,
     );

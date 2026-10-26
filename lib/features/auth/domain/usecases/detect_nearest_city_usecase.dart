@@ -22,7 +22,7 @@ class DetectNearestCityUseCase {
   Future<City> call() async {
     final position = await _location.currentCoordinates();
     final cities = await _cities.getCities();
-    if (cities.isEmpty) throw Exception('No coverage cities available');
+    if (cities.isEmpty) throw Exception('No hay ciudades disponibles.');
     return resolve(position, cities);
   }
 
