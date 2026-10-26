@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="432" height="432" role="img">
+  <title>VIGÍA, primer plano del ícono adaptable de Android (108 dp; fondo sólido #10364A aparte; zona segura: círculo de 66 dp centrado)</title>
+  <g transform="translate(54 54) scale(0.95) translate(-32 -32)">
+    <circle cx="32" cy="32" r="25.5" fill="none" stroke="#F6EFE0" stroke-width="1.5" stroke-dasharray="2 3"/>
+    <polygon points="19,21 26,21 32,36 38,21 45,21 35,47 29,47" fill="#F6EFE0"/>
+    <circle cx="32" cy="13" r="2.6" fill="#E8B03A"/>
+    <circle cx="32" cy="51" r="1.6" fill="#CF5C3F"/>
+  </g>
+</svg>
