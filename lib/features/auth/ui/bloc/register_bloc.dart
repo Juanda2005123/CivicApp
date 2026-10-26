@@ -48,7 +48,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
       emit(state.copyWith(
         selectedCityId: city.id,
         gpsStatus: GpsStatus.success,
-        gpsMessage: 'Detected nearest city: ${city.displayName}',
+        gpsMessage: 'Ciudad detectada: ${city.displayName}',
       ));
     } on Exception catch (e) {
       emit(state.copyWith(gpsStatus: GpsStatus.failure, gpsMessage: _message(e)));
@@ -63,7 +63,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
     if (city == null) {
       emit(state.copyWith(
         status: RegisterStatus.failure,
-        errorMessage: 'Please select your residence city.',
+        errorMessage: 'Elige tu ciudad.',
       ));
       return;
     }

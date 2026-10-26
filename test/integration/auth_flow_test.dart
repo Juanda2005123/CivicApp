@@ -4,6 +4,7 @@ import 'package:vigia_app/core/di/injection_container.dart';
 import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
 import 'package:vigia_app/features/auth/domain/entities/city.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
+import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/main.dart';
 
 import '../support/fakes.dart';
@@ -58,20 +59,20 @@ void main() {
       // 1. The splash finds no session and routes to the login
       await bootApp(tester);
       expect(find.text('VIGÍA'), findsOneWidget);
-      expect(find.text('Log In'), findsOneWidget);
+      expect(find.text('Ingresar'), findsOneWidget);
 
       // 2. Navigate to the registration
-      await tester.tap(find.text('Register here'));
+      await tester.tap(find.text('Regístrate'));
       await tester.pumpAndSettle();
-      expect(find.text('Citizen Registration'), findsOneWidget);
+      expect(find.widgetWithText(AppBar, 'Crear cuenta'), findsOneWidget);
 
       // 3. Fill the form and pick the city from the dropdown
-      await tester.enterText(find.byType(TextFormField).at(0), 'Juan David Quintero');
-      await tester.enterText(find.byType(TextFormField).at(1), 'juand@vigia.co');
-      await tester.enterText(find.byType(TextFormField).at(2), 'Password123');
-      await tester.enterText(find.byType(TextFormField).at(3), 'Password123');
+      await tester.enterText(find.byType(TextField).at(0), 'Juan David Quintero');
+      await tester.enterText(find.byType(TextField).at(1), 'juand@vigia.co');
+      await tester.enterText(find.byType(TextField).at(2), 'Password123');
+      await tester.enterText(find.byType(TextField).at(3), 'Password123');
 
-      final dropdown = find.byType(DropdownButtonFormField<int>);
+      final dropdown = find.byType(DropdownButton<int>);
       await tester.ensureVisible(dropdown);
       await tester.tap(dropdown);
       await tester.pumpAndSettle();
@@ -79,35 +80,35 @@ void main() {
       await tester.pumpAndSettle();
 
       // 4. Submit: account first, profile second, then the summary
-      final registerButton = find.text('Create Civic Account');
+      final registerButton = find.widgetWithText(PrimaryButton, 'Crear cuenta');
       await tester.ensureVisible(registerButton);
       await tester.tap(registerButton);
       await tester.pumpAndSettle();
 
       // The account first, the profile second, then the dashboard loads the profile
       expect(auth.calls, ['auth.signUp', 'profile.create', 'profile.get']);
-      expect(find.text('VIGÍA Civic Dashboard'), findsOneWidget);
+      expect(find.text('Mi perfil'), findsOneWidget);
       expect(find.text('Juan David Quintero'), findsOneWidget);
       expect(find.text('juand@vigia.co'), findsOneWidget);
       expect(find.text('Cali'), findsOneWidget);
-      expect(find.text('Urban Observer (Rank 1)'), findsOneWidget);
+      expect(find.text('Nivel 1 · Observador Urbano'), findsOneWidget);
 
       // 5. Log out: back to the login, with no way back to the dashboard
-      final logoutButton = find.text('Log Out');
+      final logoutButton = find.text('Cerrar sesión');
       await tester.ensureVisible(logoutButton);
       await tester.tap(logoutButton);
       await tester.pumpAndSettle();
 
       expect(auth.currentUser(), isNull);
-      expect(find.text('Log In'), findsOneWidget);
+      expect(find.text('Ingresar'), findsOneWidget);
 
       // 6. Log in again with the same account
-      await tester.enterText(find.byType(TextFormField).at(0), 'juand@vigia.co');
-      await tester.enterText(find.byType(TextFormField).at(1), 'Password123');
-      await tester.tap(find.text('Log In'));
+      await tester.enterText(find.byType(TextField).at(0), 'juand@vigia.co');
+      await tester.enterText(find.byType(TextField).at(1), 'Password123');
+      await tester.tap(find.text('Ingresar'));
       await tester.pumpAndSettle();
 
-      expect(find.text('VIGÍA Civic Dashboard'), findsOneWidget);
+      expect(find.text('Mi perfil'), findsOneWidget);
       expect(find.text('Juan David Quintero'), findsOneWidget);
     },
   );
@@ -119,8 +120,8 @@ void main() {
 
     await bootApp(tester);
 
-    expect(find.text('VIGÍA Civic Dashboard'), findsOneWidget);
+    expect(find.text('Mi perfil'), findsOneWidget);
     expect(find.text('Ana Gomez'), findsOneWidget);
-    expect(find.text('Log In'), findsNothing);
+    expect(find.text('Ingresar'), findsNothing);
   });
 }

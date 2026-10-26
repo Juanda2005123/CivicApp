@@ -1,0 +1,22 @@
+# Generates the launcher icons for every platform from the brand PNGs.
+# Run: dart run flutter_launcher_icons
+# Sources are rendered from docs/design/assets/logo/*.svg (see docs/design/03-design-system.md, section 2).
+flutter_launcher_icons:
+  image_path: "assets/brand/app_icon.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  adaptive_icon_background: "#10364A"
+  adaptive_icon_foreground: "assets/brand/app_icon_foreground.png"
+  web:
+    generate: true
+    image_path: "assets/brand/app_icon.png"
+    background_color: "#10364A"
+    theme_color: "#10364A"
+  windows:
+    generate: true
+    image_path: "assets/brand/app_icon.png"
+    icon_size: 256
+  macos:
+    generate: true
+    image_path: "assets/brand/app_icon.png"

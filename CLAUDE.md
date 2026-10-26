@@ -8,6 +8,7 @@ professor teaches it). Read it as if it were written here. Deeper material, load
 - `docs/standards/code-templates.md` — canonical Dart for every layer (entity → contract → data source → repo impl → use case → bloc → screen → DI → tests).
 - `docs/standards/supabase-and-data.md` — Auth, migrations, queries, Storage, Realtime rules.
 - `docs/standards/course-reference.md` — which lesson/lab teaches what, and how to refresh the professor's repos.
+- `docs/design/03-design-system.md` — the VIGÍA design system (brand, tokens, components, Spanish copy deck); mockups in `docs/design/mockups/`.
 - `docs/` (business rules, screens, decisions) and `data model/schema.sql` — domain truth for VIGÍA. Check them before inventing fields.
 
 ## Claude Code specifics
@@ -34,8 +35,9 @@ flutter run -d chrome                # or -d windows / -d <android device>
 - Reply in Spanish when the user writes Spanish; code, comments, commits and docs stay in English.
 - Never run `git commit`, `git push`, `git tag`, or create PRs unless asked. Sprint deliverables (tag, demo video, README flow
   instructions) are the student's to trigger — offer, don't assume.
-- Visual design: see `AGENTS.md` §6b and `.antigravity/rules/*.md` (tokens, contrast, glass/aurora limits, accessibility). Apply the
-  intent in Flutter terms (`AppTheme` tokens, WCAG AA, reduced motion) — they are web rules, not Flutter APIs.
+- **Visual design is a system, not taste:** before touching any widget read `docs/design/03-design-system.md` (rules in `AGENTS.md` §6b)
+  and look at `docs/design/mockups/*.html`. Tokens only, shared widgets first, Spanish copy, light and dark, and update the design
+  document in the same change when the system evolves. The web rules in `.antigravity/rules/` are superseded.
 
 ## Keeping this up to date
 

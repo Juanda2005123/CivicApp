@@ -12,7 +12,7 @@ class ProfileRemoteDataSource {
     try {
       await _client.from('user_profile').insert(profile.toInsertJson());
     } on PostgrestException catch (e) {
-      throw Exception('Could not save the profile: ${e.message}');
+      throw Exception('No pudimos guardar tu perfil: ${e.message}');
     }
   }
 
@@ -23,10 +23,10 @@ class ProfileRemoteDataSource {
           .select('*, civic_rank(name)')
           .eq('id_user', id)
           .maybeSingle();
-      if (row == null) throw Exception('Civic profile not found');
+      if (row == null) throw Exception('No encontramos tu perfil.');
       return ProfileModel.fromJson(row);
     } on PostgrestException catch (e) {
-      throw Exception('Could not load the profile: ${e.message}');
+      throw Exception('No pudimos cargar tu perfil: ${e.message}');
     }
   }
 }

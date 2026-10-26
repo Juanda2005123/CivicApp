@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../core/constants/app_routes.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/civic_background.dart';
-import '../../../../core/widgets/liquid_glass_button.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_dropdown_field.dart';
+import '../../../../core/widgets/app_notice.dart';
+import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/dotted_spinner.dart';
+import '../../../../core/widgets/primary_button.dart';
+import '../../../../core/widgets/theme_toggle_button.dart';
 import '../../domain/validators/password_policy.dart';
 import '../../domain/validators/registration_rules.dart';
 import '../bloc/register_bloc.dart';
@@ -11,8 +17,8 @@ import '../bloc/register_event.dart';
 import '../bloc/register_state.dart';
 import '../widgets/password_strength_chips.dart';
 
-/// Premium light Register Screen — Apple-inspired frosted glass design.
-/// It only draws the [RegisterState] and turns user input into events.
+/// Registration form. It only draws the [RegisterState] and turns user input
+/// into events; the rules live in the domain.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -69,29 +75,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  Widget _visibilityToggle({required bool obscured, required VoidCallback onPressed}) {
+    return IconButton(
+      tooltip: obscured ? 'Mostrar contraseña' : 'Ocultar contraseña',
+      icon: Icon(obscured ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+      onPressed: onPressed,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return BlocConsumer<RegisterBloc, RegisterState>(
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
         if (state.status == RegisterStatus.success) {
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            AppRoutes.dashboard,
-            (route) => false,
-          );
-        } else if (state.status == RegisterStatus.failure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                state.errorMessage ?? 'Could not complete the registration.',
-                style: const TextStyle(color: Colors.white),
-              ),
-              backgroundColor: AppTheme.dark900,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-          );
+          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.dashboard, (route) => false);
         }
       },
       builder: (context, state) {
@@ -100,152 +100,80 @@ class _RegisterScreenState extends State<RegisterScreen> {
         final gpsSuccess = state.gpsStatus == GpsStatus.success;
 
         return Scaffold(
-          extendBodyBehindAppBar: true,
           appBar: AppBar(
-            title: const Text('Citizen Registration'),
-            backgroundColor: Colors.transparent,
+            title: const Text('Crear cuenta'),
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: AppTheme.textPrimary),
+              tooltip: 'Volver',
+              icon: const Icon(Icons.arrow_back_ios_new, size: AppSizes.icon),
               onPressed: isLoading ? null : () => Navigator.pop(context),
             ),
+            actions: const [ThemeToggleButton()],
           ),
-          body: CivicBackground(
-            child: SafeArea(
+          body: SafeArea(
+            child: Center(
               child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-                child: GlassCard(
-                  maxWidth: 500,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screen,
+                  AppSpacing.xs,
+                  AppSpacing.screen,
+                  AppSpacing.xxl,
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: AppSpacing.maxContentWidth),
                   child: Form(
                     key: _formKey,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Header
-                        Row(
-                          children: [
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFFEEF2FF),
-                                    Color(0xFFE0E7FF),
-                                  ],
-                                ),
-                                border: Border.all(
-                                  color: const Color(0xFFC7D2FE),
-                                  width: 1.2,
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.person_add_alt_1_rounded,
-                                color: AppTheme.accent,
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Join Civic Oversight',
-                                    style: TextStyle(
-                                      fontSize: 19,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppTheme.textPrimary,
-                                      letterSpacing: -0.3,
-                                    ),
-                                  ),
-                                  SizedBox(height: 2),
-                                  Text(
-                                    "Audit your city's road infrastructure and participate in community pothole resolution.",
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: AppTheme.textSecondary,
-                                      height: 1.3,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                        Text(
+                          'Únete a la veeduría de tu ciudad: reporta el estado de las vías y respalda a tus vecinos.',
+                          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                         ),
-                        const SizedBox(height: 22),
-                        const Divider(color: AppTheme.borderLight, height: 1),
-                        const SizedBox(height: 18),
-
-                        // Full Name
-                        TextFormField(
+                        if (state.status == RegisterStatus.failure) ...[
+                          const SizedBox(height: AppSpacing.field),
+                          AppNotice(
+                            kind: NoticeKind.error,
+                            message: state.errorMessage ?? 'No pudimos completar el registro.',
+                          ),
+                        ],
+                        const SizedBox(height: AppSpacing.field),
+                        AppTextField(
+                          label: 'Nombre completo',
+                          hint: 'Ej. Juan David Quintero',
                           controller: _fullNameController,
+                          prefixIcon: Icons.person_outline,
                           keyboardType: TextInputType.name,
                           textCapitalization: TextCapitalization.words,
                           textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.name],
                           enabled: !isLoading,
-                          style: const TextStyle(
-                            color: AppTheme.textPrimary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: 'Full Name',
-                            hintText: 'e.g. Juan David Quintero',
-                            prefixIcon: Icon(Icons.person_outline, size: 20, color: AppTheme.slate500),
-                          ),
                           validator: RegistrationRules.validateFullName,
                         ),
-                        const SizedBox(height: 14),
-
-                        // Email
-                        TextFormField(
+                        const SizedBox(height: AppSpacing.field),
+                        AppTextField(
+                          label: 'Correo electrónico',
+                          hint: 'nombre@correo.com',
                           controller: _emailController,
+                          prefixIcon: Icons.mail_outline,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.email],
                           enabled: !isLoading,
-                          style: const TextStyle(
-                            color: AppTheme.textPrimary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: 'Email Address',
-                            hintText: 'citizen@example.com',
-                            prefixIcon: Icon(Icons.email_outlined, size: 20, color: AppTheme.slate500),
-                          ),
                           validator: RegistrationRules.validateEmail,
                         ),
-                        const SizedBox(height: 14),
-
-                        // City Selector Dropdown — exact text match: 'Residence City (DANE Coverage)'
-                        DropdownButtonFormField<int>(
-                          key: ValueKey(state.selectedCityId),
-                          initialValue: state.selectedCityId,
-                          dropdownColor: Colors.white,
-                          style: const TextStyle(
-                            color: AppTheme.textPrimary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: 'Residence City (DANE Coverage)',
-                            prefixIcon: Icon(Icons.location_city_outlined, size: 20, color: AppTheme.slate500),
-                          ),
-                          hint: const Text('Select your city', style: TextStyle(color: AppTheme.slate400)),
-                          isExpanded: true,
+                        const SizedBox(height: AppSpacing.field),
+                        AppDropdownField<int>(
+                          label: 'Ciudad de residencia',
+                          hint: 'Elige tu ciudad',
+                          prefixIcon: Icons.location_city_outlined,
+                          value: state.selectedCityId,
                           items: state.cities.map((city) {
                             return DropdownMenuItem<int>(
                               value: city.id,
                               child: Text(
                                 city.displayName,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontWeight: city.isCapital ? FontWeight.w600 : FontWeight.normal,
-                                  color: AppTheme.textPrimary,
-                                ),
+                                style: city.isCapital ? AppTextStyles.bodyStrong : AppTextStyles.body,
                               ),
                             );
                           }).toList(),
@@ -256,177 +184,80 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     context.read<RegisterBloc>().add(CitySelected(value));
                                   }
                                 },
-                          validator: (value) => value == null ? 'Please select a coverage city' : null,
+                          validator: (value) => value == null ? 'Elige tu ciudad' : null,
                         ),
-                        const SizedBox(height: 10),
-
-                        // GPS Button
-                        SizedBox(
-                          height: 42,
-                          child: OutlinedButton.icon(
-                            onPressed: (isLoading || isDetectingGps)
-                                ? null
-                                : () => context.read<RegisterBloc>().add(NearestCityRequested()),
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(
-                                color: gpsSuccess
-                                    ? AppTheme.statusSuccessBorder
-                                    : AppTheme.borderLight,
-                              ),
-                              backgroundColor: gpsSuccess
-                                    ? AppTheme.statusSuccessBg
-                                    : Colors.white,
-                            ),
-                            icon: isDetectingGps
-                                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                                : Icon(
-                                    gpsSuccess ? Icons.check_circle_outline : Icons.my_location,
-                                    size: 16,
-                                    color: gpsSuccess ? AppTheme.statusSuccess : AppTheme.accent,
-                                  ),
-                            label: Text(
-                              isDetectingGps ? 'Detecting location...' : 'Detect nearest city via GPS',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: gpsSuccess ? AppTheme.statusSuccess : AppTheme.accent,
-                              ),
-                            ),
+                        const SizedBox(height: AppSpacing.sm),
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(AppSizes.buttonCompact),
                           ),
+                          onPressed: (isLoading || isDetectingGps)
+                              ? null
+                              : () => context.read<RegisterBloc>().add(NearestCityRequested()),
+                          icon: isDetectingGps
+                              ? DottedSpinner(size: 18, semanticLabel: 'Detectando tu ubicación')
+                              : const Icon(Icons.my_location, size: 18),
+                          label: Text(isDetectingGps ? 'Detectando tu ubicación…' : 'Detectar mi ciudad por GPS'),
                         ),
                         if (state.gpsMessage != null) ...[
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: gpsSuccess
-                                  ? AppTheme.statusSuccessBg
-                                  : AppTheme.statusErrorBg,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: gpsSuccess
-                                    ? AppTheme.statusSuccessBorder
-                                    : AppTheme.statusErrorBorder,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  gpsSuccess ? Icons.check_circle_outline : Icons.info_outline,
-                                  size: 14,
-                                  color: gpsSuccess ? AppTheme.statusSuccess : AppTheme.statusError,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    state.gpsMessage!,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: gpsSuccess ? AppTheme.statusSuccess : AppTheme.statusError,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                          const SizedBox(height: AppSpacing.sm),
+                          AppNotice(
+                            kind: gpsSuccess ? NoticeKind.success : NoticeKind.error,
+                            message: state.gpsMessage!,
                           ),
                         ],
-                        const SizedBox(height: 18),
-
-                        // Password
-                        TextFormField(
+                        const SizedBox(height: AppSpacing.field),
+                        AppTextField(
+                          label: 'Contraseña',
+                          hint: 'Mínimo ${PasswordPolicy.minLength} caracteres',
                           controller: _passwordController,
+                          prefixIcon: Icons.lock_outline,
                           obscureText: _obscurePassword,
                           textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.newPassword],
                           enabled: !isLoading,
-                          style: const TextStyle(
-                            color: AppTheme.textPrimary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: 'Password',
-                            hintText: 'Minimum 6 characters',
-                            prefixIcon: Icon(Icons.lock_outline, size: 20, color: AppTheme.slate500),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                                color: AppTheme.slate500,
-                                size: 20,
-                              ),
-                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                            ),
+                          suffix: _visibilityToggle(
+                            obscured: _obscurePassword,
+                            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                           ),
                           validator: PasswordPolicy.validate,
                         ),
-                        const SizedBox(height: 8),
-
-                        // Live password chips
+                        const SizedBox(height: AppSpacing.sm),
                         PasswordStrengthChips(checks: _passwordChecks),
-                        const SizedBox(height: 14),
-
-                        // Confirm Password
-                        TextFormField(
+                        const SizedBox(height: AppSpacing.field),
+                        AppTextField(
+                          label: 'Confirmar contraseña',
+                          hint: 'Repite tu contraseña',
                           controller: _confirmPasswordController,
+                          prefixIcon: Icons.lock_reset_outlined,
                           obscureText: _obscureConfirmPassword,
                           textInputAction: TextInputAction.done,
-                          onFieldSubmitted: (_) => _handleRegister(),
                           enabled: !isLoading,
-                          style: const TextStyle(
-                            color: AppTheme.textPrimary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
+                          onFieldSubmitted: (_) => _handleRegister(),
+                          suffix: _visibilityToggle(
+                            obscured: _obscureConfirmPassword,
+                            onPressed: () =>
+                                setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                           ),
-                          decoration: InputDecoration(
-                            labelText: 'Confirm Password',
-                            hintText: 'Repeat your password',
-                            prefixIcon: Icon(Icons.lock_reset_outlined, size: 20, color: AppTheme.slate500),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                                color: AppTheme.slate500,
-                                size: 20,
-                              ),
-                              onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
-                            ),
-                          ),
-                          validator: (value) => value != _passwordController.text ? 'Passwords do not match' : null,
+                          validator: (value) =>
+                              value != _passwordController.text ? 'Las contraseñas no coinciden' : null,
                         ),
-                        const SizedBox(height: 24),
-
-                        // Apple Liquid Glass Submit Button
-                        LiquidGlassButton(
-                          onPressed: isLoading ? null : _handleRegister,
+                        const SizedBox(height: AppSpacing.xl),
+                        PrimaryButton(
+                          label: 'Crear cuenta',
+                          loadingLabel: 'Creando cuenta…',
                           isLoading: isLoading,
-                          label: 'Create Civic Account',
-                          height: 50,
+                          onPressed: _handleRegister,
                         ),
-                        const SizedBox(height: 18),
-
-                        // Link to Login
+                        const SizedBox(height: AppSpacing.md),
                         Wrap(
                           alignment: WrapAlignment.center,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            const Text(
-                              'Already have an account? ',
-                              style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
-                            ),
+                            Text('¿Ya tienes cuenta?', style: theme.textTheme.bodyMedium),
                             TextButton(
                               onPressed: isLoading ? null : () => Navigator.pop(context),
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: const Text(
-                                'Log In',
-                                style: TextStyle(
-                                  color: AppTheme.accent,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
+                              child: const Text('Ingresa'),
                             ),
                           ],
                         ),

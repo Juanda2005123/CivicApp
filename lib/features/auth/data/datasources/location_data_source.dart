@@ -11,7 +11,7 @@ class LocationDataSource {
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
         throw Exception(
-          'Location services are disabled. You can select your city from the list.',
+          'La ubicación está desactivada. Elige tu ciudad en la lista.',
         );
       }
 
@@ -20,12 +20,12 @@ class LocationDataSource {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           throw Exception(
-            'Permission denied. Please select your city manually from the catalog.',
+            'Sin permiso de ubicación. Elige tu ciudad en la lista.',
           );
         }
       }
       if (permission == LocationPermission.deniedForever) {
-        throw Exception('Permission permanently denied. Please use the city selector.');
+        throw Exception('El permiso de ubicación está bloqueado. Usa la lista de ciudades.');
       }
 
       final position = await _lastKnownPosition() ??
@@ -38,7 +38,7 @@ class LocationDataSource {
       return Coordinates(latitude: position.latitude, longitude: position.longitude);
     } on LocationServiceDisabledException {
       throw Exception(
-        'Location services are disabled. You can select your city from the list.',
+        'La ubicación está desactivada. Elige tu ciudad en la lista.',
       );
     } on TimeoutException {
       throw Exception(_unavailable);
@@ -54,7 +54,7 @@ class LocationDataSource {
   }
 
   static const _unavailable =
-      'Unable to acquire GPS coordinates. Please select your city from the list.';
+      'No pudimos obtener tu ubicación. Elige tu ciudad en la lista.';
 
   /// `getLastKnownPosition` is not supported on the web (it throws an
   /// UnsupportedError); there the current position is requested instead.

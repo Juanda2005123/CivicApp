@@ -6,10 +6,10 @@
 
 -- 1. CIVIC PROGRESSION RANKS (RN-09)
 INSERT INTO civic_rank (name, min_xp, icon_url) VALUES
-    ('Urban Observer', 0, NULL),
-    ('Active Neighbor', 1000, NULL),
-    ('Road Guardian', 2500, NULL),
-    ('Master Overseer', 4000, NULL)
+    ('Observador Urbano', 0, NULL),
+    ('Vecino Activo', 1000, NULL),
+    ('Guardián Vial', 2500, NULL),
+    ('Veedor Mayor', 4000, NULL)
 ON CONFLICT (name) DO NOTHING;
 
 -- 2. ROAD INCIDENT CATEGORIES (Urban Infrastructure Taxonomy)

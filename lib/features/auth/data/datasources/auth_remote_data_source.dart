@@ -12,11 +12,11 @@ class AuthRemoteDataSource {
     try {
       final response = await _client.auth.signUp(email: email, password: password);
       final user = response.user;
-      if (user == null) throw Exception('Could not create the account');
+      if (user == null) throw Exception('No pudimos crear tu cuenta.');
       // Without a session the next step (inserting the profile) would be
       // rejected by the row level security policy.
       if (response.session == null) {
-        throw Exception('Please confirm your email address, then log in.');
+        throw Exception('Confirma tu correo y luego ingresa.');
       }
       return AuthUser(id: user.id, email: user.email ?? email);
     } on AuthException catch (e) {
@@ -31,7 +31,7 @@ class AuthRemoteDataSource {
         password: password,
       );
       final user = response.user;
-      if (user == null) throw Exception('Could not log in. Please try again.');
+      if (user == null) throw Exception('No pudimos iniciar tu sesión. Inténtalo de nuevo.');
       return AuthUser(id: user.id, email: user.email ?? email);
     } on AuthException catch (e) {
       throw Exception(_message(e));
@@ -54,14 +54,14 @@ class AuthRemoteDataSource {
 
   String _message(AuthException e) {
     if (e is AuthRetryableFetchException) {
-      return 'Internet connection error. Please check your network connection.';
+      return 'Sin conexión. Revisa tu internet e inténtalo de nuevo.';
     }
     final text = e.message.toLowerCase();
     if (text.contains('invalid login credentials')) {
-      return 'Invalid credentials. Please verify your email and password.';
+      return 'Correo o contraseña incorrectos. Revisa tus datos e inténtalo de nuevo.';
     }
     if (text.contains('already registered')) {
-      return 'This email is already registered in VIGÍA.';
+      return 'Ese correo ya está registrado en VIGÍA.';
     }
     return e.message;
   }

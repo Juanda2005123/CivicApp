@@ -14,7 +14,7 @@ class SignInUseCase {
 
   Future<Profile> call({required String email, required String password}) async {
     if (email.trim().isEmpty || password.isEmpty) {
-      throw Exception('Please enter your email and password');
+      throw Exception('Escribe tu correo y tu contraseña');
     }
     final user = await _auth.signIn(email: email.trim(), password: password);
     try {

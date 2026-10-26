@@ -70,7 +70,7 @@ void main() {
 
     await expectLater(
       register(),
-      throwsA(predicate((e) => e.toString().contains('profile could not be saved'))),
+      throwsA(predicate((e) => e.toString().contains('no pudimos guardar tu perfil'))),
     );
     expect(calls, ['auth.signUp', 'profile.create', 'auth.signOut']);
   });
