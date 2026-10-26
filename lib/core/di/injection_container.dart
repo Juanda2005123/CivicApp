@@ -1,131 +1,83 @@
 import 'package:get_it/get_it.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide User;
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
 
-import '../config/app_env.dart';
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
+import '../../features/auth/data/datasources/city_local_data_source.dart';
 import '../../features/auth/data/datasources/city_remote_data_source.dart';
+import '../../features/auth/data/datasources/location_data_source.dart';
+import '../../features/auth/data/datasources/profile_remote_data_source.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/data/repositories/city_repository_impl.dart';
-import '../../features/auth/domain/entities/user.dart';
+import '../../features/auth/data/repositories/location_repository_impl.dart';
+import '../../features/auth/data/repositories/profile_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/repositories/city_repository.dart';
+import '../../features/auth/domain/repositories/location_repository.dart';
+import '../../features/auth/domain/repositories/profile_repository.dart';
+import '../../features/auth/domain/usecases/detect_nearest_city_usecase.dart';
 import '../../features/auth/domain/usecases/get_cities_usecase.dart';
-import '../../features/auth/domain/usecases/get_current_user_usecase.dart';
-import '../../features/auth/domain/usecases/login_usecase.dart';
-import '../../features/auth/domain/usecases/logout_usecase.dart';
-import '../../features/auth/domain/usecases/register_usecase.dart';
-import '../../features/auth/ui/cubit/auth_cubit.dart';
+import '../../features/auth/domain/usecases/get_current_profile_usecase.dart';
+import '../../features/auth/domain/usecases/sign_in_usecase.dart';
+import '../../features/auth/domain/usecases/sign_out_usecase.dart';
+import '../../features/auth/domain/usecases/sign_up_usecase.dart';
+import '../../features/auth/ui/bloc/login_bloc.dart';
+import '../../features/auth/ui/bloc/register_bloc.dart';
+import '../../features/auth/ui/bloc/startup_bloc.dart';
+import '../../features/dashboard/ui/bloc/profile_bloc.dart';
 
+/// Service locator. Every class receives its collaborators by constructor and
+/// is registered here, once, from the inside out.
 final sl = GetIt.instance;
 
-/// Centralized Service Locator & Dependency Injection Container (Clean Architecture).
-/// Decouples UI and Domain layers from concrete Data implementations.
+/// Registers the whole dependency graph. Call it after `Supabase.initialize`
+/// and before `runApp`.
+///
+/// The optional parameters let tests replace the Supabase client or a whole
+/// repository; production passes nothing.
 Future<void> initDependencies({
-  AuthRepository? customAuthRepository,
-  CityRepository? customCityRepository,
+  SupabaseClient? client,
+  AuthRepository? authRepository,
+  ProfileRepository? profileRepository,
+  CityRepository? cityRepository,
+  LocationRepository? locationRepository,
 }) async {
-  // Allow re-initialization (e.g., for test suites)
   await sl.reset();
 
-  // 1. External & Infrastructure Layer
-  SupabaseClient? client;
-  if (AppEnv.isSupabaseConfigured) {
-    try {
-      client = Supabase.instance.client;
-    } catch (_) {
-      client = null;
-    }
-  }
+  // Infrastructure
+  sl.registerLazySingleton<SupabaseClient>(() => client ?? Supabase.instance.client);
 
-  // 2. Data Sources
-  sl.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSource(
-      supabaseClient: client ?? Supabase.instance.client,
-    ),
+  // Data sources
+  sl.registerLazySingleton(() => AuthRemoteDataSource(sl()));
+  sl.registerLazySingleton(() => ProfileRemoteDataSource(sl()));
+  sl.registerLazySingleton(() => CityRemoteDataSource(sl()));
+  sl.registerLazySingleton(() => CityLocalDataSource());
+  sl.registerLazySingleton(() => LocationDataSource());
+
+  // Repositories, registered under their contract
+  sl.registerLazySingleton<AuthRepository>(
+    () => authRepository ?? AuthRepositoryImpl(sl()),
+  );
+  sl.registerLazySingleton<ProfileRepository>(
+    () => profileRepository ?? ProfileRepositoryImpl(sl()),
+  );
+  sl.registerLazySingleton<CityRepository>(
+    () => cityRepository ?? CityRepositoryImpl(sl(), sl()),
+  );
+  sl.registerLazySingleton<LocationRepository>(
+    () => locationRepository ?? LocationRepositoryImpl(sl()),
   );
 
-  sl.registerLazySingleton<CityRemoteDataSource>(
-    () => CityRemoteDataSource(
-      supabaseClient: client,
-    ),
-  );
+  // Use cases
+  sl.registerLazySingleton(() => SignUpUseCase(sl(), sl()));
+  sl.registerLazySingleton(() => SignInUseCase(sl(), sl()));
+  sl.registerLazySingleton(() => SignOutUseCase(sl()));
+  sl.registerLazySingleton(() => GetCurrentProfileUseCase(sl(), sl()));
+  sl.registerLazySingleton(() => GetCitiesUseCase(sl()));
+  sl.registerLazySingleton(() => DetectNearestCityUseCase(sl(), sl()));
 
-  // 3. Repositories
-  if (customAuthRepository != null) {
-    sl.registerLazySingleton<AuthRepository>(() => customAuthRepository);
-  } else if (AppEnv.isSupabaseConfigured && client != null) {
-    sl.registerLazySingleton<AuthRepository>(
-      () => AuthRepositoryImpl(remoteDataSource: sl<AuthRemoteDataSource>()),
-    );
-  } else {
-    sl.registerLazySingleton<AuthRepository>(() => MockAuthRepository());
-  }
-
-  if (customCityRepository != null) {
-    sl.registerLazySingleton<CityRepository>(() => customCityRepository);
-  } else {
-    sl.registerLazySingleton<CityRepository>(
-      () => CityRepositoryImpl(remoteDataSource: sl<CityRemoteDataSource>()),
-    );
-  }
-
-  // 4. Use Cases
-  sl.registerLazySingleton<LoginUseCase>(() => LoginUseCase(sl<AuthRepository>()));
-  sl.registerLazySingleton<RegisterUseCase>(() => RegisterUseCase(sl<AuthRepository>()));
-  sl.registerLazySingleton<LogoutUseCase>(() => LogoutUseCase(sl<AuthRepository>()));
-  sl.registerLazySingleton<GetCurrentUserUseCase>(
-    () => GetCurrentUserUseCase(sl<AuthRepository>()),
-  );
-  sl.registerLazySingleton<GetCitiesUseCase>(() => GetCitiesUseCase(sl<CityRepository>()));
-
-  // 5. Bloc / Cubit (Factory to provide fresh instance per scope if needed)
-  sl.registerFactory<AuthCubit>(
-    () => AuthCubit(
-      loginUseCase: sl<LoginUseCase>(),
-      registerUseCase: sl<RegisterUseCase>(),
-      logoutUseCase: sl<LogoutUseCase>(),
-      getCurrentUserUseCase: sl<GetCurrentUserUseCase>(),
-    ),
-  );
-}
-
-/// Fallback mock repository for offline execution and decoupled testability
-class MockAuthRepository implements AuthRepository {
-  @override
-  Future<User> login({required String email, required String password}) async {
-    return User(
-      id: 'mock-1',
-      email: email,
-      fullName: 'VIGÍA Citizen (Offline)',
-      residenceCityId: 1,
-      cityName: 'Cali (Valle del Cauca)',
-      rankId: 1,
-      reputationPoints: 0,
-    );
-  }
-
-  @override
-  Future<User> register({
-    required String email,
-    required String password,
-    required String fullName,
-    required int cityId,
-    String? cityName,
-  }) async {
-    return User(
-      id: 'mock-2',
-      email: email,
-      fullName: fullName,
-      residenceCityId: cityId,
-      cityName: cityName ?? 'Cali (Valle del Cauca)',
-      rankId: 1,
-      reputationPoints: 0,
-    );
-  }
-
-  @override
-  Future<void> logout() async {}
-
-  @override
-  Future<User?> getCurrentUser() async => null;
+  // Blocs: a new instance per screen
+  sl.registerFactory(() => StartupBloc(sl()));
+  sl.registerFactory(() => LoginBloc(sl()));
+  sl.registerFactory(() => RegisterBloc(sl(), sl(), sl()));
+  sl.registerFactory(() => ProfileBloc(sl(), sl()));
 }
