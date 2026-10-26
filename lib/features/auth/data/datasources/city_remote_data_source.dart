@@ -1,59 +1,30 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../../core/constants/dane_cities.dart';
 
-/// City remote data source:
-/// Queries `coverage_city` from Supabase with offline fallback to canonical `dane_cities.dart`.
+import '../../domain/entities/city.dart';
+
+/// Reads the official coverage cities from the `coverage_city` table.
 class CityRemoteDataSource {
-  final SupabaseClient? supabaseClient;
+  final SupabaseClient _client;
 
-  CityRemoteDataSource({this.supabaseClient});
+  CityRemoteDataSource(this._client);
 
-  Future<List<DaneCity>> getCities() async {
-    if (supabaseClient != null) {
-      // 1. Primary: Query new English table `coverage_city`
-      try {
-        final List<dynamic> data = await supabaseClient!
-            .from('coverage_city')
-            .select()
-            .order('name');
-
-        if (data.isNotEmpty) {
-          return data.map((json) {
-            return DaneCity(
-              id: (json['id_city'] ?? json['id'] as num).toInt(),
-              nombre: (json['name'] ?? json['nombre']) as String,
-              departamento: (json['department'] ?? json['departamento']) as String,
-              latitud: (json['center_latitude'] ?? json['latitud_centro'] as num).toDouble(),
-              longitud: (json['center_longitude'] ?? json['longitud_centro'] as num).toDouble(),
-              esCapital: (json['is_capital'] ?? json['es_capital'] as bool?) ?? false,
-            );
-          }).toList();
-        }
-      } catch (_) {}
-
-      // 2. Fallback: Query legacy Spanish table `ciudad_cobertura`
-      try {
-        final List<dynamic> legacyData = await supabaseClient!
-            .from('ciudad_cobertura')
-            .select()
-            .order('nombre');
-
-        if (legacyData.isNotEmpty) {
-          return legacyData.map((json) {
-            return DaneCity(
-              id: (json['id'] as num).toInt(),
-              nombre: json['nombre'] as String,
-              departamento: json['departamento'] as String,
-              latitud: (json['latitud_centro'] as num).toDouble(),
-              longitud: (json['longitud_centro'] as num).toDouble(),
-              esCapital: json['es_capital'] as bool? ?? false,
-            );
-          }).toList();
-        }
-      } catch (_) {}
+  Future<List<City>> getCities() async {
+    try {
+      final rows = await _client.from('coverage_city').select().order('name');
+      return rows.map(_toCity).toList();
+    } on PostgrestException catch (e) {
+      throw Exception('Could not load the coverage cities: ${e.message}');
     }
+  }
 
-    // 3. Guaranteed Canonical Offline Fallback
-    return DaneCitiesCatalog.cities;
+  City _toCity(Map<String, dynamic> row) {
+    return City(
+      id: row['id_city'] as int,
+      name: row['name'] as String,
+      department: row['department'] as String,
+      latitude: (row['center_latitude'] as num).toDouble(),
+      longitude: (row['center_longitude'] as num).toDouble(),
+      isCapital: row['is_capital'] as bool,
+    );
   }
 }

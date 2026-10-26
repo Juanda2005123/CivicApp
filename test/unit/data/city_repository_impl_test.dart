@@ -1,37 +1,69 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vigia_app/core/constants/dane_cities.dart';
+import 'package:vigia_app/features/auth/data/datasources/city_local_data_source.dart';
 import 'package:vigia_app/features/auth/data/datasources/city_remote_data_source.dart';
 import 'package:vigia_app/features/auth/data/repositories/city_repository_impl.dart';
+import 'package:vigia_app/features/auth/domain/entities/city.dart';
 
-class _FakeCityRemoteDataSource extends CityRemoteDataSource {
-  _FakeCityRemoteDataSource() : super(supabaseClient: null);
+class _FakeRemote implements CityRemoteDataSource {
+  final List<City>? cities;
+  final Exception? error;
+  _FakeRemote({this.cities, this.error});
 
   @override
-  Future<List<DaneCity>> getCities() async {
-    return [
-      const DaneCity(
-        id: 1,
-        nombre: 'Cali',
-        departamento: 'Valle del Cauca',
-        latitud: 3.4516,
-        longitud: -76.5320,
-        esCapital: true,
-      ),
-    ];
+  Future<List<City>> getCities() async {
+    if (error != null) throw error!;
+    return cities!;
   }
 }
 
 void main() {
-  group('CityRepositoryImpl Unit Tests', () {
-    test('delegates retrieval of cities to CityRemoteDataSource', () async {
-      final fakeDataSource = _FakeCityRemoteDataSource();
-      final repository = CityRepositoryImpl(remoteDataSource: fakeDataSource);
+  final local = CityLocalDataSource();
 
-      final result = await repository.getCities();
+  test('uses the remote catalog and adds the conurbation calibration', () async {
+    const remote = City(
+      id: 99,
+      name: 'Jamundí',
+      department: 'Valle del Cauca',
+      latitude: 3.2606,
+      longitude: -76.5414,
+      isCapital: false,
+    );
+    final repository = CityRepositoryImpl(_FakeRemote(cities: [remote]), local);
 
-      expect(result.length, 1);
-      expect(result.first.id, 1);
-      expect(result.first.nombre, 'Cali');
-    });
+    final cities = await repository.getCities();
+
+    expect(cities, hasLength(1));
+    expect(cities.single.id, 99);
+    expect(cities.single.kind, CityKind.satellite);
+    expect(cities.single.radiusKm, 3.0);
+  });
+
+  test('keeps a remote city that has no calibration as independent', () async {
+    const remote = City(
+      id: 7,
+      name: 'Nowhere',
+      department: 'Nowhere',
+      latitude: 0,
+      longitude: 0,
+      isCapital: false,
+    );
+    final repository = CityRepositoryImpl(_FakeRemote(cities: [remote]), local);
+
+    expect((await repository.getCities()).single.kind, CityKind.independent);
+  });
+
+  test('falls back to the local catalog when the remote read fails', () async {
+    final repository = CityRepositoryImpl(
+      _FakeRemote(error: Exception('permission denied')),
+      local,
+    );
+
+    expect(await repository.getCities(), hasLength(51));
+  });
+
+  test('falls back to the local catalog when the remote table is empty', () async {
+    final repository = CityRepositoryImpl(_FakeRemote(cities: const []), local);
+
+    expect(await repository.getCities(), hasLength(51));
   });
 }
