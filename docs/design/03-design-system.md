@@ -176,6 +176,7 @@ Todos están en `mockups/components.html` con sus estados (normal, foco, presion
 | Tarjeta | Papel, borde 1 px, radio 12; "destacada" suma sombra mínima (solo claro) | `CardTheme` |
 | Barra superior | Fondo = pantalla, título Fraunces 20/600, sin elevación | `AppBarTheme` |
 | Indicador de carga | Anillo punteado que gira; barra de progreso de 6 dp para avance conocido | `core/widgets/dotted_spinner.dart` + `ProgressIndicatorTheme` |
+| Botón de tema | Botón de icono de 48 dp; el icono muestra el tema al que se pasa (luna → oscuro, sol → claro) y el tooltip lo dice en texto. Esquina superior derecha del login; en `actions` de la barra superior en las demás pantallas | `core/widgets/theme_toggle_button.dart` + `core/theme/theme_cubit.dart` |
 | Marca (encabezado) | Sello + palabra + lema, centrado | `core/widgets/brand_mark.dart` (reemplaza `CivicBrandHeader`) |
 | Sello de rango | Círculo con numeral, 4 variantes (§3.4) | `core/widgets/rank_seal.dart` |
 | Chip de gravedad | 28 dp, forma + color + texto | `core/widgets/severity_chip.dart` (se crea cuando exista la función) |
