@@ -12,9 +12,8 @@ must look like code the professor would have written, because that is what gets 
 > (3) The professor's course material (see `docs/standards/course-reference.md`). (4) Generic Flutter "best practices".
 > If a generic best practice contradicts the course (for example `go_router`, Riverpod, Freezed, `injectable`,
 > a different folder layout), **the course wins**. Ask the user before bringing in anything the course does not teach.
-> The visual design rules in `.antigravity/rules/` (§6b) were written for the web: apply their intent (contrast,
-> accessibility, reduced motion, tokens instead of hard-coded colors) but never their CSS/Tailwind/React specifics, and never
-> at the expense of the architecture below.
+> The visual design system (§6b, `docs/design/`) governs every UI change and never overrides the architecture below.
+> The older rules in `.antigravity/rules/` were written for the web and are superseded by it.
 
 ---
 
@@ -43,7 +42,7 @@ instructions to navigate the flows. Never create tags, push, or open PRs unless 
   keep the code simple enough that the student can defend it orally.
 - Answer the user in the language they write in (Spanish by default). **Code identifiers, comments, commit messages,
   database objects and technical docs are in English** (project rule, see README "Commit & Contribution Standards").
-  UI strings are currently English too; keep the existing UI language unless the user decides otherwise.
+  **User-facing UI strings are in Spanish** (decision recorded in `docs/design/03-design-system.md` §8).
 - Conventional Commits: `feat|fix|refactor|test|docs|style|chore(<scope>): <imperative summary>`. Commit only when asked.
 - Don't refactor unrelated code. If you spot a violation of this file outside your task, mention it (see §13) instead of
   fixing it silently.
@@ -193,29 +192,34 @@ login/registration/logout so there is no back arrow to the previous session stat
 `AppRoutes`. Arguments: `ModalRoute.of(context)!.settings.arguments as T` (cast, don't use `pushNamed<T>` with a route table).
 After any `await` that uses `context`, check `mounted`.
 
-**Theme and look:** colors, text styles, radii and spacing come from `AppTheme` (single source); no hex literals or ad-hoc
-`TextStyle` colors in widgets. Meet WCAG AA contrast, support text scaling, respect reduced motion, keep tap targets ≥ 48 dp.
+**Theme and look:** follow the design system (§6b, `docs/design/03-design-system.md`). Colors, text styles, radii, spacing and
+durations come from `lib/core/theme/` (single source); no hex literals or ad-hoc `TextStyle` colors in widgets. Meet WCAG AA
+contrast, support text scaling, respect reduced motion, keep tap targets ≥ 48 dp.
 Use `const` constructors everywhere possible, `Expanded`/`SingleChildScrollView` to avoid overflow, `ListView.builder` for
 lists, `Wrap` where a `Row` could overflow.
 
 ---
 
-## 6b. Visual design rules (inherited from `.antigravity/rules/`)
+## 6b. Visual design system — VIGÍA "Sello comunitario" (mandatory)
 
-Whenever you create, lay out, style or refactor UI, read the relevant file in [`.antigravity/rules/`](.antigravity/rules/) and
-apply its **intent** in Flutter terms (the files themselves speak CSS/Tailwind/React):
+Every UI change follows the design system in [`docs/design/03-design-system.md`](docs/design/03-design-system.md). **Read it before creating, styling or refactoring any widget**, and open the matching mockup when you need to see the result:
+[`docs/design/mockups/screens.html`](docs/design/mockups/screens.html) (screens, light and dark) and [`docs/design/mockups/components.html`](docs/design/mockups/components.html) (components and states). Brand assets: [`docs/design/assets/logo/`](docs/design/assets/logo/).
 
-| Rule file | Intent to apply in Flutter |
-|---|---|
-| `taste.md` | No AI-cliché visuals (ungrounded purple/cyan gradients, floating heavy glows). Sober typography, strict 4/8 dp rhythm, snappy micro-interactions (≤ 200 ms), empty states with a clear action. |
-| `web-design-guidelines.md` | WCAG 2.1 AA contrast (4.5:1 text, 3:1 large) in every theme; `Semantics`/labels on controls; visible focus; honor `MediaQuery.disableAnimations` (reduced motion). |
-| `awesome-design.md` | Colors/spacing/radii come from tokens (`AppTheme`), never hex literals in widgets; one neutral family (Zinc **or** Slate); composable components. |
-| `glass.md` | Glassmorphism (`BackdropFilter`) at most one layer per element, never glass inside glass, ≤ 5 glass surfaces visible, solid cards for long lists; keep AA contrast over moving backgrounds. |
-| `aurora.md` | Diffuse backgrounds only as a background layer (non-interactive, `IgnorePointer`), capped blur, static when reduced motion is on. |
-| `shaders.md` | Only if custom painters/shaders are used: pause offscreen, cap pixel ratio, dispose resources, provide a static fallback. |
+Non-negotiable rules (details, values and contrast tables are in the document):
 
-Pre-flight before presenting UI: no saturated gradients/stacked shadows · semantic labels on controls · focus/tap targets ≥ 48 dp ·
-reduced-motion fallback · tokens only, one neutral palette · glass ≤ 1 layer and ≤ 5 surfaces. These never override §4–§7.
+1. **Tokens only.** Colors come from `AppColors`/the `ColorScheme`, text from `AppTextStyles`/`TextTheme`, spacing/radii/durations from `AppSpacing`. **No hex literals, ad-hoc `TextStyle` colors or magic numbers in widgets.** A new value is added to the system first (and to the design document), then used.
+2. **Light and dark.** Every screen and component must work in both themes through `ThemeData`; never read `Brightness` to pick a hex.
+3. **Reuse before creating.** Use the shared widgets in `lib/core/widgets/` (`BrandMark`, `PrimaryButton`, `AppNotice`, `DottedSpinner`, `RankSeal`, …) and the component themes (buttons, inputs, cards, chips, snackbars, app bar). A new shared widget needs: a place in `core/widgets/`, tokens only, a widget test, and an entry in the design document's component table and `components.html`.
+4. **Identity.** Flat paper surfaces with a 1 px border, no glass, no gradients, no photo backgrounds. The seal, the dotted ring and monospace data (codes, coordinates, dates, points) are the brand's signature; do not add other decorative motifs.
+5. **Color is never the only signal.** Severity = shape + color + text; errors = icon + text + thick border; states always have a text label. Contrast AA at minimum (the calculated pairs in §3.5 of the document are the only approved text/background combinations; mustard and clay-500 have restrictions).
+6. **Accessibility.** Touch targets ≥ 48 dp, visible focus, `Semantics` labels on icon-only controls, text that scales to 200 % without truncating, and `MediaQuery.disableAnimations` honored (no scale/rotation, fades only).
+7. **Language.** The whole interface is in Spanish (tú, short direct sentences). The copy deck in §8 of the document is the reference for existing strings; new strings follow its voice. Identifiers, comments, commits and docs stay in English.
+8. **Brand assets are never redrawn by hand.** The seal in code is the `BrandMark`/`RankSeal` painters, equal to `docs/design/assets/logo/*.svg`. If the logo changes, change both and the document.
+9. **Keep the system documented.** Any change to tokens, components or rules updates `docs/design/03-design-system.md` (and the mockups, via `node docs/design/mockups/build.mjs`) in the same change.
+
+Pre-flight before presenting UI: tokens only · works in light and dark · shared widgets reused · contrast pairs from the document · focus, semantics and 48 dp targets · Spanish copy in the system's voice · screenshots of the changed screens in both themes.
+
+---
 
 ---
 
