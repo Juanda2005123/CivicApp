@@ -1,11 +1,11 @@
 {
-    "name": "vigia_app",
-    "short_name": "vigia_app",
+    "name": "VIGÍA · Veeduría vial ciudadana",
+    "short_name": "VIGÍA",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#10364A",
+    "theme_color": "#10364A",
+    "description": "VIGÍA: veeduría vial ciudadana. Tu voz, con evidencia.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
