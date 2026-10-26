@@ -1,13 +1,11 @@
 import '../entities/city.dart';
 import '../repositories/city_repository.dart';
 
-/// Use Case: Retrieve official coverage cities for citizen onboarding
+/// Use case: official coverage cities for the citizen onboarding.
 class GetCitiesUseCase {
-  final CityRepository repository;
+  final CityRepository _cities;
 
-  const GetCitiesUseCase(this.repository);
+  GetCitiesUseCase(this._cities);
 
-  Future<List<City>> call() {
-    return repository.getCities();
-  }
+  Future<List<City>> call() => _cities.getCities();
 }

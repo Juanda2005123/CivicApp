@@ -3,50 +3,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/core/constants/app_routes.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
-import 'package:vigia_app/features/auth/domain/entities/user.dart';
-import 'package:vigia_app/features/auth/domain/repositories/auth_repository.dart';
-import 'package:vigia_app/features/auth/domain/usecases/get_current_user_usecase.dart';
-import 'package:vigia_app/features/auth/domain/usecases/login_usecase.dart';
-import 'package:vigia_app/features/auth/domain/usecases/logout_usecase.dart';
-import 'package:vigia_app/features/auth/domain/usecases/register_usecase.dart';
-import 'package:vigia_app/features/auth/ui/cubit/auth_cubit.dart';
+import 'package:vigia_app/features/auth/domain/usecases/sign_in_usecase.dart';
+import 'package:vigia_app/features/auth/ui/bloc/login_bloc.dart';
 import 'package:vigia_app/features/auth/ui/screens/login_screen.dart';
 
-class _FakeAuthRepository implements AuthRepository {
-  @override
-  Future<User> login({required String email, required String password}) async {
-    return User(
-      id: 'test-1',
-      email: email,
-      fullName: 'Login Test Citizen',
-      residenceCityId: 1,
-      cityName: 'Cali',
-      rankId: 1,
-      reputationPoints: 0,
-    );
-  }
+import '../support/fakes.dart';
 
-  @override
-  Future<User> register({
-    required String email,
-    required String password,
-    required String fullName,
-    required int cityId,
-    String? cityName,
-  }) async {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> logout() async {}
-
-  @override
-  Future<User?> getCurrentUser() async => null;
-}
-
-Widget createLoginTestWidget(AuthCubit cubit) {
-  return BlocProvider<AuthCubit>.value(
-    value: cubit,
+Widget createLoginTestWidget(LoginBloc bloc) {
+  return BlocProvider<LoginBloc>.value(
+    value: bloc,
     child: MaterialApp(
       theme: AppTheme.lightTheme,
       home: const LoginScreen(),
@@ -59,26 +24,28 @@ Widget createLoginTestWidget(AuthCubit cubit) {
 }
 
 void main() {
-  late _FakeAuthRepository repository;
-  late AuthCubit authCubit;
+  late FakeAuthRepository auth;
+  late FakeProfileRepository profiles;
+
+  LoginBloc newBloc() {
+    final created = LoginBloc(SignInUseCase(auth, profiles));
+    addTearDown(created.close);
+    return created;
+  }
 
   setUp(() {
-    repository = _FakeAuthRepository();
-    authCubit = AuthCubit(
-      loginUseCase: LoginUseCase(repository),
-      registerUseCase: RegisterUseCase(repository),
-      logoutUseCase: LogoutUseCase(repository),
-      getCurrentUserUseCase: GetCurrentUserUseCase(repository),
-    );
+    final calls = <String>[];
+    auth = FakeAuthRepository(calls: calls);
+    profiles = FakeProfileRepository(calls: calls)..stored['uid-1'] = caliProfile;
+    // Blocs are created inside each test: one built in setUp would run its event
+    // loop in the real zone, outside the widget tester's fake async.
   });
 
-  tearDown(() {
-    authCubit.close();
-  });
+
 
   group('LoginScreen Widget Tests', () {
     testWidgets('renders all visual elements and inputs', (tester) async {
-      await tester.pumpWidget(createLoginTestWidget(authCubit));
+      await tester.pumpWidget(createLoginTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
       expect(find.text('VIGÍA'), findsOneWidget);
@@ -89,22 +56,21 @@ void main() {
     });
 
     testWidgets('triggers validation errors when submitting empty form', (tester) async {
-      await tester.pumpWidget(createLoginTestWidget(authCubit));
+      await tester.pumpWidget(createLoginTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
-      // Click Log In button without typing
       await tester.tap(find.text('Log In'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Please enter your email address'), findsOneWidget);
+      expect(find.text('Please enter an email address'), findsOneWidget);
       expect(find.text('Please enter your password'), findsOneWidget);
+      expect(auth.calls, isEmpty);
     });
 
     testWidgets('validates invalid email format and short password', (tester) async {
-      await tester.pumpWidget(createLoginTestWidget(authCubit));
+      await tester.pumpWidget(createLoginTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
-      // Enter invalid email and short password
       await tester.enterText(find.byType(TextFormField).at(0), 'correo_invalido');
       await tester.enterText(find.byType(TextFormField).at(1), '123');
 
@@ -116,7 +82,7 @@ void main() {
     });
 
     testWidgets('toggles password visibility when clicking eye icon', (tester) async {
-      await tester.pumpWidget(createLoginTestWidget(authCubit));
+      await tester.pumpWidget(createLoginTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
       final eyeIcon = find.byIcon(Icons.visibility_outlined);
@@ -129,13 +95,43 @@ void main() {
     });
 
     testWidgets('clicking Register here navigates to register route', (tester) async {
-      await tester.pumpWidget(createLoginTestWidget(authCubit));
+      await tester.pumpWidget(createLoginTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Register here'));
       await tester.pumpAndSettle();
 
       expect(find.text('Register Screen Mock'), findsOneWidget);
+    });
+
+    testWidgets('valid credentials sign in and land on the dashboard', (tester) async {
+      await tester.pumpWidget(createLoginTestWidget(newBloc()));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextFormField).at(0), 'ana@example.com');
+      await tester.enterText(find.byType(TextFormField).at(1), 'Abc123');
+      await tester.tap(find.text('Log In'));
+      await tester.pumpAndSettle();
+
+      expect(auth.calls, ['auth.signIn', 'profile.get']);
+      expect(find.text('Dashboard Screen Mock'), findsOneWidget);
+    });
+
+    testWidgets('invalid credentials show the error and stay on the login', (tester) async {
+      auth.signInError = Exception('Invalid credentials. Please verify your email and password.');
+      await tester.pumpWidget(createLoginTestWidget(newBloc()));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextFormField).at(0), 'ana@example.com');
+      await tester.enterText(find.byType(TextFormField).at(1), 'Abc123');
+      await tester.tap(find.text('Log In'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Invalid credentials. Please verify your email and password.'),
+        findsOneWidget,
+      );
+      expect(find.text('Dashboard Screen Mock'), findsNothing);
     });
   });
 }

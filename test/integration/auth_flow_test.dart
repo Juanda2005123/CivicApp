@@ -1,132 +1,126 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vigia_app/features/auth/domain/entities/user.dart';
-import 'package:vigia_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:vigia_app/core/di/injection_container.dart';
+import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
+import 'package:vigia_app/features/auth/domain/entities/city.dart';
+import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import 'package:vigia_app/main.dart';
 
-class _FakeIntegrationAuthRepository implements AuthRepository {
-  User? _currentUser;
+import '../support/fakes.dart';
 
-  @override
-  Future<User> login({required String email, required String password}) async {
-    final user = User(
-      id: 'integration-user-1',
-      email: email,
-      fullName: 'Juan David Quintero',
-      residenceCityId: 1,
-      cityName: 'Cali (Valle del Cauca)',
-      rankId: 1,
-      rankName: 'Urban Observer',
-      reputationPoints: 0,
-    );
-    _currentUser = user;
-    return user;
-  }
-
-  @override
-  Future<User> register({
-    required String email,
-    required String password,
-    required String fullName,
-    required int cityId,
-    String? cityName,
-  }) async {
-    final user = User(
-      id: 'integration-user-2',
-      email: email,
-      fullName: fullName,
-      residenceCityId: cityId,
-      cityName: cityName ?? 'Cali (Valle del Cauca)',
-      rankId: 1,
-      rankName: 'Urban Observer',
-      reputationPoints: 0,
-    );
-    _currentUser = user;
-    return user;
-  }
-
-  @override
-  Future<void> logout() async {
-    _currentUser = null;
-  }
-
-  @override
-  Future<User?> getCurrentUser() async {
-    return _currentUser;
-  }
-}
+const _cali = City(
+  id: 1,
+  name: 'Cali',
+  department: 'Valle del Cauca',
+  latitude: 3.4516,
+  longitude: -76.5320,
+  isCapital: true,
+);
 
 void main() {
-  testWidgets('Complete End-to-End Civic Auth Flow: Boot -> Register -> Dashboard -> Logout -> Login -> Dashboard',
-      (WidgetTester tester) async {
+  late FakeAuthRepository auth;
+  late FakeProfileRepository profiles;
+
+  void useTallScreen(WidgetTester tester) {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
+  }
 
-    final fakeRepo = _FakeIntegrationAuthRepository();
-
-    // 1. Boot Application
-    await tester.pumpWidget(VigiaApp(customAuthRepository: fakeRepo));
+  /// Boots the real app: real routes, blocs, use cases and GetIt wiring, with
+  /// the repositories replaced by fakes (no network, no Supabase).
+  Future<void> bootApp(WidgetTester tester) async {
+    await initDependencies(
+      authRepository: auth,
+      profileRepository: profiles,
+      cityRepository: FakeCityRepository(const [_cali]),
+      locationRepository: FakeLocationRepository(
+        coordinates: const Coordinates(latitude: 3.4516, longitude: -76.5320),
+      ),
+    );
+    await tester.pumpWidget(const VigiaApp());
     await tester.pumpAndSettle();
+  }
 
-    // Verify initial Login Screen
-    expect(find.text('VIGÍA'), findsOneWidget);
-    expect(find.text('Log In'), findsOneWidget);
+  setUp(() {
+    final calls = <String>[];
+    auth = FakeAuthRepository(calls: calls);
+    profiles = FakeProfileRepository(calls: calls);
+  });
 
-    // 2. Navigate to Register Screen
-    await tester.tap(find.text('Register here'));
-    await tester.pumpAndSettle();
+  tearDown(() => sl.reset());
 
-    expect(find.text('Citizen Registration'), findsOneWidget);
+  testWidgets(
+    'Complete End-to-End Civic Auth Flow: Splash -> Login -> Register -> Dashboard -> Logout -> Login -> Dashboard',
+    (WidgetTester tester) async {
+      useTallScreen(tester);
 
-    // 3. Fill Registration Form
-    await tester.enterText(find.byType(TextFormField).at(0), 'Juan David Quintero');
-    await tester.enterText(find.byType(TextFormField).at(1), 'juand@vigia.co');
-    await tester.enterText(find.byType(TextFormField).at(2), 'Password123');
-    await tester.enterText(find.byType(TextFormField).at(3), 'Password123');
+      // 1. The splash finds no session and routes to the login
+      await bootApp(tester);
+      expect(find.text('VIGÍA'), findsOneWidget);
+      expect(find.text('Log In'), findsOneWidget);
 
-    // Select City in DANE Dropdown
-    final dropdownFinder = find.byType(DropdownButtonFormField<int>);
-    expect(dropdownFinder, findsOneWidget);
-    await tester.ensureVisible(dropdownFinder);
-    await tester.tap(dropdownFinder);
-    await tester.pumpAndSettle();
+      // 2. Navigate to the registration
+      await tester.tap(find.text('Register here'));
+      await tester.pumpAndSettle();
+      expect(find.text('Citizen Registration'), findsOneWidget);
 
-    // Tap 'Cali (Valle del Cauca)' item
-    await tester.tap(find.text('Cali (Valle del Cauca)').last);
-    await tester.pumpAndSettle();
+      // 3. Fill the form and pick the city from the dropdown
+      await tester.enterText(find.byType(TextFormField).at(0), 'Juan David Quintero');
+      await tester.enterText(find.byType(TextFormField).at(1), 'juand@vigia.co');
+      await tester.enterText(find.byType(TextFormField).at(2), 'Password123');
+      await tester.enterText(find.byType(TextFormField).at(3), 'Password123');
 
-    // 4. Submit Registration
-    final registerBtn = find.text('Create Civic Account');
-    await tester.ensureVisible(registerBtn);
-    await tester.tap(registerBtn);
-    await tester.pumpAndSettle();
+      final dropdown = find.byType(DropdownButtonFormField<int>);
+      await tester.ensureVisible(dropdown);
+      await tester.tap(dropdown);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cali (Valle del Cauca)').last);
+      await tester.pumpAndSettle();
 
-    // Verify Dashboard is displayed with citizen details
+      // 4. Submit: account first, profile second, then the summary
+      final registerButton = find.text('Create Civic Account');
+      await tester.ensureVisible(registerButton);
+      await tester.tap(registerButton);
+      await tester.pumpAndSettle();
+
+      // The account first, the profile second, then the dashboard loads the profile
+      expect(auth.calls, ['auth.signUp', 'profile.create', 'profile.get']);
+      expect(find.text('VIGÍA Civic Dashboard'), findsOneWidget);
+      expect(find.text('Juan David Quintero'), findsOneWidget);
+      expect(find.text('juand@vigia.co'), findsOneWidget);
+      expect(find.text('Cali'), findsOneWidget);
+      expect(find.text('Urban Observer (Rank 1)'), findsOneWidget);
+
+      // 5. Log out: back to the login, with no way back to the dashboard
+      final logoutButton = find.text('Log Out');
+      await tester.ensureVisible(logoutButton);
+      await tester.tap(logoutButton);
+      await tester.pumpAndSettle();
+
+      expect(auth.currentUser(), isNull);
+      expect(find.text('Log In'), findsOneWidget);
+
+      // 6. Log in again with the same account
+      await tester.enterText(find.byType(TextFormField).at(0), 'juand@vigia.co');
+      await tester.enterText(find.byType(TextFormField).at(1), 'Password123');
+      await tester.tap(find.text('Log In'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('VIGÍA Civic Dashboard'), findsOneWidget);
+      expect(find.text('Juan David Quintero'), findsOneWidget);
+    },
+  );
+
+  testWidgets('a persisted session skips the login and opens the dashboard', (tester) async {
+    useTallScreen(tester);
+    auth.user = const AuthUser(id: 'uid-1', email: 'ana@example.com');
+    profiles.stored['uid-1'] = caliProfile;
+
+    await bootApp(tester);
+
     expect(find.text('VIGÍA Civic Dashboard'), findsOneWidget);
-    expect(find.text('Successfully logged in!'), findsOneWidget);
-    expect(find.text('Juan David Quintero'), findsOneWidget);
-    expect(find.text('juand@vigia.co'), findsOneWidget);
-    expect(find.text('Urban Observer (Rank 1)'), findsOneWidget);
-
-    // 5. Logout
-    final logoutBtn = find.text('Log Out');
-    await tester.ensureVisible(logoutBtn);
-    await tester.tap(logoutBtn);
-    await tester.pumpAndSettle();
-
-    // Verify redirected to Login Screen and backstack is clean
-    expect(find.text('VIGÍA'), findsOneWidget);
-    expect(find.text('Log In'), findsOneWidget);
-
-    // 6. Login again with valid credentials
-    await tester.enterText(find.byType(TextFormField).at(0), 'juand@vigia.co');
-    await tester.enterText(find.byType(TextFormField).at(1), 'Password123');
-    await tester.tap(find.text('Log In'));
-    await tester.pumpAndSettle();
-
-    // Verify landed safely on Dashboard again
-    expect(find.text('VIGÍA Civic Dashboard'), findsOneWidget);
-    expect(find.text('Successfully logged in!'), findsOneWidget);
+    expect(find.text('Ana Gomez'), findsOneWidget);
+    expect(find.text('Log In'), findsNothing);
   });
 }

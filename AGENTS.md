@@ -251,8 +251,8 @@ sl.registerFactory(() => RegisterBloc(sl()));                                   
   profile with the returned id, handling "account created but profile insert failed" in the UseCase, not in the Bloc.
   **Decision (confirmed with the professor): this project follows the course flow.** `SignUpUseCase` creates the Auth account
   and then inserts the `user_profile` row through a `ProfileRepository`. The DB trigger `handle_new_user`, the client-side
-  "self-healing" `upsert` and the multi-table fallback queries are **not** part of the standard: don't add or extend them (see
-  §13 for the migration backlog). Code to copy: `docs/standards/code-templates.md`.
+  "self-healing" `upsert` and the multi-table fallback queries were removed and are **not** part of the standard: do not bring them back (see
+  §13). Working code: `lib/features/auth/domain/usecases/sign_up_usecase.dart`. Generic snippets: `docs/standards/code-templates.md`.
 - `signUp` semantics: `user != null && session != null` → created and signed in; `user != null && session == null` → must
   confirm e-mail first; weak password/invalid e-mail → `AuthException`. Login: `signInWithPassword`; logout: `signOut` (always
   call it, otherwise the Supabase session survives while the app shows the login). Current user: `auth.currentUser`.
@@ -332,19 +332,17 @@ Reference implementations if present next to this repo: `../262App4` (Lab 5 auth
 
 ---
 
-## 13. Known deviations in the current code (backlog — do not fix unasked, do not copy)
+## 13. Backlog and known limitations
 
-Audit of branch `feature/frontend-design-guidelines` against the standards above:
-1. `AuthCubit` is a **Cubit** (events missing); the standard is a `Bloc` with events (`LoginSubmitted`, `RegisterSubmitted`, `LogoutRequested`, `AuthStarted`) and a status/`copyWith` or sealed-state strategy. It also carries duplicated Spanish/English parameters (`nombreCompleto`, `ciudadId`) — remove when migrating.
-2. `RegisterScreen` takes a `GetCitiesUseCase` and calls it directly → the UI talks to a use case (and has a private `_OfflineFallbackGetCitiesUseCase`). A `Bloc` should load the cities and the screen should only read state. `register_screen.dart` (≈600 lines) also imports `geolocator` directly: move GPS to a data source + use case (`DetectNearestCityUseCase`) behind a domain type.
-3. `main.dart` builds `AuthCubit` by hand with `MockAuthRepository` fallbacks and a single root `BlocProvider`; `injection_container.dart` contains `MockAuthRepository`. Standard: `sl<XBloc>()` in `BlocProvider.create` (route-level where possible), mocks only in `test/`.
-4. `DashboardScreen` reads route `arguments` maps (`nombre`, `ciudad`) and hard-coded defaults as fallback data; it should render only the Bloc's state.
-5. Leftover one-line `export` shims that nothing imports: `lib/features/auth/presentation/**` (the old folder name), `data/models/usuario_model.dart`, `domain/entities/usuario.dart`. Safe to delete; don't create new shims.
-6. `Authenticated.usuario` "backward-compatible alias", Spanish getters on `User` (`nombreCompleto`, …), `typedef Usuario/UsuarioModel`, and the duplicated Spanish `signUp` metadata keys (`nombre_completo`, `ciudad_nombre`) are dead weight in an English codebase.
-7. **Registration doesn't follow the course flow (decided: migrate).** Profile creation is done by the trigger `handle_new_user` (`data model/schema.sql`) with a fallback that fabricates a profile in `AuthRemoteDataSource.signUp`. Target: `SignUpUseCase(AuthRepository, ProfileRepository)` → `signUp` then `createProfile`; remove the trigger (or the two would collide on `id_user`).
-8. `AuthRemoteDataSource._fetchUserProfile` is a five-step fallback chain (`user_profile` ×3, legacy Spanish `usuario`, client `upsert`) wrapped in seven empty `catch (_)`: real errors (RLS, network) end as "profile not found". Target: one query, catch `PostgrestException`/`AuthException`, rethrow `Exception('clear message')`; `getProfile` throws if the row is missing. Drop all legacy Spanish table/key support (`usuario`, `ciudad_cobertura`, `rango_civico`).
-9. `UserModel` reads `residence_city_id`, a column that doesn't exist in `user_profile` (the table has `reference_city`/`last_city`), so `residenceCityId` is always the default `1`. Align the model, the profile insert and `schema.sql`.
-10. Business rules live in `RegisterScreen` (password complexity, "at least two words", note `split(' ')` accepts double spaces). Move them to the use case and keep only trivial checks in the form.
-11. `City` is a `typedef` of `DaneCity` defined in `core/constants/dane_cities.dart` with Spanish fields; make a real domain entity and map it in the data source.
-12. `pubspec.yaml` requires Dart `^3.13.4`; the professor's reference app uses `^3.12.2`. Machines on Flutter 3.44 can't run `pub get` — align the constraint with the team's installed SDK.
-13. `.antigravity/rules/*.md` are web-centric (Tailwind/ARIA/Three.js). §6b translates their intent; rewriting them for Flutter would be a worthwhile cleanup.
+Status after the `feature/auth-course-alignment` branch (audit of Juan David's Sprint 1 code against this file).
+
+**Resolved there** (kept here so nobody reintroduces them): the Cubit became Blocs with events; screens no longer touch use cases, `geolocator` or the DANE catalog; route arguments and Spanish aliases are gone; registration follows the course flow (`SignUpUseCase`: Auth account, then `user_profile` row; the `handle_new_user` trigger is removed by `data model/migrations/001_drop_handle_new_user.sql`); the five-step fallback chain and the empty `catch (_)` blocks are gone; `ProfileModel` uses the real columns; business rules live in `PasswordPolicy`/`RegistrationRules`/use cases; mocks left production DI; the Dart SDK constraint is `^3.12.2`.
+
+**Still open**
+1. **Design tokens.** About a dozen hex colors are written directly in screens and `PasswordStrengthChips` (e.g. `Color(0xFFF1F5F9)`, the dashboard's greens and red) instead of coming from `AppTheme`. Part of the redesign phase.
+2. **Mixed UI language.** The UI is English but has Spanish strings (the password chips "6+ caracteres", "Mayúscula (A-Z)"…, the "VEEDURÍA VIAL" tag, the "o" divider). Pick one language for the whole UI.
+3. **Account without profile.** If `createProfile` fails after `signUp`, `SignUpUseCase` signs the user out and explains it, but the Auth account remains and the next login fails with "profile not found". A repair path (e.g. a "complete your profile" step) is not implemented.
+4. **City by name.** The profile stores the city **name** (`reference_city`), as `schema.sql` defines; there is no city id column. A schema change would be needed if features must join on the city.
+5. **`CityRepositoryImpl`** merges the remote `coverage_city` rows with the embedded catalog to add the conurbation calibration. If the table later stores the radii, the local copy becomes only a fallback.
+6. **Network errors** outside Auth/PostgREST (e.g. the HTTP client failing) reach the Bloc as raw exceptions; only `AuthRetryableFetchException` is translated.
+7. `.antigravity/rules/*.md` are web-centric (Tailwind/ARIA/Three.js). §6b translates their intent; rewriting them for Flutter would be a worthwhile cleanup.

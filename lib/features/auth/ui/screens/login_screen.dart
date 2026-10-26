@@ -5,8 +5,11 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/civic_background.dart';
 import '../../../../core/widgets/civic_brand_header.dart';
 import '../../../../core/widgets/liquid_glass_button.dart';
-import '../cubit/auth_cubit.dart';
-import '../cubit/auth_state.dart';
+import '../../domain/validators/password_policy.dart';
+import '../../domain/validators/registration_rules.dart';
+import '../bloc/login_bloc.dart';
+import '../bloc/login_event.dart';
+import '../bloc/login_state.dart';
 
 /// Premium light Login Screen — Apple-inspired Liquid Glass design.
 class LoginScreen extends StatefulWidget {
@@ -38,30 +41,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin() {
     if (_formKey.currentState?.validate() ?? false) {
-      context.read<AuthCubit>().login(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
+      context.read<LoginBloc>().add(
+            LoginSubmitted(
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+            ),
           );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AuthCubit, AuthState>(
+    return BlocConsumer<LoginBloc, LoginState>(
+      listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
-        if (state is Authenticated) {
-          Navigator.pushReplacementNamed(
+        if (state.status == LoginStatus.success) {
+          Navigator.pushNamedAndRemoveUntil(
             context,
             AppRoutes.dashboard,
-            arguments: {
-              'fullName': state.user.fullName,
-              'email': state.user.email,
-              'cityName': state.user.cityName ?? 'Cali (Valle del Cauca)',
-              'nombre': state.user.fullName,
-              'ciudad': state.user.cityName ?? 'Cali (Valle del Cauca)',
-            },
+            (route) => false,
           );
-        } else if (state is AuthError) {
+        } else if (state.status == LoginStatus.failure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Row(
@@ -70,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      state.message,
+                      state.errorMessage ?? 'Could not log in. Please try again.',
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                     ),
                   ),
@@ -85,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       },
       builder: (context, state) {
-        final isLoading = state is AuthLoading;
+        final isLoading = state.status == LoginStatus.loading;
 
         return Scaffold(
           body: CivicBackground(
@@ -122,15 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               hintText: 'example@email.com',
                               prefixIcon: Icon(Icons.email_outlined, size: 20, color: AppTheme.slate500),
                             ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Please enter your email address';
-                              }
-                              if (!value.contains('@') || !value.contains('.')) {
-                                return 'Please enter a valid email address';
-                              }
-                              return null;
-                            },
+                            validator: RegistrationRules.validateEmail,
                           ),
                           const SizedBox(height: 12),
 
@@ -169,8 +161,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter your password';
                               }
-                              if (value.length < 6) {
-                                return 'Password must be at least 6 characters';
+                              if (value.length < PasswordPolicy.minLength) {
+                                return 'Password must be at least ${PasswordPolicy.minLength} characters';
                               }
                               return null;
                             },
@@ -211,12 +203,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                 "Don't have a civic account? ",
                                 style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
                               ),
-                              GestureDetector(
-                                onTap: isLoading
+                              TextButton(
+                                onPressed: isLoading
                                     ? null
                                     : () {
                                         Navigator.pushNamed(context, AppRoutes.register);
                                       },
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
                                 child: const Text(
                                   'Register here',
                                   style: TextStyle(
