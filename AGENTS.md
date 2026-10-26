@@ -249,8 +249,10 @@ sl.registerFactory(() => RegisterBloc(sl()));                                   
 - A user lives in **two places**: Auth (`auth.users`, credentials) and our `user_profile` table; the profile's key
   (`id_user` here) is the Auth UID. The course teaches registration as two steps owned by one UseCase: `signUp` → insert
   profile with the returned id, handling "account created but profile insert failed" in the UseCase, not in the Bloc.
-  **This repo currently creates the profile row with the DB trigger `handle_new_user`** (signUp metadata) plus a recovery
-  fallback in `AuthRemoteDataSource`. Don't change that silently; see `docs/standards/code-templates.md` for both variants.
+  **Decision (confirmed with the professor): this project follows the course flow.** `SignUpUseCase` creates the Auth account
+  and then inserts the `user_profile` row through a `ProfileRepository`. The DB trigger `handle_new_user`, the client-side
+  "self-healing" `upsert` and the multi-table fallback queries are **not** part of the standard: don't add or extend them (see
+  §13 for the migration backlog). Code to copy: `docs/standards/code-templates.md`.
 - `signUp` semantics: `user != null && session != null` → created and signed in; `user != null && session == null` → must
   confirm e-mail first; weak password/invalid e-mail → `AuthException`. Login: `signInWithPassword`; logout: `signOut` (always
   call it, otherwise the Supabase session survives while the app shows the login). Current user: `auth.currentUser`.
@@ -338,5 +340,11 @@ Audit of branch `feature/frontend-design-guidelines` against the standards above
 3. `main.dart` builds `AuthCubit` by hand with `MockAuthRepository` fallbacks and a single root `BlocProvider`; `injection_container.dart` contains `MockAuthRepository`. Standard: `sl<XBloc>()` in `BlocProvider.create` (route-level where possible), mocks only in `test/`.
 4. `DashboardScreen` reads route `arguments` maps (`nombre`, `ciudad`) and hard-coded defaults as fallback data; it should render only the Bloc's state.
 5. Leftover one-line `export` shims that nothing imports: `lib/features/auth/presentation/**` (the old folder name), `data/models/usuario_model.dart`, `domain/entities/usuario.dart`. Safe to delete; don't create new shims.
-6. `Authenticated.usuario` "backward-compatible alias" and the duplicated Spanish `signUp` metadata keys (`nombre_completo`, `ciudad_nombre`) are dead weight in an English codebase (check the `handle_new_user` trigger before removing the keys).
-7. `.antigravity/rules/*.md` are web-centric (Tailwind/ARIA/Three.js). §6b translates their intent; rewriting them for Flutter would be a worthwhile cleanup.
+6. `Authenticated.usuario` "backward-compatible alias", Spanish getters on `User` (`nombreCompleto`, …), `typedef Usuario/UsuarioModel`, and the duplicated Spanish `signUp` metadata keys (`nombre_completo`, `ciudad_nombre`) are dead weight in an English codebase.
+7. **Registration doesn't follow the course flow (decided: migrate).** Profile creation is done by the trigger `handle_new_user` (`data model/schema.sql`) with a fallback that fabricates a profile in `AuthRemoteDataSource.signUp`. Target: `SignUpUseCase(AuthRepository, ProfileRepository)` → `signUp` then `createProfile`; remove the trigger (or the two would collide on `id_user`).
+8. `AuthRemoteDataSource._fetchUserProfile` is a five-step fallback chain (`user_profile` ×3, legacy Spanish `usuario`, client `upsert`) wrapped in seven empty `catch (_)`: real errors (RLS, network) end as "profile not found". Target: one query, catch `PostgrestException`/`AuthException`, rethrow `Exception('clear message')`; `getProfile` throws if the row is missing. Drop all legacy Spanish table/key support (`usuario`, `ciudad_cobertura`, `rango_civico`).
+9. `UserModel` reads `residence_city_id`, a column that doesn't exist in `user_profile` (the table has `reference_city`/`last_city`), so `residenceCityId` is always the default `1`. Align the model, the profile insert and `schema.sql`.
+10. Business rules live in `RegisterScreen` (password complexity, "at least two words", note `split(' ')` accepts double spaces). Move them to the use case and keep only trivial checks in the form.
+11. `City` is a `typedef` of `DaneCity` defined in `core/constants/dane_cities.dart` with Spanish fields; make a real domain entity and map it in the data source.
+12. `pubspec.yaml` requires Dart `^3.13.4`; the professor's reference app uses `^3.12.2`. Machines on Flutter 3.44 can't run `pub get` — align the constraint with the team's installed SDK.
+13. `.antigravity/rules/*.md` are web-centric (Tailwind/ARIA/Three.js). §6b translates their intent; rewriting them for Flutter would be a worthwhile cleanup.

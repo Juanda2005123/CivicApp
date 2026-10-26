@@ -8,12 +8,11 @@ top of each block only when they teach something. Build in this order: **entity 
 The worked example is the registration flow of Sprint 1 as the course teaches it (Lab 5): one form, **two destinations**
 (Auth + a profile table), so two repositories and one use case that fixes the order.
 
-> **This repo differs in two details — read before copying column names.** (1) The real table is `user_profile` with
-> `id_user`, `id_rank`, `full_name`, `email`, `reference_city`, `last_city`, `experience_points`… (see `data model/schema.sql`);
-> the names in the snippets below (`id`, `residence_city_id`) are illustrative. (2) Today the profile row is created **by the
-> database trigger `handle_new_user`** from the `signUp` metadata, with a self-healing fallback in
-> `AuthRemoteDataSource`, instead of the explicit second insert shown here. Keep that behaviour unless the user decides to move
-> to the course's explicit two-step flow; in that case the use case owns the order and the trigger must go.
+> **Decision: this is the flow the project follows** (confirmed with the professor) — the use case owns the order, no DB trigger.
+> The current code still uses the trigger `handle_new_user` + fallbacks; migrating it is backlog item 7 in `AGENTS.md` §13.
+> **Read before copying column names:** the real table is `user_profile` with `id_user`, `id_rank`, `full_name`, `email`,
+> `reference_city`, `last_city`, `experience_points`… (see `data model/schema.sql`; several are `NOT NULL`, so the insert must set
+> them, e.g. `id_rank: 1`). The names in the snippets below (`id`, `residence_city_id`) are illustrative — use the real ones.
 
 ---
 
