@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/core/constants/app_routes.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
+import 'package:vigia_app/core/theme/theme_cubit.dart';
 import 'package:vigia_app/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:vigia_app/features/auth/ui/bloc/login_bloc.dart';
 import 'package:vigia_app/features/auth/ui/screens/login_screen.dart';
@@ -10,8 +11,11 @@ import 'package:vigia_app/features/auth/ui/screens/login_screen.dart';
 import '../support/fakes.dart';
 
 Widget createLoginTestWidget(LoginBloc bloc) {
-  return BlocProvider<LoginBloc>.value(
-    value: bloc,
+  return MultiBlocProvider(
+    providers: [
+      BlocProvider<ThemeCubit>(create: (_) => ThemeCubit()),
+      BlocProvider<LoginBloc>.value(value: bloc),
+    ],
     child: MaterialApp(
       theme: AppTheme.light,
       home: const LoginScreen(),

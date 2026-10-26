@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
+import 'package:vigia_app/core/theme/theme_cubit.dart';
+import 'package:vigia_app/core/widgets/theme_toggle_button.dart';
 import 'package:vigia_app/core/widgets/app_notice.dart';
 import 'package:vigia_app/core/widgets/app_status_chip.dart';
 import 'package:vigia_app/core/widgets/app_text_field.dart';
@@ -145,6 +148,36 @@ void main() {
       await tester.enterText(find.byType(TextField), 'ana@correo.com');
 
       expect(formKey.currentState!.validate(), isTrue);
+    });
+  });
+
+  group('ThemeToggleButton', () {
+    testWidgets('switches the whole app between light and dark', (tester) async {
+      await tester.pumpWidget(BlocProvider(
+        create: (_) => ThemeCubit(),
+        child: BlocBuilder<ThemeCubit, ThemeMode>(
+          builder: (context, mode) => MaterialApp(
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: mode,
+            home: const Scaffold(body: Center(child: ThemeToggleButton())),
+          ),
+        ),
+      ));
+      final context = tester.element(find.byType(ThemeToggleButton));
+      expect(Theme.of(context).brightness, Brightness.light);
+      expect(find.byTooltip('Cambiar a modo oscuro'), findsOneWidget);
+
+      await tester.tap(find.byType(ThemeToggleButton));
+      await tester.pumpAndSettle();
+
+      expect(Theme.of(context).brightness, Brightness.dark);
+      expect(find.byTooltip('Cambiar a modo claro'), findsOneWidget);
+
+      await tester.tap(find.byType(ThemeToggleButton));
+      await tester.pumpAndSettle();
+
+      expect(Theme.of(context).brightness, Brightness.light);
     });
   });
 

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/core/constants/app_routes.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
+import 'package:vigia_app/core/theme/theme_cubit.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/features/auth/domain/entities/city.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
@@ -35,8 +36,11 @@ const _pasto = City(
 );
 
 Widget createRegisterTestWidget(RegisterBloc bloc) {
-  return BlocProvider<RegisterBloc>.value(
-    value: bloc..add(RegisterStarted()),
+  return MultiBlocProvider(
+    providers: [
+      BlocProvider<ThemeCubit>(create: (_) => ThemeCubit()),
+      BlocProvider<RegisterBloc>.value(value: bloc..add(RegisterStarted())),
+    ],
     child: MaterialApp(
       theme: AppTheme.light,
       home: const RegisterScreen(),

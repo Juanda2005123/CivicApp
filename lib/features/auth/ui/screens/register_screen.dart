@@ -9,6 +9,7 @@ import '../../../../core/widgets/app_notice.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/dotted_spinner.dart';
 import '../../../../core/widgets/primary_button.dart';
+import '../../../../core/widgets/theme_toggle_button.dart';
 import '../../domain/validators/password_policy.dart';
 import '../../domain/validators/registration_rules.dart';
 import '../bloc/register_bloc.dart';
@@ -106,6 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               icon: const Icon(Icons.arrow_back_ios_new, size: AppSizes.icon),
               onPressed: isLoading ? null : () => Navigator.pop(context),
             ),
+            actions: const [ThemeToggleButton()],
           ),
           body: SafeArea(
             child: Center(

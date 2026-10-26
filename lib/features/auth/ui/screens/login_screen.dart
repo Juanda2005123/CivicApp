@@ -9,6 +9,7 @@ import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/brand_backdrop.dart';
 import '../../../../core/widgets/brand_mark.dart';
 import '../../../../core/widgets/primary_button.dart';
+import '../../../../core/widgets/theme_toggle_button.dart';
 import '../../domain/validators/password_policy.dart';
 import '../../domain/validators/registration_rules.dart';
 import '../bloc/login_bloc.dart';
@@ -72,7 +73,16 @@ class _LoginScreenState extends State<LoginScreen> {
         return Scaffold(
           body: BrandBackdrop(
             child: SafeArea(
-              child: Center(
+              child: Stack(
+                children: [
+                  const Align(
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSpacing.sm),
+                      child: ThemeToggleButton(),
+                    ),
+                  ),
+                  Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(AppSpacing.screen),
                   child: ConstrainedBox(
@@ -167,6 +177,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+                  ),
+                ],
               ),
             ),
           ),

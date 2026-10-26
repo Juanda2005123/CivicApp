@@ -276,6 +276,8 @@ ColorScheme _lightScheme() => const ColorScheme(
 
 `ThemeData` incluye: `FilledButtonTheme` (alto 52, radio 8), `OutlinedButtonTheme`, `TextButtonTheme`, `InputDecorationTheme` (relleno `surfaceContainerLow`, borde 1,5 px, foco 2 px, error 2 px), `CardTheme` (plano con borde), `ChipThemeData`, `SnackBarThemeData` (flotante, tinta), `AppBarTheme` (sin elevación, Fraunces 20), `ProgressIndicatorThemeData`, `ThemeMode.system`.
 
+**Modo claro/oscuro.** La app arranca siguiendo el tema del sistema. El widget compartido `ThemeToggleButton` (`core/widgets/`) cambia al tema opuesto del que se ve en ese momento; su ícono muestra el tema al que se pasa (luna → oscuro, sol → claro) y su tooltip lo dice con texto ("Cambiar a modo oscuro" / "Cambiar a modo claro"). Va en la esquina superior derecha del login y en la barra superior de registro y perfil, y toda pantalla nueva con barra superior debe incluirlo. El estado vive en `ThemeCubit` (`core/theme/`, un `Cubit<ThemeMode>` provisto sobre `MaterialApp`). La elección dura mientras la app está abierta; guardarla entre sesiones requiere una dependencia de almacenamiento local (p. ej. `shared_preferences`) y queda pendiente de aprobación.
+
 **Dependencias nuevas:** ninguna obligatoria. `flutter_svg` (si se usa el SVG del sello en lugar de PNG) y, como herramientas de desarrollo, `flutter_launcher_icons` y `flutter_native_splash` para generar el ícono y el splash nativos. Se justifica cada una al implementarla.
 
 **Se eliminan:** `CivicBackground`, `LiquidGlassButton`, `CivicCard`, `CivicBrandHeader` (sustituidos por `BrandMark`, `PrimaryButton`, tarjetas con tema) y `assets/images/civic_road_hero.jpg`.

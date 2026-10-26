@@ -5,7 +5,7 @@
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture-teal)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 [![State Management](https://img.shields.io/badge/State%20Management-BLoC-blueviolet)](https://bloclibrary.dev/)
 [![Backend](https://img.shields.io/badge/Backend-Supabase%20%2F%20PostgreSQL-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
-[![Tests](https://img.shields.io/badge/Tests-132%20Passed%20(100%25)-success)](test/)
+[![Tests](https://img.shields.io/badge/Tests-135%20Passed%20(100%25)-success)](test/)
 [![License](https://img.shields.io/badge/License-Academic%20%2F%20MIT-lightgrey)]()
 
 > **VIGÍA** is a cross-platform mobile application designed for civic oversight and participatory road audit. It empowers citizens to detect, report, and monitor potholes and deteriorating road infrastructure across Colombian urban territories, fostering government transparency and community action.
@@ -247,7 +247,7 @@ VIGÍA has a single kind of user (the citizen), so there is one flow to demonstr
 
 ## Running the Test Suite
 
-The codebase includes an automated test suite with **132 tests** covering all Clean Architecture layers without requiring an active network connection or emulator:
+The codebase includes an automated test suite with **135 tests** covering all Clean Architecture layers without requiring an active network connection or emulator:
 
 ### 1. Run All Tests
 ```powershell
@@ -255,7 +255,7 @@ flutter test
 ```
 *Expected Output:*
 ```text
-00:15 +132: All tests passed!
+00:15 +135: All tests passed!
 ```
 
 ### 2. Run with Detailed Step-by-Step Output

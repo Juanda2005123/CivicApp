@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/core/constants/app_routes.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
+import 'package:vigia_app/core/theme/theme_cubit.dart';
 import 'package:vigia_app/core/widgets/dotted_spinner.dart';
 import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
 import 'package:vigia_app/features/auth/domain/entities/profile.dart';
@@ -17,8 +18,11 @@ import 'package:vigia_app/features/dashboard/ui/screens/dashboard_screen.dart';
 import '../support/fakes.dart';
 
 Widget createDashboardTestWidget(ProfileBloc bloc) {
-  return BlocProvider<ProfileBloc>.value(
-    value: bloc..add(ProfileStarted()),
+  return MultiBlocProvider(
+    providers: [
+      BlocProvider<ThemeCubit>(create: (_) => ThemeCubit()),
+      BlocProvider<ProfileBloc>.value(value: bloc..add(ProfileStarted())),
+    ],
     child: MaterialApp(
       theme: AppTheme.light,
       home: const DashboardScreen(),
