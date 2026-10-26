@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:geolocator/geolocator.dart';
 import '../../../../core/constants/app_routes.dart';
-import '../../../../core/constants/dane_cities.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/civic_background.dart';
 import '../../../../core/widgets/liquid_glass_button.dart';
-import '../../domain/entities/city.dart';
-import '../../domain/repositories/city_repository.dart';
-import '../../domain/usecases/get_cities_usecase.dart';
-import '../cubit/auth_cubit.dart';
-import '../cubit/auth_state.dart';
+import '../../domain/validators/password_policy.dart';
+import '../../domain/validators/registration_rules.dart';
+import '../bloc/register_bloc.dart';
+import '../bloc/register_event.dart';
+import '../bloc/register_state.dart';
+import '../widgets/password_strength_chips.dart';
 
 /// Premium light Register Screen — Apple-inspired frosted glass design.
-/// Pure Clean Architecture: consumes domain GetCitiesUseCase and AuthCubit.
+/// It only draws the [RegisterState] and turns user input into events.
 class RegisterScreen extends StatefulWidget {
-  final GetCitiesUseCase? getCitiesUseCase;
-
-  const RegisterScreen({super.key, this.getCitiesUseCase});
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -34,174 +31,62 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  // Live password criteria
-  bool _hasMinLength = false;
-  bool _hasLowercase = false;
-  bool _hasUppercase = false;
-  bool _hasNumber = false;
-
-  // City catalog (Domain layer)
-  late final GetCitiesUseCase _getCitiesUseCase;
-  List<City> _cities = DaneCitiesCatalog.cities;
-  int? _selectedCityId;
-
-  // GPS state
-  bool _isDetectingGps = false;
-  String? _gpsMessage;
-  bool _gpsSuccess = false;
+  // Live password checklist (the rules come from the domain's PasswordPolicy)
+  PasswordChecks _passwordChecks = PasswordPolicy.evaluate('');
 
   @override
   void initState() {
     super.initState();
     _fullNameController = TextEditingController();
     _emailController = TextEditingController();
-    _passwordController = TextEditingController()..addListener(_updatePasswordStrength);
+    _passwordController = TextEditingController()..addListener(_updatePasswordChecks);
     _confirmPasswordController = TextEditingController();
-
-    // Pure Dependency Injection: use injected use case or offline fallback
-    _getCitiesUseCase = widget.getCitiesUseCase ?? const _OfflineFallbackGetCitiesUseCase();
-
-    _loadCities();
   }
 
-  void _updatePasswordStrength() {
-    final text = _passwordController.text;
-    setState(() {
-      _hasMinLength = text.length >= 6;
-      _hasLowercase = RegExp(r'[a-z]').hasMatch(text);
-      _hasUppercase = RegExp(r'[A-Z]').hasMatch(text);
-      _hasNumber = RegExp(r'[0-9]').hasMatch(text);
-    });
-  }
-
-  Future<void> _loadCities() async {
-    try {
-      final list = await _getCitiesUseCase();
-      if (mounted && list.isNotEmpty) setState(() => _cities = list);
-    } catch (_) {
-      // Graceful fallback to canonical catalog
-    }
+  void _updatePasswordChecks() {
+    setState(() => _passwordChecks = PasswordPolicy.evaluate(_passwordController.text));
   }
 
   @override
   void dispose() {
     _fullNameController.dispose();
     _emailController.dispose();
-    _passwordController.removeListener(_updatePasswordStrength);
+    _passwordController.removeListener(_updatePasswordChecks);
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _detectNearestCity() async {
-    setState(() {
-      _isDetectingGps = true;
-      _gpsMessage = null;
-    });
-    try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        setState(() {
-          _isDetectingGps = false;
-          _gpsSuccess = false;
-          _gpsMessage = 'Location services are disabled. You can select your city from the list.';
-        });
-        return;
-      }
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          setState(() {
-            _isDetectingGps = false;
-            _gpsSuccess = false;
-            _gpsMessage = 'Permission denied. Please select your city manually from the catalog.';
-          });
-          return;
-        }
-      }
-      if (permission == LocationPermission.deniedForever) {
-        setState(() {
-          _isDetectingGps = false;
-          _gpsSuccess = false;
-          _gpsMessage = 'Permission permanently denied. Please use the city selector.';
-        });
-        return;
-      }
-      Position? position = await Geolocator.getLastKnownPosition();
-      position ??= await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.low,
-          timeLimit: Duration(seconds: 4),
-        ),
-      );
-      final closest = DaneCitiesCatalog.findClosestCity(position.latitude, position.longitude);
-      setState(() {
-        _isDetectingGps = false;
-        _selectedCityId = closest.id;
-        _gpsSuccess = true;
-        _gpsMessage = 'Detected nearest city: ${closest.displayName}';
-      });
-    } catch (_) {
-      setState(() {
-        _isDetectingGps = false;
-        _gpsSuccess = false;
-        _gpsMessage = 'Unable to acquire GPS coordinates. Please select your city from the list.';
-      });
-    }
-  }
-
   void _handleRegister() {
     if (_formKey.currentState?.validate() ?? false) {
-      if (_selectedCityId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Please select your residence city.'),
-            backgroundColor: AppTheme.dark900,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-        return;
-      }
-      final selectedCity = _cities.firstWhere(
-        (c) => c.id == _selectedCityId,
-        orElse: () => _cities.first,
-      );
-      context.read<AuthCubit>().register(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-            fullName: _fullNameController.text.trim(),
-            cityId: _selectedCityId!,
-            cityName: selectedCity.name,
+      context.read<RegisterBloc>().add(
+            RegisterSubmitted(
+              fullName: _fullNameController.text.trim(),
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+            ),
           );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AuthCubit, AuthState>(
+    return BlocConsumer<RegisterBloc, RegisterState>(
+      listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
-        if (state is Authenticated) {
-          final selectedCity = _cities.firstWhere(
-            (c) => c.id == _selectedCityId,
-            orElse: () => _cities.first,
-          );
-          Navigator.pushReplacementNamed(
+        if (state.status == RegisterStatus.success) {
+          Navigator.pushNamedAndRemoveUntil(
             context,
             AppRoutes.dashboard,
-            arguments: {
-              'fullName': state.user.fullName,
-              'email': state.user.email,
-              'cityName': state.user.cityName ?? selectedCity.displayName,
-              'nombre': state.user.fullName,
-              'ciudad': state.user.cityName ?? selectedCity.displayName,
-            },
+            (route) => false,
           );
-        } else if (state is AuthError) {
+        } else if (state.status == RegisterStatus.failure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.message, style: const TextStyle(color: Colors.white)),
+              content: Text(
+                state.errorMessage ?? 'Could not complete the registration.',
+                style: const TextStyle(color: Colors.white),
+              ),
               backgroundColor: AppTheme.dark900,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -210,7 +95,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
       },
       builder: (context, state) {
-        final isLoading = state is AuthLoading;
+        final isLoading = state.status == RegisterStatus.loading;
+        final isDetectingGps = state.gpsStatus == GpsStatus.detecting;
+        final gpsSuccess = state.gpsStatus == GpsStatus.success;
 
         return Scaffold(
           extendBodyBehindAppBar: true,
@@ -309,15 +196,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             hintText: 'e.g. Juan David Quintero',
                             prefixIcon: Icon(Icons.person_outline, size: 20, color: AppTheme.slate500),
                           ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter your full name';
-                            }
-                            if (value.trim().split(' ').length < 2) {
-                              return 'Please enter at least a first and last name';
-                            }
-                            return null;
-                          },
+                          validator: RegistrationRules.validateFullName,
                         ),
                         const SizedBox(height: 14),
 
@@ -337,22 +216,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             hintText: 'citizen@example.com',
                             prefixIcon: Icon(Icons.email_outlined, size: 20, color: AppTheme.slate500),
                           ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter an email address';
-                            }
-                            if (!value.contains('@') || !value.contains('.')) {
-                              return 'Please enter a valid email address';
-                            }
-                            return null;
-                          },
+                          validator: RegistrationRules.validateEmail,
                         ),
                         const SizedBox(height: 14),
 
                         // City Selector Dropdown — exact text match: 'Residence City (DANE Coverage)'
                         DropdownButtonFormField<int>(
-                          key: ValueKey(_selectedCityId),
-                          initialValue: _selectedCityId,
+                          key: ValueKey(state.selectedCityId),
+                          initialValue: state.selectedCityId,
                           dropdownColor: Colors.white,
                           style: const TextStyle(
                             color: AppTheme.textPrimary,
@@ -365,7 +236,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           hint: const Text('Select your city', style: TextStyle(color: AppTheme.slate400)),
                           isExpanded: true,
-                          items: _cities.map((city) {
+                          items: state.cities.map((city) {
                             return DropdownMenuItem<int>(
                               value: city.id,
                               child: Text(
@@ -378,7 +249,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             );
                           }).toList(),
-                          onChanged: isLoading ? null : (value) => setState(() => _selectedCityId = value),
+                          onChanged: isLoading
+                              ? null
+                              : (value) {
+                                  if (value != null) {
+                                    context.read<RegisterBloc>().add(CitySelected(value));
+                                  }
+                                },
                           validator: (value) => value == null ? 'Please select a coverage city' : null,
                         ),
                         const SizedBox(height: 10),
@@ -387,45 +264,47 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         SizedBox(
                           height: 42,
                           child: OutlinedButton.icon(
-                            onPressed: (isLoading || _isDetectingGps) ? null : _detectNearestCity,
+                            onPressed: (isLoading || isDetectingGps)
+                                ? null
+                                : () => context.read<RegisterBloc>().add(NearestCityRequested()),
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(
-                                color: _gpsSuccess
+                                color: gpsSuccess
                                     ? AppTheme.statusSuccessBorder
                                     : AppTheme.borderLight,
                               ),
-                              backgroundColor: _gpsSuccess
+                              backgroundColor: gpsSuccess
                                     ? AppTheme.statusSuccessBg
                                     : Colors.white,
                             ),
-                            icon: _isDetectingGps
+                            icon: isDetectingGps
                                 ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                                 : Icon(
-                                    _gpsSuccess ? Icons.check_circle_outline : Icons.my_location,
+                                    gpsSuccess ? Icons.check_circle_outline : Icons.my_location,
                                     size: 16,
-                                    color: _gpsSuccess ? AppTheme.statusSuccess : AppTheme.accent,
+                                    color: gpsSuccess ? AppTheme.statusSuccess : AppTheme.accent,
                                   ),
                             label: Text(
-                              _isDetectingGps ? 'Detecting location...' : 'Detect nearest city via GPS',
+                              isDetectingGps ? 'Detecting location...' : 'Detect nearest city via GPS',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: _gpsSuccess ? AppTheme.statusSuccess : AppTheme.accent,
+                                color: gpsSuccess ? AppTheme.statusSuccess : AppTheme.accent,
                               ),
                             ),
                           ),
                         ),
-                        if (_gpsMessage != null) ...[
+                        if (state.gpsMessage != null) ...[
                           const SizedBox(height: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
-                              color: _gpsSuccess
+                              color: gpsSuccess
                                   ? AppTheme.statusSuccessBg
                                   : AppTheme.statusErrorBg,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: _gpsSuccess
+                                color: gpsSuccess
                                     ? AppTheme.statusSuccessBorder
                                     : AppTheme.statusErrorBorder,
                               ),
@@ -433,18 +312,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: Row(
                               children: [
                                 Icon(
-                                  _gpsSuccess ? Icons.check_circle_outline : Icons.info_outline,
+                                  gpsSuccess ? Icons.check_circle_outline : Icons.info_outline,
                                   size: 14,
-                                  color: _gpsSuccess ? AppTheme.statusSuccess : AppTheme.statusError,
+                                  color: gpsSuccess ? AppTheme.statusSuccess : AppTheme.statusError,
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    _gpsMessage!,
+                                    state.gpsMessage!,
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
-                                      color: _gpsSuccess ? AppTheme.statusSuccess : AppTheme.statusError,
+                                      color: gpsSuccess ? AppTheme.statusSuccess : AppTheme.statusError,
                                     ),
                                   ),
                                 ),
@@ -478,28 +357,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                             ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) return 'Please enter a password';
-                            if (value.length < 6) return 'Must contain at least 6 characters';
-                            if (!RegExp(r'[a-z]').hasMatch(value)) return 'Must contain at least one lowercase letter';
-                            if (!RegExp(r'[A-Z]').hasMatch(value)) return 'Must contain at least one uppercase letter';
-                            if (!RegExp(r'[0-9]').hasMatch(value)) return 'Must contain at least one number';
-                            return null;
-                          },
+                          validator: PasswordPolicy.validate,
                         ),
                         const SizedBox(height: 8),
 
                         // Live password chips
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 4,
-                          children: [
-                            _buildChip('6+ caracteres', _hasMinLength),
-                            _buildChip('Mayúscula (A-Z)', _hasUppercase),
-                            _buildChip('Minúscula (a-z)', _hasLowercase),
-                            _buildChip('Número (0-9)', _hasNumber),
-                          ],
-                        ),
+                        PasswordStrengthChips(checks: _passwordChecks),
                         const SizedBox(height: 14),
 
                         // Confirm Password
@@ -549,8 +412,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               'Already have an account? ',
                               style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
                             ),
-                            GestureDetector(
-                              onTap: isLoading ? null : () => Navigator.pop(context),
+                            TextButton(
+                              onPressed: isLoading ? null : () => Navigator.pop(context),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
                               child: const Text(
                                 'Log In',
                                 style: TextStyle(
@@ -572,54 +440,5 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
       },
     );
-  }
-
-  Widget _buildChip(String label, bool satisfied) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: satisfied
-            ? AppTheme.statusSuccessBg
-            : const Color(0xFFF1F5F9), // Slate 100
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: satisfied
-              ? AppTheme.statusSuccessBorder
-              : const Color(0xFFE2E8F0), // Slate 200
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            satisfied ? Icons.check_circle : Icons.circle_outlined,
-            size: 11,
-            color: satisfied ? AppTheme.statusSuccess : AppTheme.slate400,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: satisfied ? FontWeight.w600 : FontWeight.normal,
-              color: satisfied ? AppTheme.statusSuccess : AppTheme.slate600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Fallback Use Case implementation when running in standalone unit/widget tests without DI
-class _OfflineFallbackGetCitiesUseCase implements GetCitiesUseCase {
-  const _OfflineFallbackGetCitiesUseCase();
-
-  @override
-  CityRepository get repository => throw UnimplementedError();
-
-  @override
-  Future<List<City>> call() async {
-    return DaneCitiesCatalog.cities;
   }
 }

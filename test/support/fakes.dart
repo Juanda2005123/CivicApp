@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
 import 'package:vigia_app/features/auth/domain/entities/city.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
@@ -48,6 +50,9 @@ class FakeProfileRepository implements ProfileRepository {
   Exception? createError;
   Exception? getError;
 
+  /// When set, getProfile waits for it: lets a test observe the loading state.
+  Completer<void>? gate;
+
   FakeProfileRepository({List<String>? calls}) : calls = calls ?? [];
 
   @override
@@ -60,6 +65,7 @@ class FakeProfileRepository implements ProfileRepository {
   @override
   Future<Profile> getProfile(String id) async {
     calls.add('profile.get');
+    if (gate != null) await gate!.future;
     if (getError != null) throw getError!;
     final profile = stored[id];
     if (profile == null) throw Exception('Civic profile not found');

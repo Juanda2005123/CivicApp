@@ -1,47 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/core/constants/app_routes.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
-import 'package:vigia_app/features/auth/domain/entities/user.dart';
-import 'package:vigia_app/features/auth/domain/repositories/auth_repository.dart';
-import 'package:vigia_app/features/auth/domain/usecases/get_current_user_usecase.dart';
-import 'package:vigia_app/features/auth/domain/usecases/login_usecase.dart';
-import 'package:vigia_app/features/auth/domain/usecases/logout_usecase.dart';
-import 'package:vigia_app/features/auth/domain/usecases/register_usecase.dart';
-import 'package:vigia_app/features/auth/ui/cubit/auth_cubit.dart';
-import 'package:vigia_app/features/auth/ui/cubit/auth_state.dart';
+import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
+import 'package:vigia_app/features/auth/domain/entities/profile.dart';
+import 'package:vigia_app/features/auth/domain/usecases/get_current_profile_usecase.dart';
+import 'package:vigia_app/features/auth/domain/usecases/sign_out_usecase.dart';
+import 'package:vigia_app/features/dashboard/ui/bloc/profile_bloc.dart';
+import 'package:vigia_app/features/dashboard/ui/bloc/profile_event.dart';
 import 'package:vigia_app/features/dashboard/ui/screens/dashboard_screen.dart';
 
-class _FakeAuthRepository implements AuthRepository {
-  bool logoutCalled = false;
+import '../support/fakes.dart';
 
-  @override
-  Future<User> login({required String email, required String password}) =>
-      throw UnimplementedError();
-
-  @override
-  Future<User> register({
-    required String email,
-    required String password,
-    required String fullName,
-    required int cityId,
-    String? cityName,
-  }) =>
-      throw UnimplementedError();
-
-  @override
-  Future<void> logout() async {
-    logoutCalled = true;
-  }
-
-  @override
-  Future<User?> getCurrentUser() async => null;
-}
-
-Widget createDashboardTestWidget(AuthCubit cubit) {
-  return BlocProvider<AuthCubit>.value(
-    value: cubit,
+Widget createDashboardTestWidget(ProfileBloc bloc) {
+  return BlocProvider<ProfileBloc>.value(
+    value: bloc..add(ProfileStarted()),
     child: MaterialApp(
       theme: AppTheme.lightTheme,
       home: const DashboardScreen(),
@@ -53,39 +29,35 @@ Widget createDashboardTestWidget(AuthCubit cubit) {
 }
 
 void main() {
-  late _FakeAuthRepository repository;
-  late AuthCubit authCubit;
+  late FakeAuthRepository auth;
+  late FakeProfileRepository profiles;
 
-  final testCitizen = const User(
-    id: 'user-777',
+  // Created inside each test: a bloc built in setUp would run its event loop in
+  // the real zone, outside the widget tester's fake async.
+  ProfileBloc newBloc() {
+    final created = ProfileBloc(GetCurrentProfileUseCase(auth, profiles), SignOutUseCase(auth));
+    addTearDown(created.close);
+    return created;
+  }
+
+  const citizen = Profile(
+    id: 'uid-1',
     email: 'juand@vigia.co',
     fullName: 'Juan David Quintero',
-    residenceCityId: 1,
-    cityName: 'Cali (Valle del Cauca)',
-    rankId: 1,
+    cityName: 'Cali',
     rankName: 'Urban Observer',
-    reputationPoints: 0,
   );
 
   setUp(() {
-    repository = _FakeAuthRepository();
-    authCubit = AuthCubit(
-      loginUseCase: LoginUseCase(repository),
-      registerUseCase: RegisterUseCase(repository),
-      logoutUseCase: LogoutUseCase(repository),
-      getCurrentUserUseCase: GetCurrentUserUseCase(repository),
-    );
+    auth = FakeAuthRepository(user: const AuthUser(id: 'uid-1', email: 'juand@vigia.co'));
+    profiles = FakeProfileRepository()..stored['uid-1'] = citizen;
   });
 
-  tearDown(() {
-    authCubit.close();
-  });
+
 
   group('DashboardScreen Widget Tests', () {
-    testWidgets('renders all citizen profile details correctly', (tester) async {
-      authCubit.emit(Authenticated(testCitizen));
-
-      await tester.pumpWidget(createDashboardTestWidget(authCubit));
+    testWidgets('renders all citizen profile details from the bloc state', (tester) async {
+      await tester.pumpWidget(createDashboardTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
       expect(find.text('VIGÍA Civic Dashboard'), findsOneWidget);
@@ -93,23 +65,51 @@ void main() {
       expect(find.text('Civic Profile Summary'), findsOneWidget);
       expect(find.text('Juan David Quintero'), findsOneWidget);
       expect(find.text('juand@vigia.co'), findsOneWidget);
-      expect(find.text('Cali (Valle del Cauca)'), findsOneWidget);
+      expect(find.text('Cali'), findsOneWidget);
       expect(find.text('Urban Observer (Rank 1)'), findsOneWidget);
       expect(find.text('0 pts'), findsOneWidget);
       expect(find.text('Log Out'), findsOneWidget);
     });
 
-    testWidgets('tapping logout button triggers cubit logout and navigates to login', (tester) async {
-      authCubit.emit(Authenticated(testCitizen));
+    testWidgets('shows a progress indicator while the profile loads', (tester) async {
+      final gate = profiles.gate = Completer<void>();
+      await tester.pumpWidget(createDashboardTestWidget(newBloc()));
+      await tester.pump();
 
-      await tester.pumpWidget(createDashboardTestWidget(authCubit));
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('Civic Profile Summary'), findsNothing);
+
+      gate.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('Juan David Quintero'), findsOneWidget);
+    });
+
+    testWidgets('tapping logout ends the session and navigates to login', (tester) async {
+      await tester.pumpWidget(createDashboardTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Log Out'));
       await tester.pumpAndSettle();
 
-      expect(repository.logoutCalled, isTrue);
+      expect(auth.calls, contains('auth.signOut'));
+      expect(auth.currentUser(), isNull);
       expect(find.text('Login Screen Mock'), findsOneWidget);
+    });
+
+    testWidgets('a profile that cannot load shows the message and a retry button', (tester) async {
+      profiles.getError = Exception('Could not load the profile: permission denied');
+      await tester.pumpWidget(createDashboardTestWidget(newBloc()));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Could not load the profile: permission denied'), findsOneWidget);
+
+      profiles.getError = null;
+      await tester.tap(find.text('Try again'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Juan David Quintero'), findsOneWidget);
     });
   });
 }
