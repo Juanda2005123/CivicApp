@@ -3,9 +3,9 @@
 [![Flutter](https://img.shields.io/badge/Flutter-3.13+-02569B?logo=flutter&logoColor=white)](https://flutter.dev/)
 [![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?logo=dart&logoColor=white)](https://dart.dev/)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture-teal)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
-[![State Management](https://img.shields.io/badge/State%20Management-BLoC%20%2F%20Cubit-blueviolet)](https://bloclibrary.dev/)
+[![State Management](https://img.shields.io/badge/State%20Management-BLoC-blueviolet)](https://bloclibrary.dev/)
 [![Backend](https://img.shields.io/badge/Backend-Supabase%20%2F%20PostgreSQL-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
-[![Tests](https://img.shields.io/badge/Tests-42%20Passed%20(100%25)-success)](test/)
+[![Tests](https://img.shields.io/badge/Tests-85%20Passed%20(100%25)-success)](test/)
 [![License](https://img.shields.io/badge/License-Academic%20%2F%20MIT-lightgrey)]()
 
 > **VIGÍA** is a cross-platform mobile application designed for civic oversight and participatory road audit. It empowers citizens to detect, report, and monitor potholes and deteriorating road infrastructure across Colombian urban territories, fostering government transparency and community action.
@@ -19,8 +19,9 @@
 4. [Project Structure](#project-structure)
 5. [Prerequisites & Environment Setup](#prerequisites--environment-setup)
 6. [How to Run the Application](#how-to-run-the-application)
-7. [Running the Test Suite](#running-the-test-suite)
-8. [Commit & Contribution Standards](#commit--contribution-standards)
+7. [Sprint 1 Walkthrough](#sprint-1-walkthrough-registration-login-and-profile-summary)
+8. [Running the Test Suite](#running-the-test-suite)
+9. [Commit & Contribution Standards](#commit--contribution-standards)
 
 ---
 
@@ -36,7 +37,7 @@ The goal of **Sprint 1** is to establish a rock-solid, production-grade foundati
   - Fast GPS-assisted nearest city detection with the **Hierarchical Calibrated Radii Algorithm**.
 - [x] **Citizen Login:**
   - Secure credential validation via Supabase Auth (JWT).
-  - Resilient synchronization with `public.usuario` / PostgreSQL profile schema.
+  - Loads the citizen profile from `public.user_profile` (joined with `civic_rank`) right after the credentials are validated.
   - User-friendly error handling translating raw server codes into clear civic messages.
 - [x] **Civic Profile Summary Dashboard:**
   - Displays authenticated citizen details: Full Name, Email, Residence City, Civic Rank (`Observador - Rank 1`), and Reputation Points (`0 pts`).
@@ -53,7 +54,7 @@ The application strictly implements **Uncle Bob's Clean Architecture** with **In
 ```
        ┌────────────────────────────────────────────────────────┐
        │                   Presentation Layer                   │
-       │     (UI Screens, Widgets, BLoC/Cubit, Sealed States)   │
+       │     (Screens, Widgets, Blocs with status/copyWith state) │
        └───────────────────────────┬────────────────────────────┘
                                    │ depends on
                                    ▼
@@ -73,18 +74,21 @@ The application strictly implements **Uncle Bob's Clean Architecture** with **In
 ### Layer Isolation Rules
 1. **Domain Layer (`lib/features/auth/domain/`):**
    - Pure Dart code. Zero imports from `flutter/`, `supabase_flutter/`, or SQL libraries.
-   - Declares the abstract `AuthRepository` interface contract.
-   - Contains single-responsibility callable Use Cases (`LoginUseCase`, `RegisterUseCase`, `LogoutUseCase`, `GetCurrentUserUseCase`).
+   - Entities (`AuthUser`, `Profile`, `City`, `Coordinates`) and the abstract contracts (`AuthRepository`, `ProfileRepository`, `CityRepository`, `LocationRepository`).
+   - Single-responsibility callable Use Cases (`SignUpUseCase`, `SignInUseCase`, `SignOutUseCase`, `GetCurrentProfileUseCase`, `GetCitiesUseCase`, `DetectNearestCityUseCase`). `SignUpUseCase` fixes the order of the two registration steps: first the Auth account, then the `user_profile` row with the returned id.
+   - `PasswordPolicy` and `RegistrationRules` are the single source of the form rules: the use case enforces them and the screens only reuse them for instant feedback.
 2. **Data Layer (`lib/features/auth/data/`):**
-   - Implements `AuthRepository` via `AuthRepositoryImpl`.
-   - `UsuarioModel` DTO maps PostgreSQL schema columns to pure Domain Entities.
-   - Interacts with Supabase SDK strictly within isolated Remote Data Sources.
-3. **Presentation Layer (`lib/features/auth/presentation/`):**
-   - State management powered by `flutter_bloc` (`AuthCubit`).
-   - Dart 3 `sealed class AuthState` hierarchy (`AuthInitial`, `AuthLoading`, `Authenticated`, `AuthUnauthenticated`, `AuthError`) guaranteeing compile-time pattern matching exhaustiveness.
-   - Strict separation between **Ephemeral State** (form keys, text editing controllers, password visibility toggles managed in `StatefulWidget` and released in `dispose()`) and **Global State** (session and citizen profile managed in `AuthCubit`).
+   - `AuthRemoteDataSource` (Supabase Auth), `ProfileRemoteDataSource` (`user_profile`), `CityRemoteDataSource` + `CityLocalDataSource` (`coverage_city` and its offline copy), `LocationDataSource` (the only user of `geolocator`).
+   - Repository implementations only delegate; SDK failures are translated into clear messages instead of being swallowed.
+   - `ProfileModel` maps the `user_profile` columns to the `Profile` entity.
+3. **Presentation Layer (`lib/features/*/ui/`):**
+   - `flutter_bloc` Blocs with events: `RegisterBloc`, `LoginBloc`, `StartupBloc` (session check on launch) and `ProfileBloc` (summary and logout). Each state is one class with a `status` enum and `copyWith`.
+   - Screens only draw the bloc state and dispatch events; navigation is a `BlocListener` reaction. Each route in `AppRoutes` wraps its screen in a `BlocProvider`.
+   - Strict separation between **Ephemeral State** (form keys, text editing controllers, password visibility toggles managed in `StatefulWidget` and released in `dispose()`) and **Bloc State** (registration, session and profile).
 4. **Core Layer (`lib/core/`):**
-   - Centralized named routes (`AppRoutes`), institutional Material 3 theme (`AppTheme`), safe environment variable manager (`AppEnv`), and DANE territorial catalog (`DaneCitiesCatalog`).
+   - Centralized named routes (`AppRoutes`), institutional Material 3 theme (`AppTheme`), safe environment variable manager (`AppEnv`), and the GetIt service locator (`injection_container.dart`) where every dependency is registered once.
+
+The full engineering standard that guides humans and AI agents in this repository is in [`AGENTS.md`](AGENTS.md).
 
 ---
 
@@ -115,30 +119,37 @@ vigia_app/
 │   └── seeds.sql               # Initial DANE coverage cities and ranks
 ├── docs/                       # Project specifications and academic docs
 ├── lib/
-│   ├── main.dart               # App entrypoint & Dependency Injection wiring
+│   ├── main.dart               # .env -> Supabase.initialize -> GetIt -> runApp
 │   ├── core/
 │   │   ├── config/app_env.dart # Safe environment variable loader
-│   │   ├── constants/
-│   │   │   ├── app_routes.dart # Centralized named routes map
-│   │   │   └── dane_cities.dart# 51 DANE cities + Calibrated Radii Algorithm
-│   │   └── theme/app_theme.dart# Material 3 Civic Teal & Warning Amber palette
+│   │   ├── constants/app_routes.dart # Named routes, each wrapped in its BlocProvider
+│   │   ├── di/injection_container.dart # GetIt registrations (the only wiring)
+│   │   ├── theme/app_theme.dart# Material 3 Civic Teal & Warning Amber palette
+│   │   └── widgets/            # Shared UI components
 │   └── features/
-│       └── auth/
-│           ├── domain/         # Pure business logic
-│           │   ├── entities/   # Pure domain entities (Usuario / User)
-│           │   ├── repositories/# Abstract repository interface contracts
-│           │   └── usecases/   # Callable single-responsibility use cases
-│           ├── data/           # Infrastructure & data adaptation
-│           │   ├── datasources/# Supabase SDK authentication & city queries
-│           │   ├── models/     # DTOs with robust JSON serialization
-│           │   └── repositories/# Concrete repository implementations
-│           └── presentation/   # UI & State Management
-│               ├── cubit/      # AuthCubit & Dart 3 sealed AuthState
-│               └── screens/    # LoginScreen, RegisterScreen, DashboardScreen
+│       ├── auth/
+│       │   ├── domain/         # Pure business logic
+│       │   │   ├── entities/   # AuthUser, Profile, City, Coordinates
+│       │   │   ├── repositories/# Abstract contracts
+│       │   │   ├── usecases/   # SignUp, SignIn, SignOut, GetCurrentProfile, cities, GPS
+│       │   │   └── validators/ # PasswordPolicy, RegistrationRules
+│       │   ├── data/           # Infrastructure & data adaptation
+│       │   │   ├── datasources/# Supabase Auth/profile/cities, DANE catalog, location
+│       │   │   ├── models/     # ProfileModel (user_profile <-> Profile)
+│       │   │   └── repositories/# Implementations that delegate to data sources
+│       │   └── ui/
+│       │       ├── bloc/       # Register, Login and Startup blocs
+│       │       ├── screens/    # Splash, Login, Register
+│       │       └── widgets/    # PasswordStrengthChips
+│       └── dashboard/
+│           └── ui/             # ProfileBloc + DashboardScreen (profile summary)
+├── data model/
+│   └── migrations/             # SQL to run once per Supabase project
 └── test/
-    ├── unit/                   # Isolated unit tests (Domain, Data, Cubit, Geo)
-    ├── widget/                 # UI widget interaction & form validation tests
-    └── integration/            # End-to-end full authentication flow tests
+    ├── support/                # Shared fakes and bloc test helpers
+    ├── unit/                   # Domain, Data, Blocs, GetIt wiring
+    ├── widget/                 # Screens over real blocs with fake repositories
+    └── integration/            # Full flow through the real routes, blocs and GetIt
 ```
 
 ---
@@ -146,8 +157,8 @@ vigia_app/
 ## Prerequisites & Environment Setup
 
 ### 1. Requirements
-* [Flutter SDK](https://docs.flutter.dev/get-started/install) `^3.13.0` or higher
-* [Dart SDK](https://dart.dev/get-dart) `^3.0.0` or higher
+* [Flutter SDK](https://docs.flutter.dev/get-started/install) with Dart `^3.12.2` or higher
+* A Supabase project (Auth + the schema in `data model/`), see "Supabase setup" below
 * Android Studio / VS Code with Flutter extension
 * Google Chrome (for rapid web preview)
 
@@ -165,7 +176,13 @@ SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-publishable-key
 ```
 
-> **Security Note:** `.env` is strictly excluded from version control via `.gitignore`. Never commit API keys or production database secrets to Git.
+> **Security Note:** `.env` is strictly excluded from version control via `.gitignore`. Never commit API keys or production database secrets to Git. Without these two values the app shows a "Supabase is not configured" screen instead of starting.
+
+### 3. Supabase Setup
+Run once per Supabase project, in this order:
+1. **SQL Editor:** run `data model/schema.sql` and then `data model/seeds.sql` (tables, ranks, DANE cities, RLS policies).
+2. **SQL Editor:** run `data model/migrations/001_drop_handle_new_user.sql`. Registration is done by the app (account first, profile second), so the old `handle_new_user` trigger must not exist.
+3. **Authentication > Providers > Email:** turn **Confirm email** off. The profile insert needs the session that `signUp` returns.
 
 ---
 
@@ -200,9 +217,29 @@ You can run VIGÍA across multiple platforms:
 
 ---
 
+## Sprint 1 Walkthrough: Registration, Login and Profile Summary
+
+VIGÍA has a single kind of user (the citizen), so there is one flow to demonstrate. Start the app with `flutter run -d chrome` (or any device) with the Supabase setup above done.
+
+1. **Splash:** the app checks for a persisted session. With none, it opens the **Login** screen. With one, it jumps straight to the profile summary (step 5).
+2. **Create an account:** on the Login screen tap **Register here**.
+3. **Registration form:** fill in
+   - *Full Name* with at least two words (e.g. `Ana Gomez`),
+   - *Email Address*,
+   - *Residence City*: pick it from the list **or** tap **Detect nearest city via GPS**,
+   - *Password* (6+ characters with an uppercase letter, a lowercase letter and a number; the chips turn green as each rule is met) and *Confirm Password*.
+   
+   Tap **Create Civic Account**. The app creates the Auth account and then the `user_profile` row, and lands on the summary.
+4. **Errors you can show:** a repeated email, a one-word name, a weak password, mismatched passwords or no city selected all stop the registration with a clear message.
+5. **Profile summary:** shows Full Name, Email, Residence City, Civic Rank (`Urban Observer (Rank 1)`) and Reputation Points (`0 pts`).
+6. **Log out:** tap **Log Out**. The app returns to Login and the back button no longer reaches the summary.
+7. **Log in:** enter the same email and password and tap **Log In**. You land on the summary again. Wrong credentials show *Invalid credentials* and stay on the form.
+
+---
+
 ## Running the Test Suite
 
-The codebase includes an automated test suite with **42 tests** covering all Clean Architecture layers without requiring an active network connection or emulator:
+The codebase includes an automated test suite with **85 tests** covering all Clean Architecture layers without requiring an active network connection or emulator:
 
 ### 1. Run All Tests
 ```powershell
@@ -210,7 +247,7 @@ flutter test
 ```
 *Expected Output:*
 ```text
-00:03 +42: All tests passed!
+00:15 +85: All tests passed!
 ```
 
 ### 2. Run with Detailed Step-by-Step Output
