@@ -4,6 +4,9 @@ Instructions for every AI coding agent working in this repository (Claude Code, 
 This is the **single source of truth** for all agents. `CLAUDE.md` and `GEMINI.md` are only pointers that import this file;
 never put rules in them. Visual design rules are in §6b.
 
+`§N` means "section N of this file" (the section sign, as in legal and technical documents): §5 is *State management*,
+§6b the visual design system, §11 the pre-completion checklist, §13 the backlog.
+
 This is a university project for **Aplicaciones Móviles** (Universidad Icesi, professor Domiciano Rincón). The professor
 teaches one specific way of writing Flutter apps: **Clean Architecture + Bloc + Supabase + GetIt**. The code you write
 must look like code the professor would have written, because that is what gets graded.
@@ -13,7 +16,7 @@ must look like code the professor would have written, because that is what gets 
 > If a generic best practice contradicts the course (for example `go_router`, Riverpod, Freezed, `injectable`,
 > a different folder layout), **the course wins**. Ask the user before bringing in anything the course does not teach.
 > The visual design system (§6b, `docs/design/`) governs every UI change and never overrides the architecture below.
-> The older rules in `.antigravity/rules/` were written for the web and are superseded by it.
+> The old web-oriented rules (`.antigravity/rules/`) were deleted; this file and the design system are the only sources.
 
 ---
 
@@ -47,7 +50,9 @@ instructions to navigate the flows. Never create tags, push, or open PRs unless 
 - Don't refactor unrelated code. If you spot a violation of this file outside your task, mention it (see §13) instead of
   fixing it silently.
 - Never commit secrets. `.env` is git-ignored; `.env.example` documents keys. The app only ever holds the Supabase URL and
-  the **publishable** key — never a `service_role` key.
+  the **publishable** key — never a `service_role` key. In `.env` that key is named `SUPABASE_ANON_KEY` (Supabase's older name
+  for the publishable key); do not invent another variable. `SUPABASE_DB_PASSWORD` in `.env.example` is for CLI migrations
+  only and must never be read by the app.
 - Run `flutter analyze` and `flutter test` before saying something is done, and report failures honestly.
 
 ---
@@ -129,7 +134,8 @@ that Bloc events/states may share the Bloc's file or live in `<name>_event.dart`
 ## 5. State management — Bloc (Cubit only for trivial local cases)
 
 The professor teaches `Cubit` first as a stepping stone, and uses **`Bloc` with events** in every Clean Architecture lab.
-New feature work uses `Bloc`.
+New feature work uses `Bloc`. The one accepted `Cubit` is `ThemeCubit` (`core/theme/`): a trivial, app-wide, event-less
+setting, provided once above `MaterialApp`. App-wide state of that kind lives in `core/`; feature state lives in the feature's `ui/bloc/`.
 
 **Mental model (lesson "Introducción a Bloc"):** the view *throws events* (what happened) and the Bloc *emits states* (what to
 draw). Exactly two directions, nothing else crosses. The view never changes state; the Bloc never touches a widget.
@@ -290,6 +296,8 @@ sl.registerFactory(() => RegisterBloc(sl()));                                   
 
 - UseCase tests: fake repository, no Flutter. Bloc tests: give an event, assert the emitted states, with fake UseCases/repositories.
 - Data tests: fake/mocked data source or client; model parsing tests.
+- Bloc test tooling: no `bloc_test` (the course does not teach it). Use `emittedStates` in `test/support/bloc_helpers.dart`
+  with the fakes in `test/support/fakes.dart`; ask before adding a test package.
 - Widget tests: provide a `BlocProvider` with a fake Bloc/repository; never hit the network or real Supabase.
 - Existing layout: `test/unit/{core,data,domain,presentation}`, `test/widget`, `test/integration`. Keep it. Add tests with every
   new UseCase/Bloc/screen. Commands: `flutter analyze`, `flutter test`, `flutter test test/unit/domain/`.
@@ -310,6 +318,9 @@ The professor's order — **never UI first**:
 the same shape.) Canonical code for every step: `docs/standards/code-templates.md`.
 
 ### Pre-completion checklist (run it, don't just read it)
+One command does all of it on Linux, macOS and Windows (PowerShell or bash): `dart run tool/check.dart` (the five guards below,
+then `flutter analyze` and `flutter test`; add `--guards-only` for just the guards). The `grep` lines document what the guards check
+(`tool/check.dart` is the executable version; keep them in sync):
 ```bash
 grep -rnE "import '.*/(data|ui)/|flutter|supabase|package:http" lib/features/*/domain   # must print nothing
 grep -rnE "supabase_flutter|package:http|image_picker|geolocator" lib/features/*/ui     # must print nothing
@@ -342,7 +353,7 @@ Status after the `feature/auth-course-alignment` branch (audit of Juan David's S
 
 **Resolved there** (kept here so nobody reintroduces them): the Cubit became Blocs with events; screens no longer touch use cases, `geolocator` or the DANE catalog; route arguments and Spanish aliases are gone; registration follows the course flow (`SignUpUseCase`: Auth account, then `user_profile` row; the `handle_new_user` trigger is removed by `data model/migrations/001_drop_handle_new_user.sql`); the five-step fallback chain and the empty `catch (_)` blocks are gone; `ProfileModel` uses the real columns; business rules live in `PasswordPolicy`/`RegistrationRules`/use cases; mocks left production DI; the Dart SDK constraint is `^3.12.2`.
 
-**Resolved by the design system branch:** hex colors and magic numbers left the screens (tokens in `lib/core/theme/`), the UI is fully in Spanish, glass/photo/gradients are gone, and `.antigravity/rules` is superseded by §6b.
+**Resolved by the design system branch:** hex colors and magic numbers left the screens (tokens in `lib/core/theme/`), the UI is fully in Spanish, glass/photo/gradients are gone, and the old `.antigravity/rules` folder was deleted (§6b replaces it).
 
 **Still open**
 1. **Account without profile.** If `createProfile` fails after `signUp`, `SignUpUseCase` signs the user out and explains it, but the Auth account remains and the next login fails with "No encontramos tu perfil." A repair path (e.g. a "complete your profile" step) is not implemented (decided: documented limitation).
@@ -351,4 +362,3 @@ Status after the `feature/auth-course-alignment` branch (audit of Juan David's S
 4. **Network errors** outside Auth/PostgREST (e.g. the HTTP client failing) reach the Bloc as raw exceptions; only `AuthRetryableFetchException` is translated.
 5. **Design system pieces not built yet** because their features do not exist: severity chips and colors, report cards, map markers and the validation seal (specified in `docs/design/03-design-system.md`). Build them from the document when the feature arrives.
 6. **Rank names come from the database** (`civic_rank.name`): projects created before the Spanish interface need `data model/migrations/002_spanish_rank_names.sql`.
-7. The old web rules in `.antigravity/rules/` and `GEMINI.md` mentions are obsolete; the folder can be deleted once the team agrees.

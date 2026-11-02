@@ -13,13 +13,14 @@ professor teaches it). Read it as if it were written here. Deeper material, load
 
 ## Claude Code specifics
 
-**Commands** (run from the repo root, Windows/PowerShell):
+**Commands** (run from the repo root; works on Linux, macOS and Windows):
 
 ```bash
 flutter pub get
 flutter analyze                      # must be clean before you say "done"
 flutter test                         # whole suite (offline, no Supabase needed)
 flutter test test/unit/domain/       # one folder
+dart run tool/check.dart             # AGENTS.md §11: architecture guards + analyze + test
 flutter run -d chrome                # or -d windows / -d <android device>
 ```
 
@@ -37,7 +38,7 @@ flutter run -d chrome                # or -d windows / -d <android device>
   instructions) are the student's to trigger — offer, don't assume.
 - **Visual design is a system, not taste:** before touching any widget read `docs/design/03-design-system.md` (rules in `AGENTS.md` §6b)
   and look at `docs/design/mockups/*.html`. Tokens only, shared widgets first, Spanish copy, light and dark, and update the design
-  document in the same change when the system evolves. The web rules in `.antigravity/rules/` are superseded.
+  document in the same change when the system evolves.
 
 ## Keeping this up to date
 
