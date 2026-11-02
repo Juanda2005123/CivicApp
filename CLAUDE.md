@@ -38,7 +38,7 @@ flutter run -d chrome                # or -d windows / -d <android device>
   instructions) are the student's to trigger — offer, don't assume.
 - **Visual design is a system, not taste:** before touching any widget read `docs/design/03-design-system.md` (rules in `AGENTS.md` §6b)
   and look at `docs/design/mockups/*.html`. Tokens only, shared widgets first, Spanish copy, light and dark, and update the design
-  document in the same change when the system evolves. The web rules in `.antigravity/rules/` are superseded.
+  document in the same change when the system evolves.
 
 ## Keeping this up to date
 

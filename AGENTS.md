@@ -16,7 +16,7 @@ must look like code the professor would have written, because that is what gets 
 > If a generic best practice contradicts the course (for example `go_router`, Riverpod, Freezed, `injectable`,
 > a different folder layout), **the course wins**. Ask the user before bringing in anything the course does not teach.
 > The visual design system (§6b, `docs/design/`) governs every UI change and never overrides the architecture below.
-> The older rules in `.antigravity/rules/` were written for the web and are superseded by it.
+> The old web-oriented rules (`.antigravity/rules/`) were deleted; this file and the design system are the only sources.
 
 ---
 
@@ -353,7 +353,7 @@ Status after the `feature/auth-course-alignment` branch (audit of Juan David's S
 
 **Resolved there** (kept here so nobody reintroduces them): the Cubit became Blocs with events; screens no longer touch use cases, `geolocator` or the DANE catalog; route arguments and Spanish aliases are gone; registration follows the course flow (`SignUpUseCase`: Auth account, then `user_profile` row; the `handle_new_user` trigger is removed by `data model/migrations/001_drop_handle_new_user.sql`); the five-step fallback chain and the empty `catch (_)` blocks are gone; `ProfileModel` uses the real columns; business rules live in `PasswordPolicy`/`RegistrationRules`/use cases; mocks left production DI; the Dart SDK constraint is `^3.12.2`.
 
-**Resolved by the design system branch:** hex colors and magic numbers left the screens (tokens in `lib/core/theme/`), the UI is fully in Spanish, glass/photo/gradients are gone, and `.antigravity/rules` is superseded by §6b.
+**Resolved by the design system branch:** hex colors and magic numbers left the screens (tokens in `lib/core/theme/`), the UI is fully in Spanish, glass/photo/gradients are gone, and the old `.antigravity/rules` folder was deleted (§6b replaces it).
 
 **Still open**
 1. **Account without profile.** If `createProfile` fails after `signUp`, `SignUpUseCase` signs the user out and explains it, but the Auth account remains and the next login fails with "No encontramos tu perfil." A repair path (e.g. a "complete your profile" step) is not implemented (decided: documented limitation).
@@ -362,4 +362,3 @@ Status after the `feature/auth-course-alignment` branch (audit of Juan David's S
 4. **Network errors** outside Auth/PostgREST (e.g. the HTTP client failing) reach the Bloc as raw exceptions; only `AuthRetryableFetchException` is translated.
 5. **Design system pieces not built yet** because their features do not exist: severity chips and colors, report cards, map markers and the validation seal (specified in `docs/design/03-design-system.md`). Build them from the document when the feature arrives.
 6. **Rank names come from the database** (`civic_rank.name`): projects created before the Spanish interface need `data model/migrations/002_spanish_rank_names.sql`.
-7. The old web rules in `.antigravity/rules/` and `GEMINI.md` mentions are obsolete; the folder can be deleted once the team agrees.
