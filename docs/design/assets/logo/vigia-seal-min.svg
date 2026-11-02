@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img">
+  <title>VIGÍA, sello mínimo (16 a 24 px): sin anillo punteado ni puntos</title>
+  <circle cx="32" cy="32" r="30" fill="#10364A"/>
+  <polygon points="16,16 27,16 32,34 37,16 48,16 36,50 28,50" fill="#F6EFE0"/>
+</svg>

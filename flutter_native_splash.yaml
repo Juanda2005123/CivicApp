@@ -1,0 +1,9 @@
+# Native splash shown while Flutter starts: ink background and the seal.
+# Run: dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#10364A"
+  image: assets/brand/splash_logo.png
+  android_12:
+    color: "#10364A"
+    image: assets/brand/splash_logo.png
+  web: true
