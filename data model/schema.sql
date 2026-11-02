@@ -1,461 +1,225 @@
 -- =============================================================================
--- VIGÍA - CIVIC ROAD AUDITING & CITIZEN OVERSIGHT PLATFORM
--- RELATIONAL SCHEMA (DDL) - THIRD NORMAL FORM (3NF)
--- ENGINE: PostgreSQL 14+
+-- VIGÍA - PLATAFORMA DE AUDITORÍA Y CONTROL CIUDADANO VIAL
+-- ESQUEMA RELACIONAL (DDL) - TERCERA FORMA NORMAL (3FN)
+-- MOTOR: PostgreSQL 14+
 -- =============================================================================
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 1. TABLE: civic_rank (Master Catalog of Civic Progression Ranks)
-CREATE TABLE civic_rank (
-    id_rank SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE,
-    min_xp INT NOT NULL CHECK (min_xp >= 0),
-    icon_url VARCHAR(500) NULL
+-- 1. TABLA: rango_civico (Catálogo Maestro de Niveles)
+CREATE TABLE rango_civico (
+    id_rango SERIAL PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL UNIQUE,
+    xp_minimo INT NOT NULL CHECK (xp_minimo >= 0),
+    url_icono VARCHAR(500) NULL
 );
 
--- 2. TABLE: coverage_city (Official DANE Urban Municipalities Coverage Catalog)
-CREATE TABLE coverage_city (
-    id_city SERIAL PRIMARY KEY,
-    name VARCHAR(80) NOT NULL,
-    department VARCHAR(80) NOT NULL,
-    center_latitude DECIMAL(10, 8) NOT NULL,
-    center_longitude DECIMAL(11, 8) NOT NULL,
-    is_capital BOOLEAN NOT NULL DEFAULT FALSE,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+-- 2. TABLA: usuario (Ciudadanos Registrados)
+CREATE TABLE usuario (
+    id_usuario UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id_rango INT NOT NULL,
+    nombre_completo VARCHAR(120) NOT NULL,
+    correo_electronico VARCHAR(150) NOT NULL UNIQUE,
+    hash_contrasena VARCHAR(255) NULL,
+    url_foto_perfil VARCHAR(500) NULL,
+    puntos_experiencia INT NOT NULL DEFAULT 0 CHECK (puntos_experiencia >= 0),
+    fecha_registro TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
     
-    CONSTRAINT uq_city_department UNIQUE (name, department)
-);
-
--- 3. TABLE: user_profile (Registered Citizen Profiles)
-CREATE TABLE user_profile (
-    id_user UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    id_rank INT NOT NULL,
-    full_name VARCHAR(120) NOT NULL,
-    email VARCHAR(150) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NULL,
-    auth_provider VARCHAR(30) NOT NULL DEFAULT 'LOCAL'
-        CHECK (auth_provider IN ('LOCAL', 'GOOGLE', 'APPLE')),
-    reference_city VARCHAR(80) NOT NULL,
-    last_city VARCHAR(80) NOT NULL,
-    profile_picture_url VARCHAR(500) NULL,
-    experience_points INT NOT NULL DEFAULT 0 CHECK (experience_points >= 0),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    
-    CONSTRAINT fk_user_rank 
-        FOREIGN KEY (id_rank) 
-        REFERENCES civic_rank (id_rank) 
+    CONSTRAINT fk_usuario_rango 
+        FOREIGN KEY (id_rango) 
+        REFERENCES rango_civico (id_rango) 
         ON DELETE RESTRICT
 );
 
--- 4. TABLE: civic_badge (Master Catalog of Civic Badges & Medals)
-CREATE TABLE civic_badge (
-    id_badge SERIAL PRIMARY KEY,
-    key_code VARCHAR(50) NOT NULL UNIQUE,
-    name VARCHAR(80) NOT NULL,
-    description VARCHAR(255) NOT NULL,
-    icon_url VARCHAR(500) NOT NULL
+-- 3. TABLA: insignia (Catálogo Maestro de Medallas Cívicas)
+CREATE TABLE insignia (
+    id_insignia SERIAL PRIMARY KEY,
+    codigo_clave VARCHAR(50) NOT NULL UNIQUE,
+    nombre VARCHAR(80) NOT NULL,
+    descripcion VARCHAR(255) NOT NULL,
+    url_icono VARCHAR(500) NOT NULL
 );
 
--- 5. TABLE: user_badge (Many-to-Many Relationship: User - Badge)
-CREATE TABLE user_badge (
-    id_user UUID NOT NULL,
-    id_badge INT NOT NULL,
-    earned_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-- 4. TABLA: usuario_insignia (Relación N:M Usuario - Insignia)
+CREATE TABLE usuario_insignia (
+    id_usuario UUID NOT NULL,
+    id_insignia INT NOT NULL,
+    fecha_obtencion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
-    PRIMARY KEY (id_user, id_badge),
+    PRIMARY KEY (id_usuario, id_insignia),
     
-    CONSTRAINT fk_user_badge_user 
-        FOREIGN KEY (id_user) 
-        REFERENCES user_profile (id_user) 
+    CONSTRAINT fk_usuario_insignia_usuario 
+        FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) 
         ON DELETE CASCADE,
         
-    CONSTRAINT fk_user_badge_badge 
-        FOREIGN KEY (id_badge) 
-        REFERENCES civic_badge (id_badge) 
+    CONSTRAINT fk_usuario_insignia_insignia 
+        FOREIGN KEY (id_insignia) 
+        REFERENCES insignia (id_insignia) 
         ON DELETE CASCADE
 );
 
--- 6. TABLE: incident_category (Taxonomy of Road Hazards and Infrastructure Damages)
-CREATE TABLE incident_category (
-    id_category SERIAL PRIMARY KEY,
-    name VARCHAR(80) NOT NULL UNIQUE,
-    icon VARCHAR(50) NOT NULL,
-    description VARCHAR(255) NULL
+-- 5. TABLA: categoria_reporte (Taxonomía de Incidencias)
+CREATE TABLE categoria_reporte (
+    id_categoria SERIAL PRIMARY KEY,
+    nombre VARCHAR(80) NOT NULL UNIQUE,
+    icono VARCHAR(50) NOT NULL,
+    descripcion VARCHAR(255) NULL
 );
 
--- 7. TABLE: road_incident (Public Road Infrastructure Hazard Report)
-CREATE TABLE road_incident (
-    id_incident UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tracking_code VARCHAR(30) NOT NULL UNIQUE,
-    id_reporter_user UUID NOT NULL,
-    id_category INT NOT NULL,
-    title VARCHAR(180) NOT NULL,
-    description TEXT NOT NULL,
-    severity VARCHAR(20) NOT NULL DEFAULT 'MEDIUM' 
-        CHECK (severity IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),
-    current_status VARCHAR(30) NOT NULL DEFAULT 'REPORTED'
-        CHECK (current_status IN ('REPORTED', 'UNDER_REVIEW', 'COMMUNITY_VALIDATED', 'RESOLVED')),
-    estimated_dimensions VARCHAR(100) NULL,
-    latitude DECIMAL(10, 8) NOT NULL CHECK (latitude BETWEEN -90.00000000 AND 90.00000000),
-    longitude DECIMAL(11, 8) NOT NULL CHECK (longitude BETWEEN -180.00000000 AND 180.00000000),
-    formatted_address VARCHAR(255) NOT NULL,
-    neighborhood VARCHAR(100) NOT NULL,
-    city VARCHAR(80) NOT NULL DEFAULT 'Cali',
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    resolved_at TIMESTAMPTZ NULL,
-    id_resolver_user UUID NULL,
+-- 6. TABLA: reporte (Publicación de Incidencia Vial)
+CREATE TABLE reporte (
+    id_reporte UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    radicado_codigo VARCHAR(30) NOT NULL UNIQUE,
+    id_usuario_reportante UUID NOT NULL,
+    id_categoria INT NOT NULL,
+    titulo VARCHAR(180) NOT NULL,
+    descripcion TEXT NOT NULL,
+    prioridad VARCHAR(20) NOT NULL DEFAULT 'MEDIA' 
+        CHECK (prioridad IN ('BAJA', 'MEDIA', 'ALTA', 'CRITICA')),
+    estado_actual VARCHAR(30) NOT NULL DEFAULT 'REPORTADO'
+        CHECK (estado_actual IN ('REPORTADO', 'EN_REVISION', 'VALIDADO_COMUNIDAD', 'RESUELTO')),
+    dimensiones_estimadas VARCHAR(100) NULL,
+    latitud DECIMAL(10, 8) NOT NULL CHECK (latitud BETWEEN -90.00000000 AND 90.00000000),
+    longitud DECIMAL(11, 8) NOT NULL CHECK (longitud BETWEEN -180.00000000 AND 180.00000000),
+    direccion_formateada VARCHAR(255) NOT NULL,
+    barrio VARCHAR(100) NOT NULL,
+    ciudad VARCHAR(80) NOT NULL DEFAULT 'Cali',
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
-    CONSTRAINT fk_incident_reporter_user 
-        FOREIGN KEY (id_reporter_user) 
-        REFERENCES user_profile (id_user)
+    CONSTRAINT fk_reporte_usuario 
+        FOREIGN KEY (id_usuario_reportante) 
+        REFERENCES usuario (id_usuario)
         ON DELETE RESTRICT,
 
-    CONSTRAINT fk_incident_resolver_user
-        FOREIGN KEY (id_resolver_user) 
-        REFERENCES user_profile (id_user)
-        ON DELETE SET NULL,
-
-    CONSTRAINT fk_incident_category 
-        FOREIGN KEY (id_category) 
-        REFERENCES incident_category (id_category) 
+    CONSTRAINT fk_reporte_categoria 
+        FOREIGN KEY (id_categoria) 
+        REFERENCES categoria_reporte (id_categoria) 
         ON DELETE RESTRICT
 );
 
--- 8. TABLE: incident_photo (Road Damage Photographic Evidence - 1:N)
-CREATE TABLE incident_photo (
-    id_photo UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    id_incident UUID NOT NULL,
-    file_url VARCHAR(500) NOT NULL,
-    is_primary BOOLEAN NOT NULL DEFAULT FALSE,
-    uploaded_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-- 7. TABLA: foto_reporte (Evidencias de la Vía - 1:N)
+CREATE TABLE foto_reporte (
+    id_foto_reporte UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id_reporte UUID NOT NULL,
+    url_archivo VARCHAR(500) NOT NULL,
+    es_principal BOOLEAN NOT NULL DEFAULT FALSE,
+    fecha_subida TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
-    CONSTRAINT fk_incident_photo_incident 
-        FOREIGN KEY (id_incident) 
-        REFERENCES road_incident (id_incident) 
+    CONSTRAINT fk_foto_reporte_reporte 
+        FOREIGN KEY (id_reporte) 
+        REFERENCES reporte (id_reporte) 
         ON DELETE CASCADE
 );
 
--- 9. TABLE: incident_comment (Citizen Discussion Thread on Report)
-CREATE TABLE incident_comment (
-    id_comment UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    id_incident UUID NOT NULL,
-    id_user UUID NOT NULL,
-    content TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-- 8. TABLA: comentario (Hilo de Discusión Ciudadana)
+CREATE TABLE comentario (
+    id_comentario UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id_reporte UUID NOT NULL,
+    id_usuario UUID NOT NULL,
+    contenido TEXT NOT NULL,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
-    CONSTRAINT fk_comment_incident 
-        FOREIGN KEY (id_incident) 
-        REFERENCES road_incident (id_incident) 
+    CONSTRAINT fk_comentario_reporte 
+        FOREIGN KEY (id_reporte) 
+        REFERENCES reporte (id_reporte) 
         ON DELETE CASCADE,
         
-    CONSTRAINT fk_comment_user 
-        FOREIGN KEY (id_user) 
-        REFERENCES user_profile (id_user) 
+    CONSTRAINT fk_comentario_usuario 
+        FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) 
         ON DELETE CASCADE
 );
 
--- 10. TABLE: comment_photo (Optional Single Photo Attachment in Comments - 0..1:1)
-CREATE TABLE comment_photo (
-    id_comment UUID PRIMARY KEY,
-    file_url VARCHAR(500) NOT NULL,
-    uploaded_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-- 9. TABLA: foto_comentario (Foto Opcional en Comentarios - 0..1:1)
+CREATE TABLE foto_comentario (
+    id_comentario UUID PRIMARY KEY,
+    url_archivo VARCHAR(500) NOT NULL,
+    fecha_subida TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
-    CONSTRAINT fk_comment_photo_comment 
-        FOREIGN KEY (id_comment) 
-        REFERENCES incident_comment (id_comment) 
+    CONSTRAINT fk_foto_comentario_comentario 
+        FOREIGN KEY (id_comentario) 
+        REFERENCES comentario (id_comentario) 
         ON DELETE CASCADE
 );
 
--- 11. TABLE: incident_resolution (Formal Repair Proposal & Community Verification)
-CREATE TABLE incident_resolution (
-    id_resolution UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    id_incident UUID NOT NULL,
-    id_proponent_user UUID NOT NULL,
-    photo_evidence_url VARCHAR(500) NOT NULL,
-    description TEXT NOT NULL,
-    status VARCHAR(30) NOT NULL DEFAULT 'PENDING'
-        CHECK (status IN ('PENDING', 'APPROVED_BY_AUTHOR', 'APPROVED_BY_COMMUNITY', 'REJECTED_BY_AUTHOR', 'REJECTED_BY_COMMUNITY', 'EXPIRED')),
-    confirmation_votes INT NOT NULL DEFAULT 0 CHECK (confirmation_votes >= 0),
-    objection_votes INT NOT NULL DEFAULT 0 CHECK (objection_votes >= 0),
-    proposed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    resolved_at TIMESTAMPTZ NULL,
-    id_approver_user UUID NULL,
-    rejection_reason TEXT NULL,
+-- 10. TABLA: apoyo_reporte (Votos Comunitarios / Upvotes - N:M)
+CREATE TABLE apoyo_reporte (
+    id_usuario UUID NOT NULL,
+    id_reporte UUID NOT NULL,
+    fecha_apoyo TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
-    CONSTRAINT fk_resolution_incident 
-        FOREIGN KEY (id_incident) 
-        REFERENCES road_incident (id_incident) 
+    PRIMARY KEY (id_usuario, id_reporte),
+    
+    CONSTRAINT fk_apoyo_usuario 
+        FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) 
         ON DELETE CASCADE,
         
-    CONSTRAINT fk_resolution_proponent_user 
-        FOREIGN KEY (id_proponent_user) 
-        REFERENCES user_profile (id_user) 
-        ON DELETE RESTRICT,
-        
-    CONSTRAINT fk_resolution_approver_user 
-        FOREIGN KEY (id_approver_user) 
-        REFERENCES user_profile (id_user) 
-        ON DELETE SET NULL
-);
-
--- 12. TABLE: resolution_confirmation (Citizen Verification Votes - N:M)
-CREATE TABLE resolution_confirmation (
-    id_user UUID NOT NULL,
-    id_resolution UUID NOT NULL,
-    confirmed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    PRIMARY KEY (id_user, id_resolution),
-    
-    CONSTRAINT fk_confirmation_user 
-        FOREIGN KEY (id_user) 
-        REFERENCES user_profile (id_user) 
-        ON DELETE CASCADE,
-        
-    CONSTRAINT fk_confirmation_resolution 
-        FOREIGN KEY (id_resolution) 
-        REFERENCES incident_resolution (id_resolution) 
+    CONSTRAINT fk_apoyo_reporte 
+        FOREIGN KEY (id_reporte) 
+        REFERENCES reporte (id_reporte) 
         ON DELETE CASCADE
 );
 
--- 13. TABLE: resolution_objection (Citizen Objections for Invalid/Fraudulent Evidence - N:M)
-CREATE TABLE resolution_objection (
-    id_user UUID NOT NULL,
-    id_resolution UUID NOT NULL,
-    reason TEXT NULL,
-    objected_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-- 11. TABLA: seguimiento_reporte (Campanita de Alertas - N:M)
+CREATE TABLE seguimiento_reporte (
+    id_usuario UUID NOT NULL,
+    id_reporte UUID NOT NULL,
+    fecha_seguimiento TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
-    PRIMARY KEY (id_user, id_resolution),
+    PRIMARY KEY (id_usuario, id_reporte),
     
-    CONSTRAINT fk_objection_user 
-        FOREIGN KEY (id_user) 
-        REFERENCES user_profile (id_user) 
+    CONSTRAINT fk_seguimiento_usuario 
+        FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) 
         ON DELETE CASCADE,
         
-    CONSTRAINT fk_objection_resolution 
-        FOREIGN KEY (id_resolution) 
-        REFERENCES incident_resolution (id_resolution) 
+    CONSTRAINT fk_seguimiento_reporte 
+        FOREIGN KEY (id_reporte) 
+        REFERENCES reporte (id_reporte) 
         ON DELETE CASCADE
 );
 
--- 14. TABLE: incident_upvote (Community Backing Votes / Upvotes - N:M)
-CREATE TABLE incident_upvote (
-    id_user UUID NOT NULL,
-    id_incident UUID NOT NULL,
-    upvoted_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    PRIMARY KEY (id_user, id_incident),
-    
-    CONSTRAINT fk_upvote_user 
-        FOREIGN KEY (id_user) 
-        REFERENCES user_profile (id_user) 
-        ON DELETE CASCADE,
-        
-    CONSTRAINT fk_upvote_incident 
-        FOREIGN KEY (id_incident) 
-        REFERENCES road_incident (id_incident) 
-        ON DELETE CASCADE
-);
-
--- 15. TABLE: incident_follow (Followed Reports / Notifications Bell - N:M)
-CREATE TABLE incident_follow (
-    id_user UUID NOT NULL,
-    id_incident UUID NOT NULL,
-    followed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    PRIMARY KEY (id_user, id_incident),
-    
-    CONSTRAINT fk_follow_user 
-        FOREIGN KEY (id_user) 
-        REFERENCES user_profile (id_user) 
-        ON DELETE CASCADE,
-        
-    CONSTRAINT fk_follow_incident 
-        FOREIGN KEY (id_incident) 
-        REFERENCES road_incident (id_incident) 
-        ON DELETE CASCADE
-);
-
--- 16. TABLE: notification (Citizen Alerts & System Notifications)
-CREATE TABLE notification (
-    id_notification UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    id_user UUID NOT NULL,
-    id_incident UUID NULL,
-    type VARCHAR(50) NOT NULL 
-        CHECK (type IN ('COMMUNITY_VALIDATION', 'NEW_UPVOTE', 'NEW_COMMENT', 'RESOLUTION_PROPOSAL', 'REPORT_RESOLVED', 'RANK_UP', 'NEW_BADGE')),
-    title VARCHAR(120) NOT NULL,
-    message TEXT NOT NULL,
-    is_read BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
-    CONSTRAINT fk_notification_user 
-        FOREIGN KEY (id_user) 
-        REFERENCES user_profile (id_user) 
-        ON DELETE CASCADE,
-        
-    CONSTRAINT fk_notification_incident 
-        FOREIGN KEY (id_incident) 
-        REFERENCES road_incident (id_incident) 
-        ON DELETE CASCADE
-);
+-- ÍNDICES ESTRATÉGICOS
+CREATE INDEX idx_reporte_coordenadas ON reporte (latitud, longitud);
+CREATE INDEX idx_reporte_barrio ON reporte (barrio);
+CREATE INDEX idx_reporte_categoria ON reporte (id_categoria);
+CREATE INDEX idx_reporte_fecha_creacion ON reporte (fecha_creacion DESC);
+CREATE INDEX idx_reporte_usuario ON reporte (id_usuario_reportante);
+CREATE INDEX idx_comentario_reporte ON comentario (id_reporte, fecha_creacion ASC);
+CREATE INDEX idx_apoyo_reporte_id ON apoyo_reporte (id_reporte);
 
 -- =============================================================================
--- PERFORMANCE & INTEGRITY INDEXES
+-- DATOS SEMILLA
 -- =============================================================================
 
-CREATE INDEX idx_incident_coordinates ON road_incident (latitude, longitude);
-CREATE INDEX idx_incident_neighborhood ON road_incident (neighborhood);
-CREATE INDEX idx_incident_category ON road_incident (id_category);
-CREATE INDEX idx_incident_created_at ON road_incident (created_at DESC);
-CREATE INDEX idx_incident_reporter ON road_incident (id_reporter_user);
-CREATE INDEX idx_comment_incident ON incident_comment (id_incident, created_at ASC);
-CREATE INDEX idx_upvote_incident_id ON incident_upvote (id_incident);
-CREATE INDEX idx_notification_user ON notification (id_user, is_read, created_at DESC);
-CREATE INDEX idx_resolution_incident ON incident_resolution (id_incident, status);
+-- Rangos cívicos
+INSERT INTO rango_civico (nombre, xp_minimo, url_icono) VALUES
+    ('Observador Urbano', 0, NULL),
+    ('Vecino Activo', 1000, NULL),
+    ('Guardián Vial', 2500, NULL),
+    ('Veedor Maestro', 4000, NULL)
+ON CONFLICT (nombre) DO NOTHING;
 
--- Partial Unique Index: ensures at most 1 primary photo per incident report
-CREATE UNIQUE INDEX idx_single_primary_photo ON incident_photo (id_incident) WHERE is_primary = TRUE;
+-- Categorías de reporte (icono = nombre de ícono Material)
+INSERT INTO categoria_reporte (nombre, icono, descripcion) VALUES
+    ('Hueco o Bache', 'warning', 'Huecos, baches o hundimientos en la calzada.'),
+    ('Semáforo', 'traffic', 'Semáforos dañados, apagados o desincronizados.'),
+    ('Obra Paralizada', 'construction', 'Obras viales detenidas o abandonadas.'),
+    ('Andén', 'directions_walk', 'Andenes deteriorados u obstruidos para el peatón.'),
+    ('Fuga de Agua', 'water_drop', 'Fugas de agua potable o aguas residuales en la vía.'),
+    ('Señalización', 'signpost', 'Señales de tránsito ausentes, dañadas o ilegibles.'),
+    ('Otro', 'more_horiz', 'Otras incidencias viales no clasificadas.')
+ON CONFLICT (nombre) DO NOTHING;
 
--- Partial Unique Index: ensures at most 1 active pending resolution proposal per incident report (No-Bifurcation Rule)
-CREATE UNIQUE INDEX idx_single_active_resolution ON incident_resolution (id_incident) WHERE status = 'PENDING';
-
--- =============================================================================
--- SUPABASE POSTGREST ROLE PERMISSIONS (GRANT)
--- =============================================================================
-
-GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role;
-GRANT ALL ON ALL ROUTINES IN SCHEMA public TO postgres, anon, authenticated, service_role;
-
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO postgres, anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres, anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO postgres, anon, authenticated, service_role;
-
--- =============================================================================
--- ROW LEVEL SECURITY (RLS) POLICIES
--- =============================================================================
-
--- Master Catalogs (Read-only for public and authenticated citizens)
-ALTER TABLE public.civic_rank ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.coverage_city ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.incident_category ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.civic_badge ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Public read access on civic_rank" ON public.civic_rank;
-CREATE POLICY "Public read access on civic_rank"
-  ON public.civic_rank FOR SELECT TO authenticated, anon USING (true);
-
-DROP POLICY IF EXISTS "Public read access on coverage_city" ON public.coverage_city;
-CREATE POLICY "Public read access on coverage_city"
-  ON public.coverage_city FOR SELECT TO authenticated, anon USING (true);
-
-DROP POLICY IF EXISTS "Public read access on incident_category" ON public.incident_category;
-CREATE POLICY "Public read access on incident_category"
-  ON public.incident_category FOR SELECT TO authenticated, anon USING (true);
-
-DROP POLICY IF EXISTS "Public read access on civic_badge" ON public.civic_badge;
-CREATE POLICY "Public read access on civic_badge"
-  ON public.civic_badge FOR SELECT TO authenticated, anon USING (true);
-
--- User Profile Policies
-ALTER TABLE public.user_profile ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Public read access on user_profile" ON public.user_profile;
-CREATE POLICY "Public read access on user_profile"
-  ON public.user_profile FOR SELECT TO authenticated, anon USING (true);
-
-DROP POLICY IF EXISTS "Users can insert own profile" ON public.user_profile;
-CREATE POLICY "Users can insert own profile"
-  ON public.user_profile FOR INSERT TO authenticated WITH CHECK (auth.uid() = id_user);
-
-DROP POLICY IF EXISTS "Users can update own profile" ON public.user_profile;
-CREATE POLICY "Users can update own profile"
-  ON public.user_profile FOR UPDATE TO authenticated USING (auth.uid() = id_user);
-
--- User Badges Policies
-ALTER TABLE public.user_badge ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Public read access on user_badge" ON public.user_badge;
-CREATE POLICY "Public read access on user_badge"
-  ON public.user_badge FOR SELECT TO authenticated, anon USING (true);
-
--- Road Incidents Policies
-ALTER TABLE public.road_incident ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Public read access on road_incident" ON public.road_incident;
-CREATE POLICY "Public read access on road_incident"
-  ON public.road_incident FOR SELECT TO authenticated, anon USING (true);
-
-DROP POLICY IF EXISTS "Authenticated users can create road_incident" ON public.road_incident;
-CREATE POLICY "Authenticated users can create road_incident"
-  ON public.road_incident FOR INSERT TO authenticated WITH CHECK (auth.uid() = id_reporter_user);
-
-DROP POLICY IF EXISTS "Reporters can update own road_incident" ON public.road_incident;
-CREATE POLICY "Reporters can update own road_incident"
-  ON public.road_incident FOR UPDATE TO authenticated USING (auth.uid() = id_reporter_user);
-
--- Incident Photos Policies
-ALTER TABLE public.incident_photo ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Public read access on incident_photo" ON public.incident_photo;
-CREATE POLICY "Public read access on incident_photo"
-  ON public.incident_photo FOR SELECT TO authenticated, anon USING (true);
-
-DROP POLICY IF EXISTS "Authenticated users can insert incident_photo" ON public.incident_photo;
-CREATE POLICY "Authenticated users can insert incident_photo"
-  ON public.incident_photo FOR INSERT TO authenticated WITH CHECK (true);
-
--- Comments Policies
-ALTER TABLE public.incident_comment ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Public read access on incident_comment" ON public.incident_comment;
-CREATE POLICY "Public read access on incident_comment"
-  ON public.incident_comment FOR SELECT TO authenticated, anon USING (true);
-
-DROP POLICY IF EXISTS "Authenticated users can create comments" ON public.incident_comment;
-CREATE POLICY "Authenticated users can create comments"
-  ON public.incident_comment FOR INSERT TO authenticated WITH CHECK (auth.uid() = id_user);
-
--- Upvotes Policies
-ALTER TABLE public.incident_upvote ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Public read access on incident_upvote" ON public.incident_upvote;
-CREATE POLICY "Public read access on incident_upvote"
-  ON public.incident_upvote FOR SELECT TO authenticated, anon USING (true);
-
-DROP POLICY IF EXISTS "Authenticated users can upvote" ON public.incident_upvote;
-CREATE POLICY "Authenticated users can upvote"
-  ON public.incident_upvote FOR INSERT TO authenticated WITH CHECK (auth.uid() = id_user);
-
-DROP POLICY IF EXISTS "Authenticated users can remove upvote" ON public.incident_upvote;
-CREATE POLICY "Authenticated users can remove upvote"
-  ON public.incident_upvote FOR DELETE TO authenticated USING (auth.uid() = id_user);
-
--- Follows Policies
-ALTER TABLE public.incident_follow ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Users can read own follows" ON public.incident_follow;
-CREATE POLICY "Users can read own follows"
-  ON public.incident_follow FOR SELECT TO authenticated USING (auth.uid() = id_user);
-
-DROP POLICY IF EXISTS "Users can create follow" ON public.incident_follow;
-CREATE POLICY "Users can create follow"
-  ON public.incident_follow FOR INSERT TO authenticated WITH CHECK (auth.uid() = id_user);
-
-DROP POLICY IF EXISTS "Users can remove follow" ON public.incident_follow;
-CREATE POLICY "Users can remove follow"
-  ON public.incident_follow FOR DELETE TO authenticated USING (auth.uid() = id_user);
-
--- Notifications Policies
-ALTER TABLE public.notification ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Users can read own notifications" ON public.notification;
-CREATE POLICY "Users can read own notifications"
-  ON public.notification FOR SELECT TO authenticated USING (auth.uid() = id_user);
-
-DROP POLICY IF EXISTS "Users can update own notifications" ON public.notification;
-CREATE POLICY "Users can update own notifications"
-  ON public.notification FOR UPDATE TO authenticated USING (auth.uid() = id_user);
+-- Insignias
+INSERT INTO insignia (codigo_clave, nombre, descripcion, url_icono) VALUES
+    ('PRIMER_PASO_CIVICO', 'Primer Paso Cívico', 'Publicaste tu primer reporte.', 'https://example.com/insignias/primer_paso_civico.png'),
+    ('VOZ_ACTIVA', 'Voz Activa', 'Realizaste 10 comentarios en discusiones comunitarias.', 'https://example.com/insignias/voz_activa.png'),
+    ('CAZADOR_DE_BACHES', 'Cazador de Baches', 'Publicaste 5 reportes en la categoría Hueco o Bache.', 'https://example.com/insignias/cazador_de_baches.png'),
+    ('REPORTE_DE_ALTO_IMPACTO', 'Reporte de Alto Impacto', 'Uno de tus reportes alcanzó 10 apoyos.', 'https://example.com/insignias/reporte_de_alto_impacto.png'),
+    ('GUARDIAN_COMUNITARIO', 'Guardián Comunitario', 'Otorgaste 50 apoyos a reportes de otros vecinos.', 'https://example.com/insignias/guardian_comunitario.png')
+ON CONFLICT (codigo_clave) DO NOTHING;
