@@ -5,7 +5,7 @@
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture-teal)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 [![State Management](https://img.shields.io/badge/State%20Management-BLoC-blueviolet)](https://bloclibrary.dev/)
 [![Backend](https://img.shields.io/badge/Backend-Supabase%20%2F%20PostgreSQL-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
-[![Tests](https://img.shields.io/badge/Tests-135%20Passed%20(100%25)-success)](test/)
+[![Tests](https://img.shields.io/badge/Tests-passing-success)](test/)
 [![License](https://img.shields.io/badge/License-Academic%20%2F%20MIT-lightgrey)]()
 
 > **VIGÍA** is a cross-platform mobile application designed for civic oversight and participatory road audit. It empowers citizens to detect, report, and monitor potholes and deteriorating road infrastructure across Colombian urban territories, fostering government transparency and community action.
@@ -23,6 +23,16 @@
 8. [Sprint 1 Walkthrough](#sprint-1-walkthrough-registration-login-and-profile-summary)
 9. [Running the Test Suite](#running-the-test-suite)
 10. [Commit & Contribution Standards](#commit--contribution-standards)
+
+---
+
+## Cómo probar (resumen en español)
+
+1. Copia `.env.example` a `.env` y pon `SUPABASE_URL` y `SUPABASE_ANON_KEY` (la clave publicable del proyecto).
+2. En Supabase corre `data model/schema.sql`, `seeds.sql` y las migraciones de `data model/migrations/`, y apaga **Confirm email** (detalle en "Supabase Setup").
+3. `flutter pub get` y `flutter run -d chrome` (o un dispositivo Android).
+4. Flujo: **Regístrate** → llena el formulario → **Crear cuenta** → llegas a *Mi perfil* → **Cerrar sesión** → **Ingresar** con los mismos datos.
+5. VIGÍA tiene un solo tipo de usuario (el ciudadano). Para ver que el flujo sirve para cualquier usuario, repite el registro y el login con una segunda cuenta (otro correo y otra ciudad). El detalle paso a paso está en "Sprint 1 Walkthrough".
 
 ---
 
@@ -206,6 +216,10 @@ Ensure there are zero lint issues or type warnings:
 ```powershell
 flutter analyze
 ```
+To run everything at once (architecture guards, analysis and tests; works on Linux, macOS and Windows):
+```powershell
+dart run tool/check.dart
+```
 
 ### 3. Launch Application
 You can run VIGÍA across multiple platforms:
@@ -227,7 +241,7 @@ You can run VIGÍA across multiple platforms:
 
 ## Sprint 1 Walkthrough: Registration, Login and Profile Summary
 
-VIGÍA has a single kind of user (the citizen), so there is one flow to demonstrate. Start the app with `flutter run -d chrome` (or any device) with the Supabase setup above done.
+VIGÍA has a single kind of user (the citizen), so there is one flow to demonstrate; repeat it with a second account (different email and city) to show it works for any user. Start the app with `flutter run -d chrome` (or any device) with the Supabase setup above done.
 
 1. **Splash:** the app checks for a persisted session. With none, it opens the **Login** screen. With one, it jumps straight to the profile summary (step 5).
 2. **Create an account:** on the Login screen tap **Regístrate**.
@@ -247,7 +261,7 @@ VIGÍA has a single kind of user (the citizen), so there is one flow to demonstr
 
 ## Running the Test Suite
 
-The codebase includes an automated test suite with **135 tests** covering all Clean Architecture layers without requiring an active network connection or emulator:
+The codebase includes an automated test suite covering all Clean Architecture layers without requiring an active network connection or emulator:
 
 ### 1. Run All Tests
 ```powershell
@@ -255,7 +269,7 @@ flutter test
 ```
 *Expected Output:*
 ```text
-00:15 +135: All tests passed!
+00:15 +N: All tests passed!
 ```
 
 ### 2. Run with Detailed Step-by-Step Output
