@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
 import 'package:vigia_app/core/theme/theme_cubit.dart';
 import 'package:vigia_app/core/widgets/theme_toggle_button.dart';
+import 'package:vigia_app/core/widgets/app_dropdown_field.dart';
 import 'package:vigia_app/core/widgets/app_notice.dart';
 import 'package:vigia_app/core/widgets/app_status_chip.dart';
 import 'package:vigia_app/core/widgets/app_text_field.dart';
@@ -190,6 +191,14 @@ void main() {
       await tester.pumpWidget(host(const DottedSpinner(), reduceMotion: true));
       await tester.pumpAndSettle();
       expect(tester.binding.hasScheduledFrame, isFalse);
+    });
+  });
+
+  group('normalizeSearchText', () {
+    test('lower-cases and strips Spanish accents', () {
+      expect(normalizeSearchText('Bogotá'), 'bogota');
+      expect(normalizeSearchText('NARIÑO'), 'narino');
+      expect(normalizeSearchText('Cúcuta (Norte de Santander)'), 'cucuta (norte de santander)');
     });
   });
 }

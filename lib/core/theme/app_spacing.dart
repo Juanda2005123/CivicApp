@@ -40,6 +40,9 @@ abstract final class AppSizes {
   static const double touchTarget = 48;
   static const double icon = 20;
   static const double iconLarge = 24;
+
+  /// Maximum height of the list of a searchable dropdown.
+  static const double dropdownMenuHeight = 280;
 }
 
 /// Durations and curve of the design system, section 5.

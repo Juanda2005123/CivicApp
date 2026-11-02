@@ -169,7 +169,7 @@ Todos están en `mockups/components.html` con sus estados (normal, foco, presion
 | Botón tonal y de texto | Tonal: 8 % del color de texto; texto: arcilla 700 subrayado | `TextButton` con tema |
 | Botón destructivo | Fondo `error`; solo para borrar. **Cerrar sesión no es destructivo**: es secundario | tema |
 | Campo de texto | Etiqueta arriba (14/500), campo 52 dp, borde 1,5 px `outline`, foco: borde `focus` 2 px + halo 3 px, error: borde `error` 2 px + icono y texto de ayuda | `InputDecorationTheme` |
-| Selector de ciudad | Campo con icono y flecha; menú con capitales en negrita (como hoy) | `DropdownButtonFormField` con tema |
+| Selector de ciudad | Campo con icono y flecha, en el que también se escribe: la lista se filtra mientras tecleas, sin distinguir tildes ni mayúsculas (`narino` encuentra `Nariño`) y también por departamento; menú de 280 dp como máximo, con capitales en negrita. Escribir sin elegir de la lista no selecciona nada y el formulario pide la ciudad | `app_dropdown_field.dart` (`DropdownMenu` con tema) |
 | Regla de contraseña (chip) | 28 dp, pendiente: contorno; cumplida: fondo `successBg`, icono de check y texto `success` | `password_strength_chips.dart` (ya existe) |
 | Aviso | Fondo del estado, icono + texto, radio 8; nunca solo color | `core/widgets/app_notice.dart` |
 | Snackbar | Fondo tinta, texto crema, acción en mostaza, flotante | `SnackBarTheme` |

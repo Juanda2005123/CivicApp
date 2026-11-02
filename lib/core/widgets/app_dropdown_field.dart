@@ -3,8 +3,23 @@ import 'package:flutter/material.dart';
 import '../theme/app_spacing.dart';
 import 'app_text_field.dart';
 
-/// Dropdown of the design system, with the same look as [AppTextField]. It is
-/// a [FormField], so `Form.validate()` runs its [validator].
+/// Lower-cases [text] and strips Spanish accents, so that a search for
+/// `bogota` finds `Bogotá` and `narino` finds `Nariño`.
+String normalizeSearchText(String text) {
+  const from = 'áàäâéèëêíìïîóòöôúùüûñ';
+  const to = 'aaaaeeeeiiiioooouuuun';
+  final buffer = StringBuffer();
+  for (final char in text.toLowerCase().split('')) {
+    final index = from.indexOf(char);
+    buffer.write(index == -1 ? char : to[index]);
+  }
+  return buffer.toString();
+}
+
+/// Searchable dropdown of the design system, with the same look as
+/// [AppTextField]: the user opens the list or types to filter it (accent and
+/// case insensitive). It is a [FormField], so `Form.validate()` runs its
+/// [validator]; typing without choosing an entry does not select anything.
 ///
 /// The key follows [value], so the field adopts a value that the bloc sets
 /// from outside (for example the city detected by GPS).
@@ -12,7 +27,7 @@ class AppDropdownField<T> extends FormField<T> {
   AppDropdownField({
     required String label,
     required String hint,
-    required List<DropdownMenuItem<T>> items,
+    required List<DropdownMenuEntry<T>> entries,
     required ValueChanged<T?>? onChanged,
     IconData? prefixIcon,
     T? value,
@@ -26,33 +41,31 @@ class AppDropdownField<T> extends FormField<T> {
             final theme = Theme.of(context);
             return AppFieldLabel(
               label: label,
-              child: InputDecorator(
-                isEmpty: state.value == null,
-                decoration: fieldDecoration(
+              child: DropdownMenu<T>(
+                enabled: onChanged != null,
+                expandedInsets: EdgeInsets.zero,
+                menuHeight: AppSizes.dropdownMenuHeight,
+                initialSelection: state.value,
+                dropdownMenuEntries: entries,
+                enableFilter: true,
+                requestFocusOnTap: true,
+                textStyle: theme.textTheme.bodyLarge,
+                filterCallback: (entries, filter) {
+                  final query = normalizeSearchText(filter.trim());
+                  return entries.where((entry) => normalizeSearchText(entry.label).contains(query)).toList();
+                },
+                decorationBuilder: (context, controller) => fieldDecoration(
                   context,
+                  hint: hint,
                   prefixIcon: prefixIcon,
                   errorText: state.errorText,
                 ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<T>(
-                    value: state.value,
-                    items: items,
-                    isExpanded: true,
-                    isDense: true,
-                    borderRadius: AppRadii.medium,
-                    style: theme.textTheme.bodyLarge,
-                    hint: Text(
-                      hint,
-                      style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                    ),
-                    onChanged: onChanged == null
-                        ? null
-                        : (next) {
-                            state.didChange(next);
-                            onChanged(next);
-                          },
-                  ),
-                ),
+                onSelected: onChanged == null
+                    ? null
+                    : (next) {
+                        state.didChange(next);
+                        onChanged(next);
+                      },
               ),
             );
           },
