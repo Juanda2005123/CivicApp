@@ -69,12 +69,12 @@ void main() {
       // 3. Fill the form and pick the city from the dropdown
       await tester.enterText(find.byType(TextField).at(0), 'Juan David Quintero');
       await tester.enterText(find.byType(TextField).at(1), 'juand@vigia.co');
-      await tester.enterText(find.byType(TextField).at(2), 'Password123');
       await tester.enterText(find.byType(TextField).at(3), 'Password123');
+      await tester.enterText(find.byType(TextField).at(4), 'Password123');
 
-      final dropdown = find.byType(DropdownButton<int>);
-      await tester.ensureVisible(dropdown);
-      await tester.tap(dropdown);
+      final cityField = find.byType(TextField).at(2);
+      await tester.ensureVisible(cityField);
+      await tester.enterText(cityField, 'cali');
       await tester.pumpAndSettle();
       await tester.tap(find.text('Cali (Valle del Cauca)').last);
       await tester.pumpAndSettle();

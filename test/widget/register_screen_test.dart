@@ -90,8 +90,8 @@ void main() {
   Future<void> fillValidForm(WidgetTester tester) async {
     await tester.enterText(find.byType(TextField).at(0), 'Ana Gomez');
     await tester.enterText(find.byType(TextField).at(1), 'ana@example.com');
-    await tester.enterText(find.byType(TextField).at(2), 'Abc123');
     await tester.enterText(find.byType(TextField).at(3), 'Abc123');
+    await tester.enterText(find.byType(TextField).at(4), 'Abc123');
   }
 
   group('RegisterScreen Widget Tests', () {
@@ -127,7 +127,7 @@ void main() {
       await tester.pumpWidget(createRegisterTestWidget(bloc = newBloc()));
       await tester.pumpAndSettle();
 
-      final passwordField = find.byType(TextField).at(2);
+      final passwordField = find.byType(TextField).at(3);
       final submitButton = createButton;
 
       final cases = {
@@ -150,8 +150,8 @@ void main() {
       await tester.pumpWidget(createRegisterTestWidget(bloc = newBloc()));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextField).at(2), 'Password123');
-      await tester.enterText(find.byType(TextField).at(3), 'Different123');
+      await tester.enterText(find.byType(TextField).at(3), 'Password123');
+      await tester.enterText(find.byType(TextField).at(4), 'Different123');
       await tester.ensureVisible(createButton);
       await tester.tap(createButton);
       await tester.pumpAndSettle();
@@ -166,7 +166,7 @@ void main() {
 
       expect(find.byIcon(Icons.check_circle_outline), findsNothing);
 
-      await tester.enterText(find.byType(TextField).at(2), 'Abc123');
+      await tester.enterText(find.byType(TextField).at(3), 'Abc123');
       await tester.pump();
 
       expect(find.byIcon(Icons.check_circle_outline), findsNWidgets(4));
@@ -196,6 +196,42 @@ void main() {
 
       expect(find.text('Permission denied.'), findsOneWidget);
       expect(bloc.state.selectedCity, isNull);
+    });
+
+    testWidgets('typing in the city field filters the list ignoring accents and case', (tester) async {
+      useTallScreen(tester);
+      await tester.pumpWidget(createRegisterTestWidget(bloc = newBloc()));
+      await tester.pumpAndSettle();
+
+      final cityField = find.byType(TextField).at(2);
+      await tester.ensureVisible(cityField);
+      await tester.enterText(cityField, 'NARINO');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pasto (Nariño)'), findsOneWidget);
+      expect(find.text('Cali (Valle del Cauca)'), findsNothing);
+
+      await tester.tap(find.text('Pasto (Nariño)'));
+      await tester.pumpAndSettle();
+
+      expect(bloc.state.selectedCity, _pasto);
+    });
+
+    testWidgets('typing a city without choosing it from the list does not select it', (tester) async {
+      useTallScreen(tester);
+      await tester.pumpWidget(createRegisterTestWidget(bloc = newBloc()));
+      await tester.pumpAndSettle();
+
+      await fillValidForm(tester);
+      await tester.enterText(find.byType(TextField).at(2), 'Cali');
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(createButton);
+      await tester.tap(createButton);
+      await tester.pumpAndSettle();
+
+      expect(bloc.state.selectedCity, isNull);
+      expect(find.byIcon(Icons.error_outline), findsOneWidget);
+      expect(auth.calls, isEmpty);
     });
 
     testWidgets('a valid form creates the account and the profile, then opens the dashboard', (tester) async {

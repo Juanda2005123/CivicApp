@@ -167,10 +167,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           hint: 'Elige tu ciudad',
                           prefixIcon: Icons.location_city_outlined,
                           value: state.selectedCityId,
-                          items: state.cities.map((city) {
-                            return DropdownMenuItem<int>(
+                          entries: state.cities.map((city) {
+                            return DropdownMenuEntry<int>(
                               value: city.id,
-                              child: Text(
+                              label: city.displayName,
+                              labelWidget: Text(
                                 city.displayName,
                                 overflow: TextOverflow.ellipsis,
                                 style: city.isCapital ? AppTextStyles.bodyStrong : AppTextStyles.body,
