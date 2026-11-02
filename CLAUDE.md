@@ -13,13 +13,14 @@ professor teaches it). Read it as if it were written here. Deeper material, load
 
 ## Claude Code specifics
 
-**Commands** (run from the repo root, Windows/PowerShell):
+**Commands** (run from the repo root; works on Linux, macOS and Windows):
 
 ```bash
 flutter pub get
 flutter analyze                      # must be clean before you say "done"
 flutter test                         # whole suite (offline, no Supabase needed)
 flutter test test/unit/domain/       # one folder
+dart run tool/check.dart             # AGENTS.md §11: architecture guards + analyze + test
 flutter run -d chrome                # or -d windows / -d <android device>
 ```
 
