@@ -1,0 +1,38 @@
+import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
+import '../entities/incident.dart';
+import '../entities/nearby_incident.dart';
+import '../entities/picked_photo.dart';
+
+/// Abstract contract governing public road incident reports.
+abstract class IncidentRepository {
+  /// Publishes a new road incident report with its photo attachments and awards +100 XP.
+  Future<Incident> createIncident({
+    required String reporterId,
+    required int categoryId,
+    required String title,
+    required String description,
+    required IncidentSeverity severity,
+    String? estimatedDimensions,
+    required Coordinates coordinates,
+    required String formattedAddress,
+    required String neighborhood,
+    required String city,
+    required List<PickedPhoto> photos,
+  });
+
+  /// Evaluates nearby reports of the same category within [radiusInMeters] (HU-08/HU-09).
+  Future<List<NearbyIncident>> getNearbyIncidents({
+    required Coordinates coordinates,
+    required int categoryId,
+    double radiusInMeters = 150.0,
+  });
+
+  /// Fetches an incident by its primary UUID or civic tracking code (e.g. #VIG-8492).
+  Future<Incident> getIncidentById(String idOrTrackingCode);
+
+  /// Endorses (+1 upvote) an existing nearby report when user picks "Es este daño" (HU-09).
+  Future<void> endorseIncident({
+    required String incidentId,
+    required String userId,
+  });
+}
