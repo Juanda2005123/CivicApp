@@ -55,4 +55,5 @@ app.*.map.json
 # Temporary scratch and clones
 /temp/
 /scratch/
+/planning/
 *.tmp
