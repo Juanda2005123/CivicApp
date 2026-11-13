@@ -43,6 +43,11 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
           body: SafeArea(child: _buildBody(context, state)),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.reportWizard),
+            icon: const Icon(Icons.add_location_alt_outlined),
+            label: const Text('Reportar daño'),
+          ),
         );
       },
     );

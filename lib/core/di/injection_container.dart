@@ -25,6 +25,20 @@ import '../../features/auth/ui/bloc/login_bloc.dart';
 import '../../features/auth/ui/bloc/register_bloc.dart';
 import '../../features/auth/ui/bloc/startup_bloc.dart';
 import '../../features/dashboard/ui/bloc/profile_bloc.dart';
+import '../../features/reports/data/datasources/category_remote_data_source.dart';
+import '../../features/reports/data/datasources/incident_remote_data_source.dart';
+import '../../features/reports/data/datasources/photo_storage_data_source.dart';
+import '../../features/reports/data/repositories/category_repository_impl.dart';
+import '../../features/reports/data/repositories/incident_repository_impl.dart';
+import '../../features/reports/domain/repositories/category_repository.dart';
+import '../../features/reports/domain/repositories/incident_repository.dart';
+import '../../features/reports/domain/usecases/create_incident_usecase.dart';
+import '../../features/reports/domain/usecases/endorse_incident_usecase.dart';
+import '../../features/reports/domain/usecases/get_categories_usecase.dart';
+import '../../features/reports/domain/usecases/get_incident_by_id_usecase.dart';
+import '../../features/reports/domain/usecases/get_nearby_incidents_usecase.dart';
+import '../../features/reports/ui/bloc/incident_detail_bloc.dart';
+import '../../features/reports/ui/bloc/report_wizard_bloc.dart';
 
 /// Service locator. Every class receives its collaborators by constructor and
 /// is registered here, once, from the inside out.
@@ -41,6 +55,8 @@ Future<void> initDependencies({
   ProfileRepository? profileRepository,
   CityRepository? cityRepository,
   LocationRepository? locationRepository,
+  CategoryRepository? categoryRepository,
+  IncidentRepository? incidentRepository,
 }) async {
   await sl.reset();
 
@@ -53,6 +69,9 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => CityRemoteDataSource(sl()));
   sl.registerLazySingleton(() => CityLocalDataSource());
   sl.registerLazySingleton(() => LocationDataSource());
+  sl.registerLazySingleton(() => CategoryRemoteDataSource(sl()));
+  sl.registerLazySingleton(() => PhotoStorageDataSource(sl()));
+  sl.registerLazySingleton(() => IncidentRemoteDataSource(sl()));
 
   // Repositories, registered under their contract
   sl.registerLazySingleton<AuthRepository>(
@@ -67,6 +86,12 @@ Future<void> initDependencies({
   sl.registerLazySingleton<LocationRepository>(
     () => locationRepository ?? LocationRepositoryImpl(sl()),
   );
+  sl.registerLazySingleton<CategoryRepository>(
+    () => categoryRepository ?? CategoryRepositoryImpl(sl()),
+  );
+  sl.registerLazySingleton<IncidentRepository>(
+    () => incidentRepository ?? IncidentRepositoryImpl(sl(), sl()),
+  );
 
   // Use cases
   sl.registerLazySingleton(() => SignUpUseCase(sl(), sl()));
@@ -75,6 +100,11 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => GetCurrentProfileUseCase(sl(), sl()));
   sl.registerLazySingleton(() => GetCitiesUseCase(sl()));
   sl.registerLazySingleton(() => DetectNearestCityUseCase(sl(), sl()));
+  sl.registerLazySingleton(() => GetCategoriesUseCase(sl()));
+  sl.registerLazySingleton(() => GetNearbyIncidentsUseCase(sl()));
+  sl.registerLazySingleton(() => CreateIncidentUseCase(sl()));
+  sl.registerLazySingleton(() => GetIncidentByIdUseCase(sl()));
+  sl.registerLazySingleton(() => EndorseIncidentUseCase(sl()));
 
   // Blocs: a new instance per screen
   sl.registerFactory(() => ThemeCubit());
@@ -82,4 +112,6 @@ Future<void> initDependencies({
   sl.registerFactory(() => LoginBloc(sl()));
   sl.registerFactory(() => RegisterBloc(sl(), sl(), sl()));
   sl.registerFactory(() => ProfileBloc(sl(), sl()));
+  sl.registerFactory(() => ReportWizardBloc(sl(), sl(), sl(), sl(), sl()));
+  sl.registerFactory(() => IncidentDetailBloc(sl()));
 }
