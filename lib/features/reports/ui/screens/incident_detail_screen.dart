@@ -61,10 +61,22 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
         builder: (context, state) {
           switch (state.status) {
             case IncidentDetailStatus.initial:
-            case IncidentDetailStatus.loading:
+              if (_resolvedId == null || _resolvedId!.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.screen),
+                    child: AppNotice(
+                      message: 'No se proporcionó un identificador de reporte válido.',
+                      kind: NoticeKind.error,
+                    ),
+                  ),
+                );
+              }
               return const Center(
                 child: DottedSpinner(size: 36, semanticLabel: 'Cargando reporte vial...'),
               );
+
+            case IncidentDetailStatus.loading:
 
             case IncidentDetailStatus.failure:
               return Padding(

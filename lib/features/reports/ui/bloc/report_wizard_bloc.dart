@@ -214,6 +214,8 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
   ) async {
     if (state.status == WizardStatus.submitting) return;
 
+    emit(state.copyWith(status: WizardStatus.submitting, clearErrorMessage: true));
+
     final profile = await _getCurrentProfile();
     if (profile == null) {
       emit(state.copyWith(
@@ -233,8 +235,6 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
       ));
       return;
     }
-
-    emit(state.copyWith(status: WizardStatus.submitting, clearErrorMessage: true));
 
     try {
       final published = await _createIncident(

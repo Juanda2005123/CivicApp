@@ -149,7 +149,9 @@ class IncidentRemoteDataSource {
   /// Fetches full incident detail by ID or tracking code.
   Future<IncidentModel> getIncidentById(String idOrTrackingCode) async {
     try {
-      final isCode = idOrTrackingCode.startsWith('#') || idOrTrackingCode.contains('-');
+      final isTrackingCode = idOrTrackingCode.startsWith('#') ||
+          idOrTrackingCode.startsWith('VIG-') ||
+          idOrTrackingCode.length < 32;
 
       var query = _client.from('road_incident').select('''
         *,
@@ -160,7 +162,7 @@ class IncidentRemoteDataSource {
         incident_comment(id_comment)
       ''');
 
-      final row = isCode && !idOrTrackingCode.contains('-4') // Check if tracking code format
+      final row = isTrackingCode
           ? await query.eq('tracking_code', idOrTrackingCode).maybeSingle()
           : await query.eq('id_incident', idOrTrackingCode).maybeSingle();
 
