@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vigia_app/features/auth/domain/usecases/get_current_profile_usecase.dart';
 
 import '../../domain/usecases/create_incident_usecase.dart';
 import '../../domain/usecases/endorse_incident_usecase.dart';
@@ -13,17 +14,15 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
   final GetNearbyIncidentsUseCase _getNearbyIncidents;
   final CreateIncidentUseCase _createIncident;
   final EndorseIncidentUseCase _endorseIncident;
+  final GetCurrentProfileUseCase _getCurrentProfile;
 
-  ReportWizardBloc({
-    required GetCategoriesUseCase getCategories,
-    required GetNearbyIncidentsUseCase getNearbyIncidents,
-    required CreateIncidentUseCase createIncident,
-    required EndorseIncidentUseCase endorseIncident,
-  })  : _getCategories = getCategories,
-        _getNearbyIncidents = getNearbyIncidents,
-        _createIncident = createIncident,
-        _endorseIncident = endorseIncident,
-        super(const ReportWizardState()) {
+  ReportWizardBloc(
+    this._getCategories,
+    this._getNearbyIncidents,
+    this._createIncident,
+    this._endorseIncident,
+    this._getCurrentProfile,
+  ) : super(const ReportWizardState()) {
     on<WizardStarted>(_onWizardStarted);
     on<LocationPitched>(_onLocationPitched);
     on<CategoryAndSeveritySelected>(_onCategoryAndSeveritySelected);
@@ -123,11 +122,20 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
     NearbyReportEndorsed event,
     Emitter<ReportWizardState> emit,
   ) async {
+    final profile = await _getCurrentProfile();
+    if (profile == null) {
+      emit(state.copyWith(
+        status: WizardStatus.failure,
+        errorMessage: 'Debes iniciar sesión para apoyar un reporte.',
+      ));
+      return;
+    }
+
     emit(state.copyWith(status: WizardStatus.submitting, clearErrorMessage: true));
     try {
       await _endorseIncident(
         incidentId: event.incidentId,
-        userId: event.userId,
+        userId: profile.id,
       );
       emit(state.copyWith(
         status: WizardStatus.success,
@@ -206,6 +214,15 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
   ) async {
     if (state.status == WizardStatus.submitting) return;
 
+    final profile = await _getCurrentProfile();
+    if (profile == null) {
+      emit(state.copyWith(
+        status: WizardStatus.failure,
+        errorMessage: 'Debes iniciar sesión para publicar un reporte.',
+      ));
+      return;
+    }
+
     if (state.coordinates == null ||
         state.selectedCategoryId == null ||
         state.formattedAddress == null ||
@@ -221,7 +238,7 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
 
     try {
       final published = await _createIncident(
-        reporterId: event.reporterId,
+        reporterId: profile.id,
         categoryId: state.selectedCategoryId!,
         title: state.title,
         description: state.description,

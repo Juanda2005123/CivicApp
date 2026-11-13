@@ -16,9 +16,7 @@ void main() {
 
     setUp(() {
       repository = FakeIncidentRepository();
-      bloc = IncidentDetailBloc(
-        getIncidentById: GetIncidentByIdUseCase(repository),
-      );
+      bloc = IncidentDetailBloc(GetIncidentByIdUseCase(repository));
     });
 
     tearDown(() {

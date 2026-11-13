@@ -7,10 +7,7 @@ import 'incident_detail_state.dart';
 class IncidentDetailBloc extends Bloc<IncidentDetailEvent, IncidentDetailState> {
   final GetIncidentByIdUseCase _getIncidentById;
 
-  IncidentDetailBloc({
-    required GetIncidentByIdUseCase getIncidentById,
-  })  : _getIncidentById = getIncidentById,
-        super(const IncidentDetailState()) {
+  IncidentDetailBloc(this._getIncidentById) : super(const IncidentDetailState()) {
     on<IncidentDetailStarted>(_onIncidentDetailStarted);
   }
 

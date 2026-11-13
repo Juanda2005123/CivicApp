@@ -48,15 +48,11 @@ class CategoryAndSeveritySelected extends ReportWizardEvent {
 /// Fired when citizen confirms "Es este daño" on a nearby existing report (HU-09).
 class NearbyReportEndorsed extends ReportWizardEvent {
   final String incidentId;
-  final String userId;
 
-  const NearbyReportEndorsed({
-    required this.incidentId,
-    required this.userId,
-  });
+  const NearbyReportEndorsed(this.incidentId);
 
   @override
-  List<Object?> get props => [incidentId, userId];
+  List<Object?> get props => [incidentId];
 }
 
 /// Fired when citizen confirms "Es otro daño" to continue drafting their own report.
@@ -99,11 +95,4 @@ class StepNavigated extends ReportWizardEvent {
 }
 
 /// Fired when the citizen confirms final publication in Step 5.
-class ReportSubmitConfirmed extends ReportWizardEvent {
-  final String reporterId;
-
-  const ReportSubmitConfirmed(this.reporterId);
-
-  @override
-  List<Object?> get props => [reporterId];
-}
+class ReportSubmitConfirmed extends ReportWizardEvent {}

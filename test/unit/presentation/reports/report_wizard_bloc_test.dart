@@ -2,6 +2,9 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
+import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
+import 'package:vigia_app/features/auth/domain/entities/profile.dart';
+import 'package:vigia_app/features/auth/domain/usecases/get_current_profile_usecase.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_category.dart';
 import 'package:vigia_app/features/reports/domain/entities/nearby_incident.dart';
@@ -21,6 +24,8 @@ void main() {
   group('ReportWizardBloc Tests', () {
     late FakeCategoryRepository fakeCategoryRepo;
     late FakeIncidentRepository fakeIncidentRepo;
+    late FakeAuthRepository fakeAuthRepo;
+    late FakeProfileRepository fakeProfileRepo;
     late ReportWizardBloc bloc;
 
     setUp(() {
@@ -29,12 +34,21 @@ void main() {
         const IncidentCategory(id: 2, name: 'Semáforo', icon: 'traffic_light'),
       ]);
       fakeIncidentRepo = FakeIncidentRepository();
+      fakeAuthRepo = FakeAuthRepository(user: const AuthUser(id: 'user-123', email: 'user@example.com'));
+      fakeProfileRepo = FakeProfileRepository();
+      fakeProfileRepo.stored['user-123'] = const Profile(
+        id: 'user-123',
+        email: 'user@example.com',
+        fullName: 'Juan Quintero',
+        cityName: 'Cali',
+      );
 
       bloc = ReportWizardBloc(
-        getCategories: GetCategoriesUseCase(fakeCategoryRepo),
-        getNearbyIncidents: GetNearbyIncidentsUseCase(fakeIncidentRepo),
-        createIncident: CreateIncidentUseCase(fakeIncidentRepo),
-        endorseIncident: EndorseIncidentUseCase(fakeIncidentRepo),
+        GetCategoriesUseCase(fakeCategoryRepo),
+        GetNearbyIncidentsUseCase(fakeIncidentRepo),
+        CreateIncidentUseCase(fakeIncidentRepo),
+        EndorseIncidentUseCase(fakeIncidentRepo),
+        GetCurrentProfileUseCase(fakeAuthRepo, fakeProfileRepo),
       );
     });
 
@@ -128,7 +142,7 @@ void main() {
     test('NearbyReportEndorsed endorses existing report and marks isEndorsedNearby true', () async {
       final states = await emittedStates(
         bloc,
-        const NearbyReportEndorsed(incidentId: 'inc-99', userId: 'user-123'),
+        const NearbyReportEndorsed('inc-99'),
       );
 
       expect(states.map((s) => s.status), [
@@ -178,7 +192,7 @@ void main() {
       // Step 5: Submit confirmed
       final submitStates = await emittedStates(
         bloc,
-        const ReportSubmitConfirmed('user-123'),
+        ReportSubmitConfirmed(),
       );
 
       expect(submitStates.map((s) => s.status), [
