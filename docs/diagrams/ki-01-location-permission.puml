@@ -1,0 +1,139 @@
+@startuml ki-01-location-permission
+title KI-01 / HU-29 — Blocked location permission: current problem and proposed fix (registration)
+caption Wizard Step 1 follows the same idea with ReportWizardBloc, CurrentLocationRequested and GetCurrentLocationUseCase;\nits state has no GpsStatus enum (it uses isLocating + locationStatusMessage), so there the blocked case needs one bool field.
+
+skinparam dpi 220
+skinparam sequenceMessageAlign left
+skinparam responseMessageBelowArrow true
+skinparam noteBackgroundColor #FFFBF2
+autonumber
+
+actor "Citizen" as U
+box "UI" #F6EFE0
+  participant "RegisterScreen" as S
+  participant "RegisterBloc" as B
+end box
+box "Domain" #E8F0E8
+  participant "DetectNearestCity\nUseCase" as DUC
+  participant "OpenLocationSettings\nUseCase\n<<new>>" as OUC
+  participant "LocationRepository\n<<contract>>" as R
+  participant "CityRepository\n<<contract>>" as CR
+end box
+box "Data" #E3EAF0
+  participant "LocationRepositoryImpl" as RI
+  participant "LocationDataSource" as DS
+end box
+participant "Geolocator\n(SDK / OS)" as G
+
+== PART 1 — THE PROBLEM (current code, Android 11+) ==
+U -> G : taps "No permitir" twice in the OS location dialog
+note over G : Android now answers\ndeniedForever ("don't ask again")
+
+U -> S : taps "Detectar mi ciudad por GPS"
+S -> B : add(NearestCityRequested())
+B -> B : emit(gpsStatus: detecting)
+B -> DUC : _detectNearestCity()
+DUC -> R : currentCoordinates()
+R -> RI : currentCoordinates()
+RI -> DS : currentCoordinates()
+DS -> G : isLocationServiceEnabled()
+G --> DS : true
+DS -> G : checkPermission()
+G --> DS : deniedForever
+DS --> RI : throw Exception("El permiso de ubicación está\nbloqueado. Usa la lista de ciudades.")
+RI --> R : (propagates)
+R --> DUC : (propagates)
+DUC --> B : (propagates)
+B -> B : on Exception catch (e)\nemit(gpsStatus: failure, gpsMessage: _message(e))
+B --> S : new state
+S -> U : same plain error text as any other GPS failure
+note over U, B #F4D6CC
+  <b>Dead end:</b> the OS will not show the dialog again,
+  and the app has no way to open the system settings:
+  no button, no use case, no repository method.
+  Nothing reacts differently to the "blocked" message.
+  The user must find the phone settings alone or reinstall.
+end note
+
+autonumber 1
+== PART 2 — PROPOSED FIX (HU-29) ==
+U -> S : taps "Detectar mi ciudad por GPS"
+S -> B : add(NearestCityRequested())
+B -> B : emit(gpsStatus: detecting)
+B -> DUC : _detectNearestCity()
+DUC -> R : currentCoordinates()
+R -> RI : currentCoordinates()
+RI -> DS : currentCoordinates()
+DS -> G : isLocationServiceEnabled()
+G --> DS : true
+DS -> G : checkPermission()
+G --> DS : deniedForever
+DS --> RI : throw Exception(LocationRepository.blockedMessage)
+RI --> R : (propagates)
+R --> DUC : (propagates)
+DUC --> B : (propagates)
+B -> B : on Exception catch (e)\nemit(gpsStatus: _message(e) == LocationRepository.blockedMessage\n    ? GpsStatus.blocked : GpsStatus.failure,\n  gpsMessage: _message(e))
+note right of B
+  <b>changed:</b> the whole message is compared
+  with the constant declared on the contract.
+  GpsStatus gains one value: blocked.
+end note
+B --> S : new state
+S -> U : AppNotice "El permiso de ubicación está bloqueado.\nToca \"Abrir ajustes\" y luego Permisos → Ubicación."\n+ button "Abrir ajustes" (only when gpsStatus == blocked)
+
+group new: open the system settings
+  U -> S : taps "Abrir ajustes"
+  S -> B : add(LocationSettingsRequested())
+  B -> OUC : _openLocationSettings()
+  OUC -> R : openSettings()
+  R -> RI : openSettings()
+  RI -> DS : openSettings()
+  DS -> G : openAppSettings()
+  alt Android / iOS
+    G --> DS : true
+    G -> U : shows the app settings screen
+    DS --> RI : true
+    RI --> R : true
+    R --> OUC : true
+    OUC --> B : returns normally
+    note right of B : no emit: the notice stays\nuntil the user retries
+    U -> G : enables location, returns to VIGÍA
+  else web (geolocator_web throws "unsupported"), or the OS returns false
+    G --> DS : throws / false
+    DS --> RI : false  (the data source catches the error)
+    RI --> R : false
+    R --> OUC : false
+    OUC --> B : throw Exception("No pudimos abrir los ajustes.\nActiva la ubicación desde la configuración\nde tu navegador o teléfono.")
+    B -> B : on Exception catch (e)\nemit(gpsStatus: failure, gpsMessage: _message(e))
+    B --> S : new state
+    S -> U : explanatory notice, button hidden, no crash
+  end
+end
+
+group retry (existing flow, unchanged code)
+  U -> S : taps "Detectar mi ciudad por GPS" again
+  S -> B : add(NearestCityRequested())
+  B -> B : emit(gpsStatus: detecting)
+  B -> DUC : _detectNearestCity()
+  DUC -> R : currentCoordinates()
+  R -> RI : currentCoordinates()
+  RI -> DS : currentCoordinates()
+  DS -> G : isLocationServiceEnabled()
+  G --> DS : true
+  DS -> G : checkPermission()
+  G --> DS : whileInUse
+  DS -> G : getLastKnownPosition() ?? getCurrentPosition()
+  G --> DS : Position
+  DS --> RI : Coordinates
+  RI --> R : Coordinates
+  R --> DUC : Coordinates
+  DUC -> CR : getCities()
+  CR --> DUC : List<City>
+  DUC -> DUC : resolve(position, cities)
+  DUC --> B : City
+  B -> B : emit(selectedCityId: city.id,\n  gpsStatus: success,\n  gpsMessage: "Ciudad detectada: …")
+  B --> S : new state
+  S -> U : city preselected, notice and button hidden
+end
+
+@enduml

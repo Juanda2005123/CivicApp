@@ -61,6 +61,7 @@
 | **HU-26** | Reverse Geocoding (Nominatim) | Reports / Location | **PENDING** | Auto-populate street/carrera from GPS via OpenStreetMap |
 | **HU-27** | Interactive Map Pin Picker | Reports / Location | **PENDING** | Map widget with draggable pin in Step 1 |
 | **HU-28** | Direct Address Geocoding | Reports / Location | **PENDING** | Text address to coordinates calculation |
+| **HU-29** | Recover a Blocked Location Permission | Auth + Reports / Location | **COMPLETED** | Fixes KI-01: "Abrir ajustes" button when the permission is blocked |
 
 ---
 
@@ -285,6 +286,21 @@
 1. **Given that** I enter a structured Colombian address (e.g. `Carrera 9 # 45, Popayán`), **when** I tap *"Confirmar ubicación"*, **then** the system queries forward geocoding to resolve approximate latitude and longitude.
 2. **Given that** forward geocoding succeeds, **when** resolved, **then** the coordinates card updates to show the resolved location.
 3. **Given that** geocoding yields no results, **when** it fails, **then** the system defaults to the city center and allows the user to proceed with manual description.
+
+---
+
+### HU-29: Recover a Blocked Location Permission (KI-01)
+**As a** citizen who blocked location access by mistake,  
+**I want** the app to tell me that location is blocked and take me to the place where I can turn it back on,  
+**So that** I can use GPS detection again without reinstalling the app or searching the phone settings on my own.
+
+#### Acceptance Criteria
+1. **Given that** location permission is blocked (Android: denied twice; iOS: denied once), **when** I tap *"Detectar mi ciudad por GPS"* at registration or *"Mi GPS"* in Step 1 of the wizard (HU-07), **then** I see *"El permiso de ubicación está bloqueado. Toca "Abrir ajustes" y luego Permisos → Ubicación."* with an *"Abrir ajustes"* button.
+2. **Given that** I tap *"Abrir ajustes"*, **when** the operating system allows it, **then** the app's system settings screen opens.
+3. **Given that** I enabled location in the settings, **when** I return to the app and tap the GPS button again, **then** the location is detected normally, with no restart.
+4. **Given that** I return without enabling location, **when** I come back to the app, **then** the blocked notice remains and the city list or the manual address stays fully usable.
+5. **Given that** the settings screen cannot be opened (e.g., on the web), **when** I tap *"Abrir ajustes"*, **then** a message explains how to enable location manually, and nothing crashes.
+6. **Given that** location is only denied (not blocked), **when** I tap the GPS button, **then** the native permission dialog appears again and no settings button is shown.
 
 ---
 
