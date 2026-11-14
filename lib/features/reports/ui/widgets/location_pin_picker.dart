@@ -96,26 +96,46 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
   }
 
   void _tryParseInitialAddress(String address) {
-    // Basic detection: "Tipo Vía # Cruce - Placa"
-    final regex = RegExp(
+    // 1. Detection with plaque: "Tipo Vía # Cruce - Placa"
+    final regexWithPlaque = RegExp(
       r'^(Carrera|Calle|Avenida|Diagonal|Transversal|Circular|Autopista)\s+([^#]+)#\s*([^-]+)-\s*(.+)$',
       caseSensitive: false,
     );
-    final match = regex.firstMatch(address.trim());
-    if (match != null) {
+    final matchWithPlaque = regexWithPlaque.firstMatch(address.trim());
+    if (matchWithPlaque != null) {
       final matchedType = _roadTypes.firstWhere(
-        (t) => t.toLowerCase() == match.group(1)!.toLowerCase(),
+        (t) => t.toLowerCase() == matchWithPlaque.group(1)!.toLowerCase(),
         orElse: () => 'Carrera',
       );
       _selectedRoadType = matchedType;
-      _mainRoadNumberController.text = match.group(2)!.trim();
-      _crossRoadNumberController.text = match.group(3)!.trim();
-      _plaqueNumberController.text = match.group(4)!.trim();
+      _mainRoadNumberController.text = matchWithPlaque.group(2)!.trim();
+      _crossRoadNumberController.text = matchWithPlaque.group(3)!.trim();
+      _plaqueNumberController.text = matchWithPlaque.group(4)!.trim();
       _useStructuredAddress = true;
-    } else {
-      _useStructuredAddress = false;
-      _freeAddressController.text = address;
+      return;
     }
+
+    // 2. Detection without plaque: "Tipo Vía # Cruce"
+    final regexNoPlaque = RegExp(
+      r'^(Carrera|Calle|Avenida|Diagonal|Transversal|Circular|Autopista)\s+([^#]+)#\s*(.+)$',
+      caseSensitive: false,
+    );
+    final matchNoPlaque = regexNoPlaque.firstMatch(address.trim());
+    if (matchNoPlaque != null) {
+      final matchedType = _roadTypes.firstWhere(
+        (t) => t.toLowerCase() == matchNoPlaque.group(1)!.toLowerCase(),
+        orElse: () => 'Carrera',
+      );
+      _selectedRoadType = matchedType;
+      _mainRoadNumberController.text = matchNoPlaque.group(2)!.trim();
+      _crossRoadNumberController.text = matchNoPlaque.group(3)!.trim();
+      _plaqueNumberController.text = '';
+      _useStructuredAddress = true;
+      return;
+    }
+
+    _useStructuredAddress = false;
+    _freeAddressController.text = address;
   }
 
   @override
@@ -152,6 +172,9 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
       final main = _mainRoadNumberController.text.trim();
       final cross = _crossRoadNumberController.text.trim();
       final plaque = _plaqueNumberController.text.trim();
+      if (plaque.isEmpty) {
+        return '$_selectedRoadType $main # $cross';
+      }
       return '$_selectedRoadType $main # $cross - $plaque';
     }
     return _freeAddressController.text.trim();
@@ -296,22 +319,58 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
               children: [
                 Expanded(
                   flex: 5,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _selectedRoadType,
-                    decoration: InputDecoration(
-                      labelText: 'Tipo de vía',
-                      filled: true,
-                      fillColor: theme.colorScheme.surface,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadii.md),
+                  child: AppFieldLabel(
+                    label: 'Tipo de vía',
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _selectedRoadType,
+                      isExpanded: true,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onSurface,
                       ),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: theme.colorScheme.surfaceContainerLow,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadii.sm),
+                          borderSide: BorderSide(
+                            color: theme.colorScheme.outline,
+                            width: 1.5,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadii.sm),
+                          borderSide: BorderSide(
+                            color: theme.colorScheme.outline,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadii.sm),
+                          borderSide: BorderSide(
+                            color: theme.colorScheme.primary,
+                            width: 2.0,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: 13.5,
+                        ),
+                      ),
+                      items: _roadTypes.map((type) {
+                        return DropdownMenuItem(
+                          value: type,
+                          child: Text(
+                            type,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) setState(() => _selectedRoadType = val);
+                      },
                     ),
-                    items: _roadTypes.map((type) {
-                      return DropdownMenuItem(value: type, child: Text(type));
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedRoadType = val);
-                    },
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -341,7 +400,7 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
               children: [
                 Expanded(
                   child: AppTextField(
-                    label: 'Cruce (#)',
+                    label: 'Cruce o generadora (#)',
                     controller: _crossRoadNumberController,
                     hint: 'Ej. 45 o 2B',
                     prefixIcon: Icons.tag,
@@ -357,15 +416,12 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: AppTextField(
-                    label: 'Placa (-)',
+                    label: 'Número o predio (opcional)',
                     controller: _plaqueNumberController,
                     hint: 'Ej. 20 o 04',
                     prefixIcon: Icons.remove,
                     validator: (v) {
-                      if (!_useStructuredAddress) return null;
-                      if (v == null || v.trim().isEmpty) {
-                        return 'Requerido';
-                      }
+                      // Placa is optional per Colombian road damage context
                       return null;
                     },
                   ),

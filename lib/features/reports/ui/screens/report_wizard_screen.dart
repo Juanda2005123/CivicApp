@@ -6,6 +6,7 @@ import 'package:vigia_app/core/widgets/app_notice.dart';
 import 'package:vigia_app/core/widgets/app_text_field.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
+import 'package:vigia_app/features/reports/domain/entities/incident_category.dart';
 import '../bloc/report_wizard_bloc.dart';
 import '../bloc/report_wizard_event.dart';
 import '../bloc/report_wizard_state.dart';
@@ -182,6 +183,29 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
     }
   }
 
+  IconData _getCategoryIcon(IncidentCategory cat) {
+    final lower = cat.name.toLowerCase();
+    if (lower.contains('hueco') || lower.contains('bache') || lower.contains('pothole')) {
+      return Icons.remove_road_outlined;
+    }
+    if (lower.contains('semáforo') || lower.contains('semaforo') || lower.contains('traffic')) {
+      return Icons.traffic_outlined;
+    }
+    if (lower.contains('obra') || lower.contains('abandoned')) {
+      return Icons.construction_outlined;
+    }
+    if (lower.contains('andén') || lower.contains('anden') || lower.contains('sidewalk')) {
+      return Icons.directions_walk_outlined;
+    }
+    if (lower.contains('agua') || lower.contains('fuga') || lower.contains('water') || lower.contains('alcantarilla')) {
+      return Icons.water_drop_outlined;
+    }
+    if (lower.contains('señal') || lower.contains('senal') || lower.contains('signage')) {
+      return Icons.signpost_outlined;
+    }
+    return Icons.report_problem_outlined;
+  }
+
   // STEP 2: Classification and Severity (HU-08/HU-09)
   Widget _buildStep2Classification(BuildContext context, ReportWizardState state) {
     final theme = Theme.of(context);
@@ -219,45 +243,66 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
               crossAxisCount: 2,
               crossAxisSpacing: AppSpacing.xs,
               mainAxisSpacing: AppSpacing.xs,
-              childAspectRatio: 2.8,
+              childAspectRatio: 3.1,
             ),
             itemCount: state.categories.length,
             itemBuilder: (context, index) {
               final cat = state.categories[index];
               final isSelected = (_selectedCategoryId ?? state.selectedCategoryId) == cat.id;
+              final iconData = _getCategoryIcon(cat);
 
               return InkWell(
                 onTap: () {
                   setState(() => _selectedCategoryId = cat.id);
                 },
-                borderRadius: BorderRadius.circular(AppRadii.md),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 4),
+                borderRadius: BorderRadius.circular(AppRadii.sm),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs + 2, vertical: 3),
                   decoration: BoxDecoration(
-                    color: isSelected ? theme.colorScheme.primary : theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(AppRadii.md),
+                    color: isSelected
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(AppRadii.sm),
                     border: Border.all(
-                      color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outline.withValues(alpha: 0.3),
-                      width: isSelected ? 2.0 : 1.0,
+                      color: isSelected
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.outline.withValues(alpha: 0.28),
+                      width: isSelected ? 1.8 : 1.0,
                     ),
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.warning_amber_rounded,
-                        size: 18,
-                        color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.primary,
+                      Container(
+                        width: 26,
+                        height: 26,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? theme.colorScheme.onPrimary.withValues(alpha: 0.22)
+                              : theme.colorScheme.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Icon(
+                          iconData,
+                          size: 15,
+                          color: isSelected
+                              ? theme.colorScheme.onPrimary
+                              : theme.colorScheme.primary,
+                        ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSpacing.xs + 2),
                       Expanded(
                         child: Text(
                           cat.displayNameSpanish,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.labelSmall?.copyWith(
-                            color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                            fontSize: 11,
+                            color: isSelected
+                                ? theme.colorScheme.onPrimary
+                                : theme.colorScheme.onSurface,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                            fontSize: 10.5,
+                            height: 1.15,
                           ),
                         ),
                       ),

@@ -33,8 +33,34 @@
 │    - HU-19: Paginated community feed (20-item chunks) with pull-refresh│
 │    - HU-21: Smart City Switcher (assisted modal with fuzzy search).    │
 │    - HU-22: Guest / Unauthenticated browsing mode.                    │
+│                                                                        │
+│ 4. Geolocation Refinements (Deferred / Post-MVP):                      │
+│    - HU-26: Assisted Reverse Geocoding via Nominatim.                  │
+│    - HU-27: Interactive Map Pin Picker Widget.                         │
+│    - HU-28: Direct Address Geocoding.                                  │
 └────────────────────────────────────────────────────────────────────────┘
 ```
+
+### Sprint 2 Progress & Tracking (~50% Milestone Achieved)
+
+| User Story | Name | Scope / Responsibility | Status | Implementation Details |
+|---|---|---|---|---|
+| **HU-06** | Initiate a Report & Discard Guard | Reports / Wizard | **COMPLETED** | `ReportWizardScreen` with `PopScope` + draft discard confirmation |
+| **HU-07 (MVP)** | Step 1: Location & Nomenclature | Reports / Wizard | **COMPLETED** | Real GPS (`geolocator`), nearest city (Haversine), structured Colombian address + reference point fallback |
+| **HU-08** | Step 2: Typology & Severity | Reports / Wizard | **COMPLETED** | 7 Spanish categories with distinct vector icons, `SeverityChipSelector` (4 levels) |
+| **HU-09** | Step 2.1: Proximity Duplicate Detection | Reports / Wizard | **COMPLETED** | Realtime 150m Haversine duplicate detection with endorsement modal |
+| **HU-10** | Step 3: Photo Evidence | Reports / Wizard | **COMPLETED** | Up to 3 photos (camera/gallery), compressed, stored in Supabase `incident-evidence` |
+| **HU-11** | Step 4: Description & Dimensions | Reports / Wizard | **COMPLETED** | Validated title, description, and optional dimensions |
+| **HU-12** | Step 5: Review & Publish Report | Reports / Wizard | **COMPLETED** | #VIG-XXXX tracking code generation, Supabase insert, +100 XP credit |
+| **HU-14** | Report Detail Inspection View | Reports / UI | **COMPLETED** | `IncidentDetailScreen` with photo carousel, tracking badge, rank seal, full audit data |
+| **HU-03** | Location Permission on App Open | Explore / Shell | **PENDING** | Request location on entering map shell; handle denial gracefully |
+| **HU-13** | Cartographic Map View & Markers | Explore / Map | **PENDING** | Map tab with cluster/category markers |
+| **HU-19** | Paginated Community Feed | Explore / Feed | **PENDING** | 20-item chunks, pull-to-refresh, status badges |
+| **HU-21** | Smart City Switcher | Explore / Modal | **PENDING** | Assistive modal with fuzzy search across Colombian cities |
+| **HU-22** | Guest Browsing Mode | Auth / Explore | **PENDING** | Read-only mode without login; prompt auth on action |
+| **HU-26** | Reverse Geocoding (Nominatim) | Reports / Location | **PENDING** | Auto-populate street/carrera from GPS via OpenStreetMap |
+| **HU-27** | Interactive Map Pin Picker | Reports / Location | **PENDING** | Map widget with draggable pin in Step 1 |
+| **HU-28** | Direct Address Geocoding | Reports / Location | **PENDING** | Text address to coordinates calculation |
 
 ---
 
@@ -222,6 +248,43 @@
 3. **Given that** I am a guest, **when** I attempt to Report (HU-06), Upvote, or Comment, **then** an authentication prompt invites me to sign in or register without performing the action.
 4. **Given that** I am a guest, **when** I tap Perfil, **then** the same sign-in invitation replaces the civic dashboard.
 5. **Given that** I sign in from the invitation modal, **when** completed, **then** I land on my profile like any authenticated citizen.
+
+---
+
+### HU-26: Assisted Reverse Geocoding via OpenStreetMap (Nominatim)
+**As a** citizen reporting road damage with GPS active,  
+**I want** the application to automatically suggest the road type, main road number, and neighborhood based on my GPS coordinates,  
+**So that** I do not have to type the street name manually when I am standing right at the scene.
+
+#### Acceptance Criteria
+1. **Given that** I tap *"Mi GPS"* in Step 1, **when** valid coordinates are detected, **then** the app asynchronously queries the free OpenStreetMap Nominatim reverse geocoding endpoint with compliant headers (User-Agent).
+2. **Given that** Nominatim returns structured address tokens (`road`, `suburb`/`neighbourhood`, `city`), **when** received, **then** the form pre-populates the road type, road number, and neighborhood automatically.
+3. **Given that** reverse geocoding is slow (>3s), rate-limited, or unavailable offline, **when** it fails, **then** the app silently keeps manual entry enabled without blocking the user.
+4. **Given that** the suggested address is populated, **when** viewed by the user, **then** all fields remain fully editable for human verification.
+
+---
+
+### HU-27: Interactive Map Pin Picker Widget
+**As a** citizen reporting road damage from a distance or without precise GPS,  
+**I want** an interactive cartographic map widget in Step 1 where I can drag and drop a pin on the damaged street,  
+**So that** I can accurately report issues located blocks away from my current physical position.
+
+#### Acceptance Criteria
+1. **Given that** I am on Step 1, **when** I switch to *"Seleccionar en mapa"*, **then** an interactive map (`flutter_map` with OpenStreetMap raster tiles) renders centered on the current coordinates or default city center.
+2. **Given that** I pan the map, **when** movement stops, **then** the central crosshair/pin updates the active report coordinates.
+3. **Given that** I tap *"Confirmar punto"*, **when** pressed, **then** the coordinates are locked into the wizard draft and the user returns to address confirmation.
+
+---
+
+### HU-28: Direct Address Geocoding (Address to Estimated Coordinates)
+**As a** citizen who knows the address but does not have GPS turned on,  
+**I want** the app to calculate approximate coordinates when I type a Colombian street address,  
+**So that** my report is positioned on the civic map without manual GPS calibration.
+
+#### Acceptance Criteria
+1. **Given that** I enter a structured Colombian address (e.g. `Carrera 9 # 45, Popayán`), **when** I tap *"Confirmar ubicación"*, **then** the system queries forward geocoding to resolve approximate latitude and longitude.
+2. **Given that** forward geocoding succeeds, **when** resolved, **then** the coordinates card updates to show the resolved location.
+3. **Given that** geocoding yields no results, **when** it fails, **then** the system defaults to the city center and allows the user to proceed with manual description.
 
 ---
 
