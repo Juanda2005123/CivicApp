@@ -138,6 +138,7 @@ notifications sprint.
 | `HU-xx` | User story (*historia de usuario*), sprint backlogs `docs/05-…` and `docs/06-…`. |
 | `§N` | Section N of `AGENTS.md`, unless another document is named. |
 | Screen / Page / Component | Lab 2 vocabulary: a Screen is a routed `Scaffold`; a Page is hosted by a Screen and has no `Scaffold`; a Component is a small reusable widget (AGENTS.md §6). |
+| Shell | The host **Screen** with the `BottomNavigationBar` (Mapa · Comunidad · Mi perfil). It stays fixed and remembers the selected tab; each tab is a **Page** without its own `Scaffold`. Built in HU-13 as `HomeScreen` (route `/home`) with two tabs, Mapa and Mi perfil, plus the "Reportar daño" button; HU-19 adds Comunidad. Login and registration land here, on Mi perfil. |
 | Entity, Repository, UseCase, DataSource, RepositoryImpl, Bloc | Clean Architecture pieces. Table and rules in AGENTS.md §4–5. |
 | Token | A design value (color, text style, spacing, radius, duration) defined in `lib/core/theme/`. Widgets use tokens, never literals (AGENTS.md §6b). |
 | Sello comunitario | The visual direction of the design system: paper surfaces, the seal, the dotted ring and monospace data. |

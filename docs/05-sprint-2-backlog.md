@@ -54,7 +54,7 @@
 | **HU-12** | Step 5: Review & Publish Report | Reports / Wizard | **COMPLETED** | #VIG-XXXX tracking code generation, Supabase insert, +100 XP credit |
 | **HU-14** | Report Detail Inspection View | Reports / UI | **COMPLETED** | `IncidentDetailScreen` with photo carousel, tracking badge, rank seal, full audit data |
 | **HU-03** | Location Permission on App Open | Explore / Shell | **PENDING** | Request location on entering map shell; handle denial gracefully |
-| **HU-13** | Cartographic Map View & Markers | Explore / Map | **PENDING** | Map tab with cluster/category markers |
+| **HU-13 (MVP)** | Cartographic Map View & Markers | Explore / Map | **COMPLETED** | Shell with Mapa + Mi perfil tabs and the "Reportar daño" button; `flutter_map` (OpenStreetMap) centered on the profile city with severity-shaped markers that open the detail; a "Centrar en mi ubicación" button (top right) moves the map to the GPS position, with "Abrir ajustes" when the permission is blocked. Automatic centering on open and the permission banners are left to HU-03 / HU-21 |
 | **HU-19** | Paginated Community Feed | Explore / Feed | **PENDING** | 20-item chunks, pull-to-refresh, status badges |
 | **HU-21** | Smart City Switcher | Explore / Modal | **PENDING** | Assistive modal with fuzzy search across Colombian cities |
 | **HU-22** | Guest Browsing Mode | Auth / Explore | **PENDING** | Read-only mode without login; prompt auth on action |

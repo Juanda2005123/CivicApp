@@ -156,7 +156,7 @@ Las tres familias son de licencia abierta (OFL), traen tildes y ñ, y se **empaq
 - **Patrón de marca:** anillos punteados concéntricos recortados en una esquina, al 7-8 % de opacidad (`rings` en las maquetas). Sustituye a la foto de ciudad difuminada, que se elimina (y con ella `assets/images/civic_road_hero.jpg`).
 - **Estados vacíos y errores:** círculo punteado con una marca (un signo de exclamación, una V) y un texto corto; sin ilustraciones complejas.
 - **Fotos de evidencia (futuro):** relación 4:3, radio 8, con la etiqueta del código (`#VIG-8492`) en mono sobre fondo tinta en la esquina inferior izquierda.
-- **Mapa (futuro):** base crema atenuada, rótulos tinta. Marcadores con la **forma** de cada gravedad (el medio lleva relleno mostaza y contorno tinta para ser visible sobre crema). Una sola tarjeta flotante con superficie sólida.
+- **Mapa:** base crema atenuada, rótulos tinta. Marcadores con la **forma** de cada gravedad (el medio lleva relleno mostaza y contorno tinta para ser visible sobre crema). Una sola tarjeta flotante con superficie sólida. Implementado en HU-13 con `flutter_map` y mosaicos de OpenStreetMap (sin clave de API) con la atribución "© OpenStreetMap"; en el tema oscuro los mismos mosaicos se oscurecen con `darkModeTileBuilder`. CARTO no se usa: sus mosaicos ahora exigen clave y devuelven una imagen "API KEY REQUIRED". Pendiente: el tono crema de los mosaicos y la tarjeta flotante.
 
 ## 7. Componentes
 
@@ -180,6 +180,9 @@ Todos están en `mockups/components.html` con sus estados (normal, foco, presion
 | Marca (encabezado) | Sello + palabra + lema, centrado | `core/widgets/brand_mark.dart` (reemplaza `CivicBrandHeader`) |
 | Sello de rango | Círculo con numeral, 4 variantes (§3.4) | `core/widgets/rank_seal.dart` |
 | Chip de gravedad | 28 dp, forma + color + texto | `core/widgets/severity_chip.dart` (se crea cuando exista la función) |
+| Barra de navegación inferior | Fondo = pantalla, plana con borde superior de 1 px (`divider`); seleccionado: color `primary` y etiqueta 600; siempre icono + texto | `BottomNavigationBarTheme` + `features/explore/ui/screens/home_screen.dart` |
+| Botón de mi ubicación | Botón de icono circular de 48 dp sobre el mapa (arriba a la derecha): superficie sólida con borde de 1 px, tooltip "Centrar en mi ubicación", anillo punteado mientras busca. La posición se dibuja como un punto `info` con aro de superficie, etiqueta semántica "Tu ubicación" | `features/explore/ui/pages/map_page.dart` |
+| Marcador de mapa | Forma de la gravedad (§3.3) de 36 dp con contorno de 2 px e icono de la categoría; objetivo táctil de 48 dp; etiqueta semántica con título, categoría y gravedad | `features/explore/ui/widgets/incident_map_marker.dart` (colores en `core/theme/severity_colors.dart`) |
 | Sello "Reporte validado" | Sello de arcilla 700 con anillo y texto circular | futuro |
 
 ## 8. Voz y textos en español (mazo de textos)
