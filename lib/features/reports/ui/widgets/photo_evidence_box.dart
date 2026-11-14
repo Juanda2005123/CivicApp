@@ -98,7 +98,17 @@ class _PhotoThumbnail extends StatelessWidget {
             ),
             clipBehavior: Clip.antiAlias,
             child: photo.bytes.isNotEmpty
-                ? Image.memory(photo.bytes, fit: BoxFit.cover)
+                ? Image.memory(
+                    photo.bytes,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Center(
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        size: 28,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  )
                 : const Icon(Icons.image, size: 32),
           ),
           if (isPrimary)

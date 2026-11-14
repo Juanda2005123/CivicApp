@@ -15,6 +15,7 @@ import 'package:vigia_app/features/reports/domain/entities/nearby_incident.dart'
 import 'package:vigia_app/features/reports/domain/entities/picked_photo.dart';
 import 'package:vigia_app/features/reports/domain/repositories/category_repository.dart';
 import 'package:vigia_app/features/reports/domain/repositories/incident_repository.dart';
+import 'package:vigia_app/features/reports/domain/repositories/photo_picker_repository.dart';
 
 /// Records every call so tests can assert the order of the steps.
 class FakeAuthRepository implements AuthRepository {
@@ -200,5 +201,18 @@ class FakeIncidentRepository implements IncidentRepository {
     required String userId,
   }) async {
     calls.add('incident.endorse');
+  }
+}
+
+class FakePhotoPickerRepository implements PhotoPickerRepository {
+  PickedPhoto? photoToReturn;
+  Exception? error;
+
+  FakePhotoPickerRepository({this.photoToReturn, this.error});
+
+  @override
+  Future<PickedPhoto?> pickPhoto({bool fromCamera = false}) async {
+    if (error != null) throw error!;
+    return photoToReturn;
   }
 }

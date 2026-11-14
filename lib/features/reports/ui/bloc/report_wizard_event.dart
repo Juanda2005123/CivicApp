@@ -58,6 +58,9 @@ class NearbyReportEndorsed extends ReportWizardEvent {
 /// Fired when citizen confirms "Es otro daño" to continue drafting their own report.
 class NearbyCheckDismissed extends ReportWizardEvent {}
 
+/// Fired when citizen requests detecting current physical GPS location in Step 1.
+class CurrentLocationRequested extends ReportWizardEvent {}
+
 /// Fired when photo evidence is added, removed, or updated in Step 3.
 class PhotosUpdated extends ReportWizardEvent {
   final List<PickedPhoto> photos;
@@ -66,6 +69,26 @@ class PhotosUpdated extends ReportWizardEvent {
 
   @override
   List<Object?> get props => [photos];
+}
+
+/// Fired when citizen selects a photo from camera or gallery.
+class PhotoPickRequested extends ReportWizardEvent {
+  final bool fromCamera;
+
+  const PhotoPickRequested({this.fromCamera = false});
+
+  @override
+  List<Object?> get props => [fromCamera];
+}
+
+/// Fired when citizen deletes an attached photo.
+class PhotoRemoved extends ReportWizardEvent {
+  final int index;
+
+  const PhotoRemoved(this.index);
+
+  @override
+  List<Object?> get props => [index];
 }
 
 /// Fired when text details (title, description, dimensions) are entered in Step 4.

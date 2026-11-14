@@ -27,6 +27,8 @@ class ReportWizardState extends Equatable {
   final IncidentSeverity severity;
   final List<NearbyIncident> nearbyIncidents;
   final bool isCheckingNearby;
+  final bool isLocating;
+  final String? locationStatusMessage;
   final List<PickedPhoto> photos;
   final String title;
   final String description;
@@ -47,6 +49,8 @@ class ReportWizardState extends Equatable {
     this.severity = IncidentSeverity.medium,
     this.nearbyIncidents = const [],
     this.isCheckingNearby = false,
+    this.isLocating = false,
+    this.locationStatusMessage,
     this.photos = const [],
     this.title = '',
     this.description = '',
@@ -85,6 +89,9 @@ class ReportWizardState extends Equatable {
     IncidentSeverity? severity,
     List<NearbyIncident>? nearbyIncidents,
     bool? isCheckingNearby,
+    bool? isLocating,
+    String? locationStatusMessage,
+    bool clearLocationStatusMessage = false,
     List<PickedPhoto>? photos,
     String? title,
     String? description,
@@ -107,6 +114,8 @@ class ReportWizardState extends Equatable {
       severity: severity ?? this.severity,
       nearbyIncidents: nearbyIncidents ?? this.nearbyIncidents,
       isCheckingNearby: isCheckingNearby ?? this.isCheckingNearby,
+      isLocating: isLocating ?? this.isLocating,
+      locationStatusMessage: clearLocationStatusMessage ? null : (locationStatusMessage ?? this.locationStatusMessage),
       photos: photos ?? this.photos,
       title: title ?? this.title,
       description: description ?? this.description,
@@ -130,6 +139,8 @@ class ReportWizardState extends Equatable {
         severity,
         nearbyIncidents,
         isCheckingNearby,
+        isLocating,
+        locationStatusMessage,
         photos,
         title,
         description,

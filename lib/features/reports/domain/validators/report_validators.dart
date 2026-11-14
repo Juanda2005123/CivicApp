@@ -53,15 +53,43 @@ class ReportValidators {
 
   /// Validates formatted address (RN-01).
   static void validateAddress(String address) {
-    if (address.trim().isEmpty) {
+    final trimmed = address.trim();
+    if (trimmed.isEmpty) {
       throw Exception('La dirección o punto de referencia es obligatoria.');
+    }
+    if (trimmed.length < 5) {
+      throw Exception('Ingresa una dirección o punto de referencia válido de al menos 5 caracteres.');
+    }
+    final hasVowel = RegExp(r'[aeiouáéíóúAEIOUÁÉÍÓÚ]', caseSensitive: false).hasMatch(trimmed);
+    final hasDigit = RegExp(r'\d').hasMatch(trimmed);
+    if (!hasVowel && !hasDigit) {
+      throw Exception('Ingresa una dirección o punto de referencia real.');
+    }
+    // If there is no numeric nomenclature (# or digits), require at least 2 descriptive words
+    if (!hasDigit && !trimmed.contains(' ')) {
+      throw Exception('Para puntos de referencia sin nomenclatura, describe el lugar con al menos 2 palabras (ej: Frente al parque).');
     }
   }
 
   /// Validates neighborhood / sector (RN-01).
   static void validateNeighborhood(String neighborhood) {
-    if (neighborhood.trim().isEmpty) {
+    final trimmed = neighborhood.trim();
+    if (trimmed.isEmpty) {
       throw Exception('El barrio o sector es obligatorio.');
+    }
+    if (trimmed.length < 3) {
+      throw Exception('El barrio o sector debe tener al menos 3 caracteres.');
+    }
+    final hasVowel = RegExp(r'[aeiouáéíóúAEIOUÁÉÍÓÚ]', caseSensitive: false).hasMatch(trimmed);
+    if (!hasVowel) {
+      throw Exception('Ingresa un nombre de barrio o sector válido.');
+    }
+    // Reject single random word with only 1 vowel and weird consonant ratio (like GAWG, QWRTY)
+    if (!trimmed.contains(' ') && trimmed.length <= 4) {
+      final vowels = RegExp(r'[aeiouáéíóúAEIOUÁÉÍÓÚ]', caseSensitive: false).allMatches(trimmed).length;
+      if (vowels < 2 && !['paz', 'sur'].contains(trimmed.toLowerCase())) {
+        throw Exception('Ingresa un nombre de barrio o sector reconocido.');
+      }
     }
   }
 

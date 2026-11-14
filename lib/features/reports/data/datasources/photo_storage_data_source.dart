@@ -33,6 +33,12 @@ class PhotoStorageDataSource {
 
       return _client.storage.from(bucketName).getPublicUrl(path);
     } on StorageException catch (e) {
+      if (e.message.toLowerCase().contains('bucket') || e.statusCode == '404') {
+        throw Exception(
+          'No se encontró el bucket de almacenamiento "$bucketName" en Supabase. '
+          'Verifica que el bucket público esté creado en la consola de Supabase Storage.',
+        );
+      }
       throw Exception('No pudimos subir la foto de evidencia: ${e.message}');
     } catch (e) {
       if (e is Exception) rethrow;

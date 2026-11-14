@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vigia_app/core/theme/app_spacing.dart';
@@ -8,7 +6,6 @@ import 'package:vigia_app/core/widgets/app_notice.dart';
 import 'package:vigia_app/core/widgets/app_text_field.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
-import 'package:vigia_app/features/reports/domain/entities/picked_photo.dart';
 import '../bloc/report_wizard_bloc.dart';
 import '../bloc/report_wizard_event.dart';
 import '../bloc/report_wizard_state.dart';
@@ -30,7 +27,6 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
   // Step 2 state
   int? _selectedCategoryId;
   IncidentSeverity _selectedSeverity = IncidentSeverity.medium;
-  final TextEditingController _categorySearchController = TextEditingController();
 
   // Step 4 state
   final _step4FormKey = GlobalKey<FormState>();
@@ -40,7 +36,6 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
 
   @override
   void dispose() {
-    _categorySearchController.dispose();
     _titleController.dispose();
     _descriptionController.dispose();
     _dimensionsController.dispose();
@@ -150,6 +145,11 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
           initialAddress: state.formattedAddress,
           initialNeighborhood: state.neighborhood,
           initialCity: state.city,
+          isLocating: state.isLocating,
+          locationStatusMessage: state.locationStatusMessage,
+          onDetectLocation: () {
+            context.read<ReportWizardBloc>().add(CurrentLocationRequested());
+          },
           onLocationConfirmed: ({
             required coordinates,
             required formattedAddress,
@@ -185,12 +185,6 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
   // STEP 2: Classification and Severity (HU-08/HU-09)
   Widget _buildStep2Classification(BuildContext context, ReportWizardState state) {
     final theme = Theme.of(context);
-    final query = _categorySearchController.text.toLowerCase().trim();
-
-    final filteredCategories = state.categories.where((cat) {
-      if (query.isEmpty) return true;
-      return cat.name.toLowerCase().contains(query);
-    }).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,39 +200,16 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: AppSpacing.md),
-        TextField(
-          controller: _categorySearchController,
-          onChanged: (_) => setState(() {}),
-          decoration: InputDecoration(
-            hintText: 'Buscar categoría...',
-            prefixIcon: const Icon(Icons.search),
-            filled: true,
-            fillColor: theme.colorScheme.surface,
-            contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadii.md),
-              borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.4)),
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           'Categoría del daño',
           style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: AppSpacing.xs),
         if (state.status == WizardStatus.loading)
-          const Center(child: CircularProgressIndicator())
-        else if (filteredCategories.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-            child: Text(
-              'No encontramos categorías que coincidan.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+            child: Center(child: CircularProgressIndicator()),
           )
         else
           GridView.builder(
@@ -246,13 +217,13 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              crossAxisSpacing: AppSpacing.sm,
-              mainAxisSpacing: AppSpacing.sm,
-              childAspectRatio: 2.3,
+              crossAxisSpacing: AppSpacing.xs,
+              mainAxisSpacing: AppSpacing.xs,
+              childAspectRatio: 2.8,
             ),
-            itemCount: filteredCategories.length,
+            itemCount: state.categories.length,
             itemBuilder: (context, index) {
-              final cat = filteredCategories[index];
+              final cat = state.categories[index];
               final isSelected = (_selectedCategoryId ?? state.selectedCategoryId) == cat.id;
 
               return InkWell(
@@ -261,7 +232,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
                 },
                 borderRadius: BorderRadius.circular(AppRadii.md),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 4),
                   decoration: BoxDecoration(
                     color: isSelected ? theme.colorScheme.primary : theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(AppRadii.md),
@@ -274,18 +245,19 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
                     children: [
                       Icon(
                         Icons.warning_amber_rounded,
-                        size: 22,
+                        size: 18,
                         color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.primary,
                       ),
-                      const SizedBox(width: AppSpacing.xs),
+                      const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          cat.name,
+                          cat.displayNameSpanish,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.labelMedium?.copyWith(
+                          style: theme.textTheme.labelSmall?.copyWith(
                             color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                            fontSize: 11,
                           ),
                         ),
                       ),
@@ -295,20 +267,20 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
               );
             },
           ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.md),
         Text(
           'Gravedad del daño',
           style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: AppSpacing.xs),
         SeverityChipSelector(
           selectedSeverity: _selectedSeverity,
           onSeverityChanged: (s) => setState(() => _selectedSeverity = s),
         ),
         if (state.nearbyIncidents.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.sm),
           Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
               color: theme.colorScheme.errorContainer.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(AppRadii.md),
@@ -316,12 +288,12 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.warning, color: theme.colorScheme.error),
-                const SizedBox(width: AppSpacing.sm),
+                Icon(Icons.warning, color: theme.colorScheme.error, size: 20),
+                const SizedBox(width: AppSpacing.xs),
                 Expanded(
                   child: Text(
                     'Hay ${state.nearbyIncidents.length} daños cercanos de este tipo.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
+                    style: theme.textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.onErrorContainer,
                     ),
@@ -346,7 +318,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
             ),
           ),
         ],
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.md),
         PrimaryButton(
           label: 'Continuar',
           isLoading: state.isCheckingNearby,
@@ -389,20 +361,9 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
         const SizedBox(height: AppSpacing.lg),
         PhotoEvidenceBox(
           photos: state.photos,
-          onPickPhoto: () {
-            // Emulate picking or provide sample photo bytes for the wizard
-            final sampleBytes = Uint8List.fromList(List.filled(200, 1));
-            final newPhotos = List<PickedPhoto>.from(state.photos)
-              ..add(PickedPhoto(
-                bytes: sampleBytes,
-                extension: 'jpg',
-                sizeInBytes: 200,
-              ));
-            context.read<ReportWizardBloc>().add(PhotosUpdated(newPhotos));
-          },
+          onPickPhoto: () => _showPhotoSourceSheet(context),
           onRemovePhoto: (index) {
-            final newPhotos = List<PickedPhoto>.from(state.photos)..removeAt(index);
-            context.read<ReportWizardBloc>().add(PhotosUpdated(newPhotos));
+            context.read<ReportWizardBloc>().add(PhotoRemoved(index));
           },
         ),
         const SizedBox(height: AppSpacing.xl),
@@ -413,6 +374,43 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
           },
         ),
       ],
+    );
+  }
+
+  void _showPhotoSourceSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.lg)),
+      ),
+      builder: (bottomSheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.camera_alt_outlined),
+                  title: const Text('Tomar foto con la cámara'),
+                  onTap: () {
+                    Navigator.of(bottomSheetContext).pop();
+                    context.read<ReportWizardBloc>().add(const PhotoPickRequested(fromCamera: true));
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_outlined),
+                  title: const Text('Elegir foto de la galería / archivos'),
+                  onTap: () {
+                    Navigator.of(bottomSheetContext).pop();
+                    context.read<ReportWizardBloc>().add(const PhotoPickRequested(fromCamera: false));
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

@@ -27,16 +27,21 @@ import '../../features/auth/ui/bloc/startup_bloc.dart';
 import '../../features/dashboard/ui/bloc/profile_bloc.dart';
 import '../../features/reports/data/datasources/category_remote_data_source.dart';
 import '../../features/reports/data/datasources/incident_remote_data_source.dart';
+import '../../features/reports/data/datasources/photo_picker_data_source.dart';
 import '../../features/reports/data/datasources/photo_storage_data_source.dart';
 import '../../features/reports/data/repositories/category_repository_impl.dart';
 import '../../features/reports/data/repositories/incident_repository_impl.dart';
+import '../../features/reports/data/repositories/photo_picker_repository_impl.dart';
 import '../../features/reports/domain/repositories/category_repository.dart';
 import '../../features/reports/domain/repositories/incident_repository.dart';
+import '../../features/reports/domain/repositories/photo_picker_repository.dart';
 import '../../features/reports/domain/usecases/create_incident_usecase.dart';
 import '../../features/reports/domain/usecases/endorse_incident_usecase.dart';
 import '../../features/reports/domain/usecases/get_categories_usecase.dart';
+import '../../features/reports/domain/usecases/get_current_location_usecase.dart';
 import '../../features/reports/domain/usecases/get_incident_by_id_usecase.dart';
 import '../../features/reports/domain/usecases/get_nearby_incidents_usecase.dart';
+import '../../features/reports/domain/usecases/pick_photo_usecase.dart';
 import '../../features/reports/ui/bloc/incident_detail_bloc.dart';
 import '../../features/reports/ui/bloc/report_wizard_bloc.dart';
 
@@ -57,6 +62,7 @@ Future<void> initDependencies({
   LocationRepository? locationRepository,
   CategoryRepository? categoryRepository,
   IncidentRepository? incidentRepository,
+  PhotoPickerRepository? photoPickerRepository,
 }) async {
   await sl.reset();
 
@@ -72,6 +78,7 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => CategoryRemoteDataSource(sl()));
   sl.registerLazySingleton(() => PhotoStorageDataSource(sl()));
   sl.registerLazySingleton(() => IncidentRemoteDataSource(sl()));
+  sl.registerLazySingleton(() => PhotoPickerDataSource());
 
   // Repositories, registered under their contract
   sl.registerLazySingleton<AuthRepository>(
@@ -92,6 +99,9 @@ Future<void> initDependencies({
   sl.registerLazySingleton<IncidentRepository>(
     () => incidentRepository ?? IncidentRepositoryImpl(sl(), sl()),
   );
+  sl.registerLazySingleton<PhotoPickerRepository>(
+    () => photoPickerRepository ?? PhotoPickerRepositoryImpl(sl()),
+  );
 
   // Use cases
   sl.registerLazySingleton(() => SignUpUseCase(sl(), sl()));
@@ -105,6 +115,8 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => CreateIncidentUseCase(sl()));
   sl.registerLazySingleton(() => GetIncidentByIdUseCase(sl()));
   sl.registerLazySingleton(() => EndorseIncidentUseCase(sl()));
+  sl.registerLazySingleton(() => GetCurrentLocationUseCase(sl()));
+  sl.registerLazySingleton(() => PickPhotoUseCase(sl()));
 
   // Blocs: a new instance per screen
   sl.registerFactory(() => ThemeCubit());
@@ -112,6 +124,17 @@ Future<void> initDependencies({
   sl.registerFactory(() => LoginBloc(sl()));
   sl.registerFactory(() => RegisterBloc(sl(), sl(), sl()));
   sl.registerFactory(() => ProfileBloc(sl(), sl()));
-  sl.registerFactory(() => ReportWizardBloc(sl(), sl(), sl(), sl(), sl()));
+  sl.registerFactory(
+    () => ReportWizardBloc(
+      sl(),
+      sl(),
+      sl(),
+      sl(),
+      sl(),
+      sl(),
+      sl(),
+      sl(),
+    ),
+  );
   sl.registerFactory(() => IncidentDetailBloc(sl()));
 }

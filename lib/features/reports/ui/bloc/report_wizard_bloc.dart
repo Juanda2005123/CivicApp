@@ -1,10 +1,15 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
+import 'package:vigia_app/features/auth/domain/usecases/detect_nearest_city_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/get_current_profile_usecase.dart';
 
+import '../../domain/entities/picked_photo.dart';
 import '../../domain/usecases/create_incident_usecase.dart';
 import '../../domain/usecases/endorse_incident_usecase.dart';
 import '../../domain/usecases/get_categories_usecase.dart';
+import '../../domain/usecases/get_current_location_usecase.dart';
 import '../../domain/usecases/get_nearby_incidents_usecase.dart';
+import '../../domain/usecases/pick_photo_usecase.dart';
 import '../../domain/validators/report_validators.dart';
 import 'report_wizard_event.dart';
 import 'report_wizard_state.dart';
@@ -15,6 +20,9 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
   final CreateIncidentUseCase _createIncident;
   final EndorseIncidentUseCase _endorseIncident;
   final GetCurrentProfileUseCase _getCurrentProfile;
+  final GetCurrentLocationUseCase _getCurrentLocation;
+  final PickPhotoUseCase _pickPhoto;
+  final DetectNearestCityUseCase _detectNearestCity;
 
   ReportWizardBloc(
     this._getCategories,
@@ -22,13 +30,19 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
     this._createIncident,
     this._endorseIncident,
     this._getCurrentProfile,
+    this._getCurrentLocation,
+    this._pickPhoto,
+    this._detectNearestCity,
   ) : super(const ReportWizardState()) {
     on<WizardStarted>(_onWizardStarted);
+    on<CurrentLocationRequested>(_onCurrentLocationRequested);
     on<LocationPitched>(_onLocationPitched);
     on<CategoryAndSeveritySelected>(_onCategoryAndSeveritySelected);
     on<NearbyReportEndorsed>(_onNearbyReportEndorsed);
     on<NearbyCheckDismissed>(_onNearbyCheckDismissed);
     on<PhotosUpdated>(_onPhotosUpdated);
+    on<PhotoPickRequested>(_onPhotoPickRequested);
+    on<PhotoRemoved>(_onPhotoRemoved);
     on<DetailsSubmitted>(_onDetailsSubmitted);
     on<StepNavigated>(_onStepNavigated);
     on<ReportSubmitConfirmed>(_onReportSubmitConfirmed);
@@ -41,15 +55,72 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
     emit(state.copyWith(status: WizardStatus.loading, clearErrorMessage: true));
     try {
       final categories = await _getCategories();
+      final profile = await _getCurrentProfile();
+
+      Coordinates? initialCoords = state.coordinates;
+      String? initialCity = state.city ?? profile?.cityName;
+
+      // Proactively detect real device GPS or fall back to user's registered city
+      try {
+        final deviceCoords = await _getCurrentLocation();
+        initialCoords = deviceCoords;
+        try {
+          final detectedCity = await _detectNearestCity();
+          initialCity = detectedCity.name;
+        } catch (_) {}
+      } catch (_) {
+        if (initialCoords == null && initialCity != null) {
+          initialCoords = _resolveFallbackCoordinatesForCity(initialCity);
+        }
+      }
+
+      initialCoords ??= const Coordinates(latitude: 3.4516, longitude: -76.5320);
+      initialCity ??= 'Cali';
+
       emit(state.copyWith(
         status: WizardStatus.ready,
         categories: categories,
+        coordinates: initialCoords,
+        city: initialCity,
         clearErrorMessage: true,
       ));
     } on Exception catch (e) {
       emit(state.copyWith(
         status: WizardStatus.failure,
         errorMessage: _cleanExceptionMessage(e),
+      ));
+    }
+  }
+
+  Future<void> _onCurrentLocationRequested(
+    CurrentLocationRequested event,
+    Emitter<ReportWizardState> emit,
+  ) async {
+    emit(state.copyWith(
+      isLocating: true,
+      clearLocationStatusMessage: true,
+      clearErrorMessage: true,
+    ));
+    try {
+      final coords = await _getCurrentLocation();
+      String? cityName = state.city;
+      try {
+        final nearest = await _detectNearestCity();
+        cityName = nearest.name;
+      } catch (_) {}
+
+      emit(state.copyWith(
+        isLocating: false,
+        coordinates: coords,
+        city: cityName,
+        locationStatusMessage:
+            'GPS detectado: (${coords.latitude.toStringAsFixed(4)}, ${coords.longitude.toStringAsFixed(4)}) en $cityName',
+        clearErrorMessage: true,
+      ));
+    } on Exception catch (e) {
+      emit(state.copyWith(
+        isLocating: false,
+        locationStatusMessage: 'No se pudo obtener el GPS: ${_cleanExceptionMessage(e)}',
       ));
     }
   }
@@ -89,7 +160,7 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
       clearErrorMessage: true,
     ));
 
-    // If coordinates are available, inspect for nearby duplicates
+    // If coordinates are available, inspect for nearby duplicates (HU-08)
     if (state.coordinates != null) {
       try {
         final nearby = await _getNearbyIncidents(
@@ -100,14 +171,12 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
         emit(state.copyWith(
           nearbyIncidents: nearby,
           isCheckingNearby: false,
-          // If duplicates are detected, stay on Step 2 so citizen can inspect (HU-08/HU-09)
-          // Otherwise, proceed directly to Step 3 (photos)
           currentStep: nearby.isNotEmpty ? 2 : 3,
           clearErrorMessage: true,
         ));
         return;
       } catch (_) {
-        // Nearby inspection failure should not block the user from proceeding
+        // Nearby inspection failure should not block the citizen from proceeding
       }
     }
 
@@ -172,6 +241,47 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
         errorMessage: _cleanExceptionMessage(e),
       ));
     }
+  }
+
+  Future<void> _onPhotoPickRequested(
+    PhotoPickRequested event,
+    Emitter<ReportWizardState> emit,
+  ) async {
+    if (state.photos.length >= ReportValidators.maxPhotosAllowed) {
+      emit(state.copyWith(
+        errorMessage: 'Ya has alcanzado el límite de ${ReportValidators.maxPhotosAllowed} fotos.',
+      ));
+      return;
+    }
+
+    try {
+      final photo = await _pickPhoto(fromCamera: event.fromCamera);
+      if (photo == null) return;
+
+      final updated = List<PickedPhoto>.from(state.photos)..add(photo);
+      ReportValidators.validatePhotos(updated);
+
+      emit(state.copyWith(
+        photos: updated,
+        clearErrorMessage: true,
+      ));
+    } on Exception catch (e) {
+      emit(state.copyWith(
+        errorMessage: _cleanExceptionMessage(e),
+      ));
+    }
+  }
+
+  void _onPhotoRemoved(
+    PhotoRemoved event,
+    Emitter<ReportWizardState> emit,
+  ) {
+    if (event.index < 0 || event.index >= state.photos.length) return;
+    final updated = List<PickedPhoto>.from(state.photos)..removeAt(event.index);
+    emit(state.copyWith(
+      photos: updated,
+      clearErrorMessage: true,
+    ));
   }
 
   void _onDetailsSubmitted(
@@ -262,6 +372,29 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
         errorMessage: _cleanExceptionMessage(e),
       ));
     }
+  }
+
+  Coordinates _resolveFallbackCoordinatesForCity(String cityName) {
+    final lower = cityName.toLowerCase().trim();
+    if (lower.contains('popay')) {
+      return const Coordinates(latitude: 2.4448, longitude: -76.6147);
+    }
+    if (lower.contains('bogot')) {
+      return const Coordinates(latitude: 4.7110, longitude: -74.0721);
+    }
+    if (lower.contains('medell')) {
+      return const Coordinates(latitude: 6.2442, longitude: -75.5812);
+    }
+    if (lower.contains('barranquill')) {
+      return const Coordinates(latitude: 10.9685, longitude: -74.7813);
+    }
+    if (lower.contains('bucaramang')) {
+      return const Coordinates(latitude: 7.1254, longitude: -73.1198);
+    }
+    if (lower.contains('pasto')) {
+      return const Coordinates(latitude: 1.2136, longitude: -77.2811);
+    }
+    return const Coordinates(latitude: 3.4516, longitude: -76.5320); // Cali default
   }
 
   String _cleanExceptionMessage(Exception e) {
