@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 
 import '../../domain/entities/coordinates.dart';
+import '../../domain/repositories/location_repository.dart';
 
 /// The only class that uses the location SDK. It translates its types into the
 /// domain's [Coordinates] and its failures into user-facing messages.
@@ -25,7 +26,7 @@ class LocationDataSource {
         }
       }
       if (permission == LocationPermission.deniedForever) {
-        throw Exception('El permiso de ubicación está bloqueado. Usa la lista de ciudades.');
+        throw Exception(LocationRepository.blockedMessage);
       }
 
       final position = await _lastKnownPosition() ??
@@ -50,6 +51,16 @@ class LocationDataSource {
       // The SDK can throw Errors (not Exceptions) on some platforms; the Bloc
       // only handles Exceptions, so translate them here.
       throw Exception(_unavailable);
+    }
+  }
+
+  /// The web implementation of the SDK throws instead of returning `false`, so
+  /// any failure here means "could not open them".
+  Future<bool> openSettings() async {
+    try {
+      return await Geolocator.openAppSettings();
+    } catch (_) {
+      return false;
     }
   }
 

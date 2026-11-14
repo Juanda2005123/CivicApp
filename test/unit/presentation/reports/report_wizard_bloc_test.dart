@@ -6,6 +6,8 @@ import 'package:vigia_app/features/auth/domain/entities/city.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import 'package:vigia_app/features/auth/domain/entities/profile.dart';
 import 'package:vigia_app/features/auth/domain/usecases/detect_nearest_city_usecase.dart';
+import 'package:vigia_app/features/auth/domain/usecases/open_location_settings_usecase.dart';
+import 'package:vigia_app/features/auth/domain/repositories/location_repository.dart';
 import 'package:vigia_app/features/auth/domain/usecases/get_current_profile_usecase.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_category.dart';
@@ -69,6 +71,7 @@ void main() {
         GetCurrentLocationUseCase(fakeLocationRepo),
         PickPhotoUseCase(fakePhotoPickerRepo),
         DetectNearestCityUseCase(fakeLocationRepo, fakeCityRepo),
+        OpenLocationSettingsUseCase(fakeLocationRepo),
       );
     });
 
@@ -95,6 +98,34 @@ void main() {
       expect(states.last.isLocating, false);
       expect(states.last.coordinates?.latitude, 2.4448);
       expect(states.last.locationStatusMessage, contains('GPS detectado'));
+      expect(states.last.isLocationBlocked, false);
+    });
+
+    test('CurrentLocationRequested flags a blocked permission', () async {
+      bloc = ReportWizardBloc(
+        GetCategoriesUseCase(fakeCategoryRepo),
+        GetNearbyIncidentsUseCase(fakeIncidentRepo),
+        CreateIncidentUseCase(fakeIncidentRepo),
+        EndorseIncidentUseCase(fakeIncidentRepo),
+        GetCurrentProfileUseCase(fakeAuthRepo, fakeProfileRepo),
+        GetCurrentLocationUseCase(
+          FakeLocationRepository(error: Exception(LocationRepository.blockedMessage)),
+        ),
+        PickPhotoUseCase(fakePhotoPickerRepo),
+        DetectNearestCityUseCase(fakeLocationRepo, fakeCityRepo),
+        OpenLocationSettingsUseCase(fakeLocationRepo),
+      );
+
+      final states = await emittedStates(bloc, CurrentLocationRequested());
+
+      expect(states.last.isLocationBlocked, true);
+      expect(states.last.locationStatusMessage, LocationRepository.blockedMessage);
+    });
+
+    test('LocationSettingsRequested opens the system settings', () async {
+      await emittedStates(bloc, LocationSettingsRequested());
+
+      expect(fakeLocationRepo.openSettingsCalls, 1);
     });
 
     test('PhotoPickRequested appends selected photo to state', () async {

@@ -18,6 +18,7 @@ import '../../features/auth/domain/repositories/profile_repository.dart';
 import '../../features/auth/domain/usecases/detect_nearest_city_usecase.dart';
 import '../../features/auth/domain/usecases/get_cities_usecase.dart';
 import '../../features/auth/domain/usecases/get_current_profile_usecase.dart';
+import '../../features/auth/domain/usecases/open_location_settings_usecase.dart';
 import '../../features/auth/domain/usecases/sign_in_usecase.dart';
 import '../../features/auth/domain/usecases/sign_out_usecase.dart';
 import '../../features/auth/domain/usecases/sign_up_usecase.dart';
@@ -110,6 +111,7 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => GetCurrentProfileUseCase(sl(), sl()));
   sl.registerLazySingleton(() => GetCitiesUseCase(sl()));
   sl.registerLazySingleton(() => DetectNearestCityUseCase(sl(), sl()));
+  sl.registerLazySingleton(() => OpenLocationSettingsUseCase(sl()));
   sl.registerLazySingleton(() => GetCategoriesUseCase(sl()));
   sl.registerLazySingleton(() => GetNearbyIncidentsUseCase(sl()));
   sl.registerLazySingleton(() => CreateIncidentUseCase(sl()));
@@ -122,10 +124,11 @@ Future<void> initDependencies({
   sl.registerFactory(() => ThemeCubit());
   sl.registerFactory(() => StartupBloc(sl()));
   sl.registerFactory(() => LoginBloc(sl()));
-  sl.registerFactory(() => RegisterBloc(sl(), sl(), sl()));
+  sl.registerFactory(() => RegisterBloc(sl(), sl(), sl(), sl()));
   sl.registerFactory(() => ProfileBloc(sl(), sl()));
   sl.registerFactory(
     () => ReportWizardBloc(
+      sl(),
       sl(),
       sl(),
       sl(),

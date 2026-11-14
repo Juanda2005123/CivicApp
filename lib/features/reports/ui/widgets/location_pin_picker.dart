@@ -14,6 +14,8 @@ class LocationPinPicker extends StatefulWidget {
   final String? initialCity;
   final bool isLocating;
   final String? locationStatusMessage;
+  final bool isLocationBlocked;
+  final VoidCallback? onOpenLocationSettings;
   final VoidCallback? onDetectLocation;
   final void Function({
     required Coordinates coordinates,
@@ -30,6 +32,8 @@ class LocationPinPicker extends StatefulWidget {
     this.initialCity,
     this.isLocating = false,
     this.locationStatusMessage,
+    this.isLocationBlocked = false,
+    this.onOpenLocationSettings,
     this.onDetectLocation,
     required this.onLocationConfirmed,
   });
@@ -279,6 +283,14 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
                           : theme.colorScheme.error,
                       fontWeight: FontWeight.w500,
                     ),
+                  ),
+                ],
+                if (widget.isLocationBlocked && widget.onOpenLocationSettings != null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  OutlinedButton.icon(
+                    onPressed: widget.onOpenLocationSettings,
+                    icon: const Icon(Icons.settings_outlined, size: 18),
+                    label: const Text('Abrir ajustes'),
                   ),
                 ],
               ],

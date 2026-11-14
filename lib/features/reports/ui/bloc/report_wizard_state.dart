@@ -29,6 +29,10 @@ class ReportWizardState extends Equatable {
   final bool isCheckingNearby;
   final bool isLocating;
   final String? locationStatusMessage;
+
+  /// The user blocked the location permission; Step 1 offers to open the
+  /// system settings.
+  final bool isLocationBlocked;
   final List<PickedPhoto> photos;
   final String title;
   final String description;
@@ -51,6 +55,7 @@ class ReportWizardState extends Equatable {
     this.isCheckingNearby = false,
     this.isLocating = false,
     this.locationStatusMessage,
+    this.isLocationBlocked = false,
     this.photos = const [],
     this.title = '',
     this.description = '',
@@ -92,6 +97,7 @@ class ReportWizardState extends Equatable {
     bool? isLocating,
     String? locationStatusMessage,
     bool clearLocationStatusMessage = false,
+    bool? isLocationBlocked,
     List<PickedPhoto>? photos,
     String? title,
     String? description,
@@ -116,6 +122,7 @@ class ReportWizardState extends Equatable {
       isCheckingNearby: isCheckingNearby ?? this.isCheckingNearby,
       isLocating: isLocating ?? this.isLocating,
       locationStatusMessage: clearLocationStatusMessage ? null : (locationStatusMessage ?? this.locationStatusMessage),
+      isLocationBlocked: isLocationBlocked ?? this.isLocationBlocked,
       photos: photos ?? this.photos,
       title: title ?? this.title,
       description: description ?? this.description,
@@ -141,6 +148,7 @@ class ReportWizardState extends Equatable {
         isCheckingNearby,
         isLocating,
         locationStatusMessage,
+        isLocationBlocked,
         photos,
         title,
         description,

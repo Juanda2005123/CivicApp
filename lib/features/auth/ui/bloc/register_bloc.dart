@@ -1,7 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/usecases/detect_nearest_city_usecase.dart';
+import '../../domain/repositories/location_repository.dart';
 import '../../domain/usecases/get_cities_usecase.dart';
+import '../../domain/usecases/open_location_settings_usecase.dart';
 import '../../domain/usecases/sign_up_usecase.dart';
 import 'register_event.dart';
 import 'register_state.dart';
@@ -9,13 +11,19 @@ import 'register_state.dart';
 class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
   final GetCitiesUseCase _getCities;
   final DetectNearestCityUseCase _detectNearestCity;
+  final OpenLocationSettingsUseCase _openLocationSettings;
   final SignUpUseCase _signUp;
 
-  RegisterBloc(this._getCities, this._detectNearestCity, this._signUp)
-      : super(const RegisterState()) {
+  RegisterBloc(
+    this._getCities,
+    this._detectNearestCity,
+    this._openLocationSettings,
+    this._signUp,
+  ) : super(const RegisterState()) {
     on<RegisterStarted>(_onStarted);
     on<CitySelected>(_onCitySelected);
     on<NearestCityRequested>(_onNearestCityRequested);
+    on<LocationSettingsRequested>(_onLocationSettingsRequested);
     on<RegisterSubmitted>(_onSubmitted);
   }
 
@@ -50,6 +58,24 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
         gpsStatus: GpsStatus.success,
         gpsMessage: 'Ciudad detectada: ${city.displayName}',
       ));
+    } on Exception catch (e) {
+      final message = _message(e);
+      emit(state.copyWith(
+        gpsStatus: message == LocationRepository.blockedMessage
+            ? GpsStatus.blocked
+            : GpsStatus.failure,
+        gpsMessage: message,
+      ));
+    }
+  }
+
+  /// No emit on success: the notice stays until the user tries the GPS again.
+  Future<void> _onLocationSettingsRequested(
+    LocationSettingsRequested event,
+    Emitter<RegisterState> emit,
+  ) async {
+    try {
+      await _openLocationSettings();
     } on Exception catch (e) {
       emit(state.copyWith(gpsStatus: GpsStatus.failure, gpsMessage: _message(e)));
     }

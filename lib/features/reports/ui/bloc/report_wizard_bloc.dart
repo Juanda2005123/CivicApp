@@ -1,7 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
+import 'package:vigia_app/features/auth/domain/repositories/location_repository.dart';
 import 'package:vigia_app/features/auth/domain/usecases/detect_nearest_city_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/get_current_profile_usecase.dart';
+import 'package:vigia_app/features/auth/domain/usecases/open_location_settings_usecase.dart';
 
 import '../../domain/entities/picked_photo.dart';
 import '../../domain/usecases/create_incident_usecase.dart';
@@ -23,6 +25,7 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
   final GetCurrentLocationUseCase _getCurrentLocation;
   final PickPhotoUseCase _pickPhoto;
   final DetectNearestCityUseCase _detectNearestCity;
+  final OpenLocationSettingsUseCase _openLocationSettings;
 
   ReportWizardBloc(
     this._getCategories,
@@ -33,9 +36,11 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
     this._getCurrentLocation,
     this._pickPhoto,
     this._detectNearestCity,
+    this._openLocationSettings,
   ) : super(const ReportWizardState()) {
     on<WizardStarted>(_onWizardStarted);
     on<CurrentLocationRequested>(_onCurrentLocationRequested);
+    on<LocationSettingsRequested>(_onLocationSettingsRequested);
     on<LocationPitched>(_onLocationPitched);
     on<CategoryAndSeveritySelected>(_onCategoryAndSeveritySelected);
     on<NearbyReportEndorsed>(_onNearbyReportEndorsed);
@@ -98,6 +103,7 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
   ) async {
     emit(state.copyWith(
       isLocating: true,
+      isLocationBlocked: false,
       clearLocationStatusMessage: true,
       clearErrorMessage: true,
     ));
@@ -118,9 +124,27 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
         clearErrorMessage: true,
       ));
     } on Exception catch (e) {
+      final message = _cleanExceptionMessage(e);
+      final blocked = message == LocationRepository.blockedMessage;
       emit(state.copyWith(
         isLocating: false,
-        locationStatusMessage: 'No se pudo obtener el GPS: ${_cleanExceptionMessage(e)}',
+        isLocationBlocked: blocked,
+        locationStatusMessage: blocked ? message : 'No se pudo obtener el GPS: $message',
+      ));
+    }
+  }
+
+  /// No emit on success: the notice stays until the user tries the GPS again.
+  Future<void> _onLocationSettingsRequested(
+    LocationSettingsRequested event,
+    Emitter<ReportWizardState> emit,
+  ) async {
+    try {
+      await _openLocationSettings();
+    } on Exception catch (e) {
+      emit(state.copyWith(
+        isLocationBlocked: false,
+        locationStatusMessage: _cleanExceptionMessage(e),
       ));
     }
   }

@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/features/auth/domain/entities/city.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
+import 'package:vigia_app/features/auth/domain/repositories/location_repository.dart';
 import 'package:vigia_app/features/auth/domain/usecases/detect_nearest_city_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/get_cities_usecase.dart';
+import 'package:vigia_app/features/auth/domain/usecases/open_location_settings_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/sign_up_usecase.dart';
 import 'package:vigia_app/features/auth/ui/bloc/register_bloc.dart';
 import 'package:vigia_app/features/auth/ui/bloc/register_event.dart';
@@ -41,6 +43,7 @@ void main() {
     return RegisterBloc(
       GetCitiesUseCase(cities),
       DetectNearestCityUseCase(location, cities),
+      OpenLocationSettingsUseCase(location),
       SignUpUseCase(auth, profiles),
     );
   }
@@ -103,6 +106,44 @@ void main() {
       expect(states.last.gpsStatus, GpsStatus.failure);
       expect(states.last.gpsMessage, 'Permission denied.');
       expect(states.last.selectedCity, isNull);
+    });
+
+    test('emits blocked when the permission is blocked', () async {
+      location = FakeLocationRepository(error: Exception(LocationRepository.blockedMessage));
+      bloc = buildBloc();
+
+      final states = await emittedStates(bloc, NearestCityRequested());
+
+      expect(states.last.gpsStatus, GpsStatus.blocked);
+      expect(states.last.gpsMessage, LocationRepository.blockedMessage);
+    });
+  });
+
+  group('LocationSettingsRequested', () {
+    test('opens the settings and keeps the blocked notice', () async {
+      location = FakeLocationRepository(error: Exception(LocationRepository.blockedMessage));
+      bloc = buildBloc();
+      await emittedStates(bloc, NearestCityRequested());
+
+      final states = await emittedStates(bloc, LocationSettingsRequested());
+
+      expect(location.openSettingsCalls, 1);
+      expect(states, isEmpty);
+      expect(bloc.state.gpsStatus, GpsStatus.blocked);
+    });
+
+    test('explains the manual path when the settings cannot be opened', () async {
+      location = FakeLocationRepository(
+        error: Exception(LocationRepository.blockedMessage),
+        canOpenSettings: false,
+      );
+      bloc = buildBloc();
+      await emittedStates(bloc, NearestCityRequested());
+
+      final states = await emittedStates(bloc, LocationSettingsRequested());
+
+      expect(states.last.gpsStatus, GpsStatus.failure);
+      expect(states.last.gpsMessage, startsWith('No pudimos abrir los ajustes.'));
     });
   });
 
