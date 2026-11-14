@@ -7,6 +7,7 @@ import 'package:vigia_app/features/auth/domain/entities/city.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import 'package:vigia_app/features/auth/domain/entities/profile.dart';
 import 'package:vigia_app/features/auth/domain/usecases/detect_nearest_city_usecase.dart';
+import 'package:vigia_app/features/auth/domain/usecases/open_location_settings_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/get_current_profile_usecase.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_category.dart';
 import 'package:vigia_app/features/reports/domain/usecases/create_incident_usecase.dart';
@@ -64,6 +65,7 @@ void main() {
         GetCurrentLocationUseCase(fakeLocationRepo),
         PickPhotoUseCase(fakePhotoPickerRepo),
         DetectNearestCityUseCase(fakeLocationRepo, fakeCityRepo),
+        OpenLocationSettingsUseCase(fakeLocationRepo),
       )..add(WizardStarted());
       addTearDown(bloc.close);
       return bloc;

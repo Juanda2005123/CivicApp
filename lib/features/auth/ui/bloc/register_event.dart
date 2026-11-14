@@ -13,6 +13,9 @@ class CitySelected extends RegisterEvent {
 /// The citizen asked to detect the nearest city with the GPS.
 class NearestCityRequested extends RegisterEvent {}
 
+/// The citizen tapped "Abrir ajustes" after blocking the location permission.
+class LocationSettingsRequested extends RegisterEvent {}
+
 /// The citizen submitted the form. The city is the one held in the state.
 class RegisterSubmitted extends RegisterEvent {
   final String fullName;

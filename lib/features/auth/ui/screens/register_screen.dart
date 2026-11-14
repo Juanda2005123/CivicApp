@@ -207,6 +207,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             message: state.gpsMessage!,
                           ),
                         ],
+                        if (state.gpsStatus == GpsStatus.blocked) ...[
+                          const SizedBox(height: AppSpacing.sm),
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(AppSizes.buttonCompact),
+                            ),
+                            onPressed: isLoading
+                                ? null
+                                : () => context.read<RegisterBloc>().add(LocationSettingsRequested()),
+                            icon: const Icon(Icons.settings_outlined, size: 18),
+                            label: const Text('Abrir ajustes'),
+                          ),
+                        ],
                         const SizedBox(height: AppSpacing.field),
                         AppTextField(
                           label: 'Contraseña',

@@ -92,12 +92,24 @@ class FakeCityRepository implements CityRepository {
 class FakeLocationRepository implements LocationRepository {
   final Coordinates? coordinates;
   final Exception? error;
-  FakeLocationRepository({this.coordinates, this.error});
+
+  /// What [openSettings] answers; `false` simulates a platform (e.g. the web)
+  /// that cannot open the system settings.
+  final bool canOpenSettings;
+  int openSettingsCalls = 0;
+
+  FakeLocationRepository({this.coordinates, this.error, this.canOpenSettings = true});
 
   @override
   Future<Coordinates> currentCoordinates() async {
     if (error != null) throw error!;
     return coordinates!;
+  }
+
+  @override
+  Future<bool> openSettings() async {
+    openSettingsCalls++;
+    return canOpenSettings;
   }
 }
 

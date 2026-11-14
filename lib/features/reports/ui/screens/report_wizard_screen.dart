@@ -148,8 +148,12 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
           initialCity: state.city,
           isLocating: state.isLocating,
           locationStatusMessage: state.locationStatusMessage,
+          isLocationBlocked: state.isLocationBlocked,
           onDetectLocation: () {
             context.read<ReportWizardBloc>().add(CurrentLocationRequested());
+          },
+          onOpenLocationSettings: () {
+            context.read<ReportWizardBloc>().add(LocationSettingsRequested());
           },
           onLocationConfirmed: ({
             required coordinates,

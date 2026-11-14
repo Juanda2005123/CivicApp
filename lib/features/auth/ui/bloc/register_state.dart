@@ -3,7 +3,9 @@ import '../../domain/entities/profile.dart';
 
 enum RegisterStatus { initial, loading, success, failure }
 
-enum GpsStatus { idle, detecting, success, failure }
+/// `blocked`: the user blocked the location permission; the screen offers to
+/// open the system settings.
+enum GpsStatus { idle, detecting, success, failure, blocked }
 
 class RegisterState {
   final RegisterStatus status;

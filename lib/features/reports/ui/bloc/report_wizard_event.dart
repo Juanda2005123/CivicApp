@@ -61,6 +61,9 @@ class NearbyCheckDismissed extends ReportWizardEvent {}
 /// Fired when citizen requests detecting current physical GPS location in Step 1.
 class CurrentLocationRequested extends ReportWizardEvent {}
 
+/// Fired when citizen taps "Abrir ajustes" after blocking the location permission.
+class LocationSettingsRequested extends ReportWizardEvent {}
+
 /// Fired when photo evidence is added, removed, or updated in Step 3.
 class PhotosUpdated extends ReportWizardEvent {
   final List<PickedPhoto> photos;
