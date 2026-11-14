@@ -91,7 +91,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
         if (state.status == RegisterStatus.success) {
-          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.dashboard, (route) => false);
+          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);
         }
       },
       builder: (context, state) {

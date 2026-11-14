@@ -26,6 +26,7 @@ import '../../features/auth/ui/bloc/login_bloc.dart';
 import '../../features/auth/ui/bloc/register_bloc.dart';
 import '../../features/auth/ui/bloc/startup_bloc.dart';
 import '../../features/dashboard/ui/bloc/profile_bloc.dart';
+import '../../features/explore/ui/bloc/map_bloc.dart';
 import '../../features/reports/data/datasources/category_remote_data_source.dart';
 import '../../features/reports/data/datasources/incident_remote_data_source.dart';
 import '../../features/reports/data/datasources/photo_picker_data_source.dart';
@@ -39,6 +40,7 @@ import '../../features/reports/domain/repositories/photo_picker_repository.dart'
 import '../../features/reports/domain/usecases/create_incident_usecase.dart';
 import '../../features/reports/domain/usecases/endorse_incident_usecase.dart';
 import '../../features/reports/domain/usecases/get_categories_usecase.dart';
+import '../../features/reports/domain/usecases/get_city_map_usecase.dart';
 import '../../features/reports/domain/usecases/get_current_location_usecase.dart';
 import '../../features/reports/domain/usecases/get_incident_by_id_usecase.dart';
 import '../../features/reports/domain/usecases/get_nearby_incidents_usecase.dart';
@@ -116,6 +118,7 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => GetNearbyIncidentsUseCase(sl()));
   sl.registerLazySingleton(() => CreateIncidentUseCase(sl()));
   sl.registerLazySingleton(() => GetIncidentByIdUseCase(sl()));
+  sl.registerLazySingleton(() => GetCityMapUseCase(sl(), sl(), sl(), sl()));
   sl.registerLazySingleton(() => EndorseIncidentUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentLocationUseCase(sl()));
   sl.registerLazySingleton(() => PickPhotoUseCase(sl()));
@@ -126,6 +129,7 @@ Future<void> initDependencies({
   sl.registerFactory(() => LoginBloc(sl()));
   sl.registerFactory(() => RegisterBloc(sl(), sl(), sl(), sl()));
   sl.registerFactory(() => ProfileBloc(sl(), sl()));
+  sl.registerFactory(() => MapBloc(sl(), sl(), sl()));
   sl.registerFactory(
     () => ReportWizardBloc(
       sl(),

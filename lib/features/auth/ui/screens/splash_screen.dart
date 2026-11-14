@@ -20,7 +20,7 @@ class SplashScreen extends StatelessWidget {
       listener: (context, state) {
         switch (state.status) {
           case StartupStatus.authenticated:
-            Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
+            Navigator.pushReplacementNamed(context, AppRoutes.home);
           case StartupStatus.unauthenticated:
             Navigator.pushReplacementNamed(context, AppRoutes.login);
           case StartupStatus.checking:

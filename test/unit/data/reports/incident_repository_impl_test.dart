@@ -7,6 +7,7 @@ import 'package:vigia_app/features/reports/data/datasources/photo_storage_data_s
 import 'package:vigia_app/features/reports/data/models/incident_model.dart';
 import 'package:vigia_app/features/reports/data/repositories/incident_repository_impl.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
+import 'package:vigia_app/features/reports/domain/entities/incident_marker.dart';
 import 'package:vigia_app/features/reports/domain/entities/nearby_incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/picked_photo.dart';
 
@@ -49,6 +50,12 @@ class FakeIncidentRemoteDataSource implements IncidentRemoteDataSource {
   }) async {
     calls.add('remote.getNearbyIncidents');
     return nearbyToReturn;
+  }
+
+  @override
+  Future<List<IncidentMarker>> getCityIncidents(String city) async {
+    calls.add('remote.getCityIncidents');
+    return const [];
   }
 
   @override
@@ -129,6 +136,12 @@ void main() {
       await repository.endorseIncident(incidentId: 'inc-1', userId: 'user-1');
 
       expect(fakeRemote.calls, ['remote.endorseIncident']);
+    });
+
+    test('getCityIncidents delegates to remote data source', () async {
+      await repository.getCityIncidents('Cali');
+
+      expect(fakeRemote.calls, ['remote.getCityIncidents']);
     });
   });
 }

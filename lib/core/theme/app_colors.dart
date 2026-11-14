@@ -48,6 +48,14 @@ abstract final class AppColors {
   static const Color infoContainerDark = inkRaised;
   static const Color warningDark = Color(0xFFF2C66A);
   static const Color warningContainerDark = Color(0xFF4A3A12);
+
+  // Severity (section 3.3): each level also has a shape and a text label.
+  static const Color severityLowLight = Color(0xFF266A70);
+  static const Color severityHighLight = Color(0xFFC2410C);
+  static const Color severityCriticalLight = Color(0xFF8F1D2C);
+  static const Color severityLowDark = Color(0xFF3E9AA2);
+  static const Color severityHighDark = Color(0xFFF08A57);
+  static const Color severityCriticalDark = Color(0xFFE56B7B);
 }
 
 /// Colors that [ColorScheme] has no slot for. Read them with `context.semantic`.

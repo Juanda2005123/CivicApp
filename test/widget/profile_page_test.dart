@@ -13,11 +13,11 @@ import 'package:vigia_app/features/auth/domain/usecases/get_current_profile_usec
 import 'package:vigia_app/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:vigia_app/features/dashboard/ui/bloc/profile_bloc.dart';
 import 'package:vigia_app/features/dashboard/ui/bloc/profile_event.dart';
-import 'package:vigia_app/features/dashboard/ui/screens/dashboard_screen.dart';
+import 'package:vigia_app/features/dashboard/ui/pages/profile_page.dart';
 
 import '../support/fakes.dart';
 
-Widget createDashboardTestWidget(ProfileBloc bloc) {
+Widget createProfileTestWidget(ProfileBloc bloc) {
   return MultiBlocProvider(
     providers: [
       BlocProvider<ThemeCubit>(create: (_) => ThemeCubit()),
@@ -25,7 +25,8 @@ Widget createDashboardTestWidget(ProfileBloc bloc) {
     ],
     child: MaterialApp(
       theme: AppTheme.light,
-      home: const DashboardScreen(),
+      // A Page has no Scaffold; the shell hosts it in the app.
+      home: const Scaffold(body: ProfilePage()),
       routes: {
         AppRoutes.login: (context) => const Scaffold(body: Text('Login Screen Mock')),
       },
@@ -60,12 +61,11 @@ void main() {
 
 
 
-  group('DashboardScreen Widget Tests', () {
+  group('ProfilePage Widget Tests', () {
     testWidgets('renders all citizen profile details from the bloc state', (tester) async {
-      await tester.pumpWidget(createDashboardTestWidget(newBloc()));
+      await tester.pumpWidget(createProfileTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
-      expect(find.text('Mi perfil'), findsOneWidget);
       expect(find.text('Sesión activa'), findsOneWidget);
       expect(find.text('Rango cívico'), findsOneWidget);
       expect(find.text('Juan David Quintero'), findsOneWidget);
@@ -78,7 +78,7 @@ void main() {
 
     testWidgets('shows a progress indicator while the profile loads', (tester) async {
       final gate = profiles.gate = Completer<void>();
-      await tester.pumpWidget(createDashboardTestWidget(newBloc()));
+      await tester.pumpWidget(createProfileTestWidget(newBloc()));
       await tester.pump();
 
       expect(find.byType(DottedSpinner), findsOneWidget);
@@ -92,7 +92,7 @@ void main() {
     });
 
     testWidgets('tapping logout ends the session and navigates to login', (tester) async {
-      await tester.pumpWidget(createDashboardTestWidget(newBloc()));
+      await tester.pumpWidget(createProfileTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
       await tester.ensureVisible(find.text('Cerrar sesión'));
@@ -106,7 +106,7 @@ void main() {
 
     testWidgets('a profile that cannot load shows the message and a retry button', (tester) async {
       profiles.getError = Exception('No pudimos cargar tu perfil: permission denied');
-      await tester.pumpWidget(createDashboardTestWidget(newBloc()));
+      await tester.pumpWidget(createProfileTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
       expect(find.text('No pudimos cargar tu perfil: permission denied'), findsOneWidget);

@@ -47,7 +47,7 @@ Widget createRegisterTestWidget(RegisterBloc bloc) {
       theme: AppTheme.light,
       home: const RegisterScreen(),
       routes: {
-        AppRoutes.dashboard: (context) => const Scaffold(body: Text('Dashboard Screen Mock')),
+        AppRoutes.home: (context) => const Scaffold(body: Text('Dashboard Screen Mock')),
       },
     ),
   );

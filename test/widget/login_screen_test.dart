@@ -21,7 +21,7 @@ Widget createLoginTestWidget(LoginBloc bloc) {
       home: const LoginScreen(),
       routes: {
         AppRoutes.register: (context) => const Scaffold(body: Text('Register Screen Mock')),
-        AppRoutes.dashboard: (context) => const Scaffold(body: Text('Dashboard Screen Mock')),
+        AppRoutes.home: (context) => const Scaffold(body: Text('Dashboard Screen Mock')),
       },
     ),
   );
