@@ -288,21 +288,30 @@
 
 ---
 
-## 3. Technical & Architectural Decisions for Sprint 2
+## 3. Additional Work: Unplanned but Important
 
-### 3.1. Wizard Step Order Swap (UX Decision)
+### KI-01 — Blocked location permission has no way out from the app
+**Platform:** Android 11+
+
+**Symptom:** If the user taps **"No permitir"** twice in the location dialog, the dialog never appears again. The app only shows *"El permiso de ubicación está bloqueado. Usa la lista de ciudades."* and offers no way to turn location back on.
+
+---
+
+## 4. Technical & Architectural Decisions for Sprint 2
+
+### 4.1. Wizard Step Order Swap (UX Decision)
 - **Previous Flow:** Location $\rightarrow$ Photos $\rightarrow$ Classification $\rightarrow$ Description $\rightarrow$ Publish.
 - **Adopted Flow:** **Location (HU-07) $\rightarrow$ Classification & Severity (HU-08) $\rightarrow$ Nearby Duplicates Check (HU-09) $\rightarrow$ Photos (HU-10) $\rightarrow$ Description (HU-11) $\rightarrow$ Confirmation (HU-12).**
 - **Rationale:** Prevents citizens from capturing and uploading heavy photos before learning that an identical issue was already reported nearby.
 
-### 3.2. Business Rules Impacted in Sprint 2
+### 4.2. Business Rules Impacted in Sprint 2
 1. **RN-01 (Report Integrity):** Title (≤ 180 chars), description, valid category, severity (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`), coordinates, address, and neighborhood are mandatory.
 2. **RN-02 (Photographic Evidence):** 0 to 3 images in JPG, PNG, or WebP format, max 5 MB each, stored in Supabase Storage.
 3. **RN-08 (Initial XP):** Atomic reward of **+100 XP** upon successful report publication.
 4. **RN-12 (Geographic Delimitation):** Coordinates strictly validated within Colombia's continental bounding box and coverage catalog.
 5. **RN-14 (Launch Location):** Location permissions requested upon entering Map; application remains 100% operational on denial via `last_city`.
 
-### 3.3. Target Clean Architecture Structure
+### 4.3. Target Clean Architecture Structure
 ```text
 lib/features/reports/
 ├── domain/
