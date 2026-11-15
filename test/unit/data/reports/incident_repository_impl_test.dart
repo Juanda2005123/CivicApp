@@ -6,6 +6,7 @@ import 'package:vigia_app/features/reports/data/datasources/incident_remote_data
 import 'package:vigia_app/features/reports/data/datasources/photo_storage_data_source.dart';
 import 'package:vigia_app/features/reports/data/models/incident_model.dart';
 import 'package:vigia_app/features/reports/data/repositories/incident_repository_impl.dart';
+import 'package:vigia_app/features/reports/domain/entities/feed_incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_marker.dart';
 import 'package:vigia_app/features/reports/domain/entities/nearby_incident.dart';
@@ -55,6 +56,17 @@ class FakeIncidentRemoteDataSource implements IncidentRemoteDataSource {
   @override
   Future<List<IncidentMarker>> getCityIncidents(String city) async {
     calls.add('remote.getCityIncidents');
+    return const [];
+  }
+
+  int? lastFeedOffset;
+  int? lastFeedLimit;
+
+  @override
+  Future<List<FeedIncident>> getCityFeed(String city, {required int offset, required int limit}) async {
+    calls.add('remote.getCityFeed');
+    lastFeedOffset = offset;
+    lastFeedLimit = limit;
     return const [];
   }
 
@@ -130,6 +142,14 @@ void main() {
       expect(fakeRemote.calls, ['remote.getNearbyIncidents']);
       expect(results.length, 1);
       expect(results.first.title, 'Daño vial');
+    });
+
+    test('getCityFeed delegates the page to the remote data source (HU-19)', () async {
+      await repository.getCityFeed('Cali', offset: 40);
+
+      expect(fakeRemote.calls, ['remote.getCityFeed']);
+      expect(fakeRemote.lastFeedOffset, 40);
+      expect(fakeRemote.lastFeedLimit, 20);
     });
 
     test('endorseIncident delegates to remote data source', () async {

@@ -1,4 +1,5 @@
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
+import '../../domain/entities/feed_incident.dart';
 import '../../domain/entities/incident.dart';
 import '../../domain/entities/incident_marker.dart';
 import '../../domain/entities/nearby_incident.dart';
@@ -86,6 +87,11 @@ class IncidentRepositoryImpl implements IncidentRepository {
   @override
   Future<List<IncidentMarker>> getCityIncidents(String city) {
     return _remoteDataSource.getCityIncidents(city);
+  }
+
+  @override
+  Future<List<FeedIncident>> getCityFeed(String city, {required int offset, int limit = 20}) {
+    return _remoteDataSource.getCityFeed(city, offset: offset, limit: limit);
   }
 
   @override

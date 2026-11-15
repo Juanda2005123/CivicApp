@@ -1,4 +1,5 @@
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
+import '../entities/feed_incident.dart';
 import '../entities/incident.dart';
 import '../entities/incident_marker.dart';
 import '../entities/nearby_incident.dart';
@@ -30,6 +31,10 @@ abstract class IncidentRepository {
 
   /// Reports of [city] to draw on the map, newest first (HU-13).
   Future<List<IncidentMarker>> getCityIncidents(String city);
+
+  /// One page of the community feed of [city], newest first (HU-19). [offset]
+  /// reports are skipped; a page shorter than [limit] is the last one.
+  Future<List<FeedIncident>> getCityFeed(String city, {required int offset, int limit = 20});
 
   /// Fetches an incident by its primary UUID or civic tracking code (e.g. #VIG-8492).
   Future<Incident> getIncidentById(String idOrTrackingCode);
