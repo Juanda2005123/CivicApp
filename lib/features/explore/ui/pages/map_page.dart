@@ -9,10 +9,12 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_notice.dart';
 import '../../../../core/widgets/dotted_spinner.dart';
 import '../../../../core/widgets/location_blocked_dialog.dart';
+import '../../../auth/domain/entities/city.dart';
 import '../../../reports/domain/entities/incident_marker.dart';
 import '../bloc/map_bloc.dart';
 import '../bloc/map_event.dart';
 import '../bloc/map_state.dart';
+import '../widgets/city_switcher_sheet.dart';
 import '../widgets/incident_map_marker.dart';
 
 /// "Mapa" tab of the shell (HU-13): the reports of the citizen's city as
@@ -152,9 +154,21 @@ class _MapPageState extends State<MapPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  _CityButton(
+                    city: city,
+                    isLoading: state.status == MapStatus.loading,
+                    onPressed: () => _switchCity(context, city),
+                  ),
+                  // The city could not be saved or loaded: the map keeps the previous one.
+                  if (state.status == MapStatus.failure && state.errorMessage != null) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    AppNotice(kind: NoticeKind.error, message: state.errorMessage!),
+                  ],
                   // A blocked permission is explained in the modal instead.
-                  if (state.myLocationMessage != null && state.myLocationStatus != MyLocationStatus.blocked)
+                  if (state.myLocationMessage != null && state.myLocationStatus != MyLocationStatus.blocked) ...[
+                    const SizedBox(height: AppSpacing.sm),
                     AppNotice(kind: NoticeKind.error, message: state.myLocationMessage!),
+                  ],
                 ],
               ),
             ),
@@ -172,6 +186,13 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
+  Future<void> _switchCity(BuildContext context, City current) async {
+    final bloc = context.read<MapBloc>();
+    final picked = await showCitySwitcherSheet(context, current: current);
+    if (picked == null || picked == current) return;
+    bloc.add(CitySelected(picked));
+  }
+
   Marker _toMapMarker(BuildContext context, IncidentMarker marker) {
     return Marker(
       point: LatLng(marker.coordinates.latitude, marker.coordinates.longitude),
@@ -182,6 +203,39 @@ class _MapPageState extends State<MapPage> {
         categoryIcon: marker.categoryIcon,
         semanticLabel: '${marker.title}, ${marker.categoryName}, gravedad ${marker.severity.labelSpanish}',
         onTap: () => Navigator.pushNamed(context, AppRoutes.reportDetail, arguments: marker.id),
+      ),
+    );
+  }
+}
+
+/// Shows the city on the map and opens the switcher (HU-21): a solid surface
+/// with a 1 px border, like the other overlays, so it reads on any tile.
+class _CityButton extends StatelessWidget {
+  final City city;
+  final bool isLoading;
+  final VoidCallback onPressed;
+
+  const _CityButton({required this.city, required this.isLoading, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: OutlinedButton.icon(
+        onPressed: isLoading ? null : onPressed,
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(0, AppSizes.touchTarget),
+          backgroundColor: scheme.surface,
+          disabledBackgroundColor: scheme.surface,
+          foregroundColor: scheme.onSurface,
+          side: BorderSide(color: scheme.outlineVariant),
+        ),
+        icon: isLoading
+            ? const DottedSpinner(size: AppSizes.icon, semanticLabel: 'Cargando la ciudad')
+            : const Icon(Icons.location_city_outlined, size: AppSizes.icon),
+        label: Text('${city.name}, ${city.department}', overflow: TextOverflow.ellipsis),
       ),
     );
   }

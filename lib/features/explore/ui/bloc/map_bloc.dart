@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../auth/domain/repositories/location_repository.dart';
 import '../../../auth/domain/usecases/open_location_settings_usecase.dart';
+import '../../domain/usecases/switch_city_usecase.dart';
 import '../../../reports/domain/usecases/get_city_map_usecase.dart';
 import '../../../reports/domain/usecases/get_current_location_usecase.dart';
 import 'map_event.dart';
@@ -13,10 +14,12 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   final GetCityMapUseCase _getCityMap;
   final GetCurrentLocationUseCase _getCurrentLocation;
   final OpenLocationSettingsUseCase _openLocationSettings;
+  final SwitchCityUseCase _switchCity;
 
-  MapBloc(this._getCityMap, this._getCurrentLocation, this._openLocationSettings)
+  MapBloc(this._getCityMap, this._getCurrentLocation, this._openLocationSettings, this._switchCity)
       : super(const MapState()) {
     on<MapStarted>(_onStarted);
+    on<CitySelected>(_onCitySelected);
     on<MyLocationRequested>(_onMyLocationRequested);
     on<LocationSettingsRequested>(_onLocationSettingsRequested);
   }
@@ -25,7 +28,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     if (state.status == MapStatus.loading) return;
     emit(state.copyWith(status: MapStatus.loading, clearErrorMessage: true));
     try {
-      final (city, markers) = await _getCityMap();
+      // A reload keeps the city already on screen (the one the citizen picked).
+      final (city, markers) = await _getCityMap(city: state.city);
       emit(state.copyWith(status: MapStatus.success, city: city, markers: markers));
     } on Exception catch (e) {
       emit(state.copyWith(status: MapStatus.failure, errorMessage: _message(e)));
@@ -43,6 +47,20 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       emit(state.copyWith(myLocationStatus: MyLocationStatus.found, myLocation: position));
     } on Exception {
       return;
+    }
+  }
+
+  /// Saves the city first: if that fails the map keeps the previous city and
+  /// its markers, and the page shows the message.
+  Future<void> _onCitySelected(CitySelected event, Emitter<MapState> emit) async {
+    if (state.status == MapStatus.loading) return;
+    emit(state.copyWith(status: MapStatus.loading, clearErrorMessage: true));
+    try {
+      await _switchCity(event.city);
+      final (city, markers) = await _getCityMap(city: event.city);
+      emit(state.copyWith(status: MapStatus.success, city: city, markers: markers));
+    } on Exception catch (e) {
+      emit(state.copyWith(status: MapStatus.failure, errorMessage: _message(e)));
     }
   }
 
