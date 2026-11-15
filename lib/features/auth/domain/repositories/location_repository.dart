@@ -10,9 +10,9 @@ abstract class LocationRepository {
 
   /// Throws an [Exception] with a user-facing message when the position
   /// cannot be obtained (service off, permission denied or blocked, timeout).
-  /// With [askPermission] false the system dialog never opens: without a
-  /// granted permission it just throws (used to center the map on open).
-  Future<Coordinates> currentCoordinates({bool askPermission = true});
+  /// When the permission is not granted yet it opens the system dialog; the
+  /// operating system stops showing it once the permission is blocked.
+  Future<Coordinates> currentCoordinates();
 
   /// Opens the app's system settings so the user can allow location again.
   /// Returns `false` when the platform cannot open them (e.g. the web).

@@ -53,8 +53,8 @@
 | **HU-11** | Step 4: Description & Dimensions | Reports / Wizard | **COMPLETED** | Validated title, description, and optional dimensions |
 | **HU-12** | Step 5: Review & Publish Report | Reports / Wizard | **COMPLETED** | #VIG-XXXX tracking code generation, Supabase insert, +100 XP credit |
 | **HU-14** | Report Detail Inspection View | Reports / UI | **COMPLETED** | `IncidentDetailScreen` with photo carousel, tracking badge, rank seal, full audit data |
-| **HU-03** | Location Permission on App Open | Explore / Shell | **PENDING** | Request location on entering map shell; handle denial gracefully |
-| **HU-13 (MVP)** | Cartographic Map View & Markers | Explore / Map | **COMPLETED** | Shell with Mapa + Mi perfil tabs and the "Reportar daño" button; `flutter_map` (OpenStreetMap) centered on the profile city with severity-shaped markers that open the detail; a "Centrar en mi ubicación" button (top right) moves the map to the GPS position, with "Abrir ajustes" when the permission is blocked. With the permission already granted, the map opens centered on the citizen (no prompt on open); asking for the permission on open and the banners are left to HU-03 / HU-21 |
+| **HU-03** | Location Permission on App Open | Explore / Shell | **COMPLETED** | The map asks for the permission on its first load (the OS stops asking once it is blocked: Android after two denials, iOS after one); granted → centered on the citizen; denied or blocked → city view, silent. The "Centrar en mi ubicación" button replaces the "Activar ubicación" banner |
+| **HU-13 (MVP)** | Cartographic Map View & Markers | Explore / Map | **COMPLETED** | Shell with Mapa + Mi perfil tabs and the "Reportar daño" button; `flutter_map` (OpenStreetMap) centered on the profile city with severity-shaped markers that open the detail; a "Centrar en mi ubicación" button (top right) moves the map to the GPS position, with "Abrir ajustes" when the permission is blocked. On open it asks for the permission (HU-03) and centers on the citizen when granted; the button replaces the "Activar ubicación" banner (criterion 2); `last_city` arrives with HU-21 |
 | **HU-19** | Paginated Community Feed | Explore / Feed | **PENDING** | 20-item chunks, pull-to-refresh, status badges |
 | **HU-21** | Smart City Switcher | Explore / Modal | **PENDING** | Assistive modal with fuzzy search across Colombian cities |
 | **HU-22** | Guest Browsing Mode | Auth / Explore | **PENDING** | Read-only mode without login; prompt auth on action |
@@ -75,8 +75,8 @@
 #### Acceptance Criteria
 1. **Given that** I navigate to the main screen (HU-13), **when** I have not yet responded to the permission prompt, **then** the native OS dialog requests "while using the app" location access.
 2. **Given that** I granted location access, **when** I open the map (HU-13) or community feed (HU-19), **then** both center dynamically on my current coordinates.
-3. **Given that** I denied location access, **when** I open the screen, **then** the application operates without blocking or crashing, defaults to my last active city (`last_city`) (HU-21), and displays a non-intrusive banner with an *"Activar ubicación"* button.
-4. **Given that** I tap *"Activar ubicación"*, **when** the operating system permits re-prompting, **then** permission is requested again; otherwise, device system settings are opened.
+3. **Given that** I denied location access, **when** I open the screen, **then** the application operates without blocking or crashing and stays on my city (`last_city` (HU-21); today the reference city), with no error and no banner.
+4. **Given that** I tap *"Centrar en mi ubicación"* on the map, **when** the operating system permits re-prompting, **then** permission is requested again; otherwise the *"Ubicación bloqueada"* modal offers *"Abrir ajustes"*. (Changed in Sprint 2: this button replaces the *"Activar ubicación"* banner.)
 5. **Given that** my GPS coordinates are outside covered municipalities, **when** I enter the main screen with the permission granted, **then** the map still centers on my current position (RN-14, point 4; changed in Sprint 2).
 
 ---
@@ -188,7 +188,7 @@
 
 #### Acceptance Criteria
 1. **Given that** I open the Map screen with location enabled and the permission granted, **when** loaded, **then** it centers on my current position and displays the markers of my city.
-2. **Given that** location permissions were denied, **when** I open Map, **then** it centers on `last_city` (HU-21) and displays a subtle banner with an *"Activar ubicación"* button.
+2. **Given that** location permissions were denied, **when** I open Map, **then** it centers on `last_city` (HU-21; today the reference city) and the *"Centrar en mi ubicación"* button lets me ask again (changed in Sprint 2: it replaces the *"Activar ubicación"* banner, HU-03).
 3. **Given that** markers are rendered, **when** compared, **then** each marker displays a typology-specific icon (HU-08) without relying solely on color.
 4. **Given that** my position is outside covered areas, **when** Map opens with the permission granted, **then** it still centers on my current position (RN-14, point 4; changed in Sprint 2 — previously it kept the `last_city` view with a banner).
 

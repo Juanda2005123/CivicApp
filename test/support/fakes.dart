@@ -99,20 +99,21 @@ class FakeLocationRepository implements LocationRepository {
   final bool canOpenSettings;
   int openSettingsCalls = 0;
 
-  /// `false` simulates a permission not granted yet: a call that may not ask
-  /// for it fails without a dialog.
-  final bool permissionGranted;
+  /// Thrown by the first call only: e.g. the citizen denies the dialog the map
+  /// shows on open, then allows it from the button.
+  Exception? firstCallError;
+  int calls = 0;
 
-  FakeLocationRepository({
-    this.coordinates,
-    this.error,
-    this.canOpenSettings = true,
-    this.permissionGranted = true,
-  });
+  FakeLocationRepository({this.coordinates, this.error, this.canOpenSettings = true, this.firstCallError});
 
   @override
-  Future<Coordinates> currentCoordinates({bool askPermission = true}) async {
-    if (!askPermission && !permissionGranted) throw Exception('Sin permiso de ubicación.');
+  Future<Coordinates> currentCoordinates() async {
+    calls++;
+    final once = firstCallError;
+    if (once != null) {
+      firstCallError = null;
+      throw once;
+    }
     if (error != null) throw error!;
     return coordinates!;
   }
