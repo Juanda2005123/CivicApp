@@ -10,6 +10,7 @@ import 'package:vigia_app/features/auth/domain/repositories/location_repository.
 import 'package:vigia_app/features/auth/domain/repositories/profile_repository.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_category.dart';
+import 'package:vigia_app/features/reports/domain/entities/incident_marker.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_photo.dart';
 import 'package:vigia_app/features/reports/domain/entities/nearby_incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/picked_photo.dart';
@@ -98,10 +99,20 @@ class FakeLocationRepository implements LocationRepository {
   final bool canOpenSettings;
   int openSettingsCalls = 0;
 
-  FakeLocationRepository({this.coordinates, this.error, this.canOpenSettings = true});
+  /// `false` simulates a permission not granted yet: a call that may not ask
+  /// for it fails without a dialog.
+  final bool permissionGranted;
+
+  FakeLocationRepository({
+    this.coordinates,
+    this.error,
+    this.canOpenSettings = true,
+    this.permissionGranted = true,
+  });
 
   @override
-  Future<Coordinates> currentCoordinates() async {
+  Future<Coordinates> currentCoordinates({bool askPermission = true}) async {
+    if (!askPermission && !permissionGranted) throw Exception('Sin permiso de ubicación.');
     if (error != null) throw error!;
     return coordinates!;
   }
@@ -137,6 +148,8 @@ class FakeIncidentRepository implements IncidentRepository {
   final List<String> calls = [];
   final Map<String, Incident> stored = {};
   List<NearbyIncident> nearbyToReturn = [];
+  List<IncidentMarker> cityMarkers = [];
+  String? lastCity;
   Exception? createError;
   Exception? getError;
 
@@ -196,6 +209,13 @@ class FakeIncidentRepository implements IncidentRepository {
   }) async {
     calls.add('incident.getNearby');
     return nearbyToReturn;
+  }
+
+  @override
+  Future<List<IncidentMarker>> getCityIncidents(String city) async {
+    calls.add('incident.getCityIncidents');
+    lastCity = city;
+    return cityMarkers;
   }
 
   @override

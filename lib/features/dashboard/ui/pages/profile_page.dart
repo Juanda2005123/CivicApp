@@ -8,16 +8,16 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_status_chip.dart';
 import '../../../../core/widgets/dotted_spinner.dart';
 import '../../../../core/widgets/rank_seal.dart';
-import '../../../../core/widgets/theme_toggle_button.dart';
 import '../../../auth/domain/entities/profile.dart';
 import '../bloc/profile_bloc.dart';
 import '../bloc/profile_event.dart';
 import '../bloc/profile_state.dart';
 
-/// Citizen profile summary (Sprint 1 landing screen) with secure logout.
-/// It only draws the [ProfileState]; nothing arrives through route arguments.
-class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+/// "Mi perfil" tab of the shell: the citizen's profile summary (Sprint 1) with
+/// secure logout. A Page, so it has no Scaffold; it only draws the
+/// [ProfileState].
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,28 +28,7 @@ class DashboardScreen extends StatelessWidget {
           Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (route) => false);
         }
       },
-      builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Mi perfil'),
-            automaticallyImplyLeading: false,
-            actions: [
-              const ThemeToggleButton(),
-              IconButton(
-                tooltip: 'Cerrar sesión',
-                icon: const Icon(Icons.logout),
-                onPressed: () => context.read<ProfileBloc>().add(SignOutRequested()),
-              ),
-            ],
-          ),
-          body: SafeArea(child: _buildBody(context, state)),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => Navigator.pushNamed(context, AppRoutes.reportWizard),
-            icon: const Icon(Icons.add_location_alt_outlined),
-            label: const Text('Reportar daño'),
-          ),
-        );
-      },
+      builder: (context, state) => _buildBody(context, state),
     );
   }
 

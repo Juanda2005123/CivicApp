@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_spacing.dart';
 import 'app_text_styles.dart';
+import 'severity_colors.dart';
 
 /// Light and dark themes of the "Sello comunitario" design system.
 ///
 /// Everything visual comes from here: widgets read [ColorScheme],
 /// [TextTheme], [AppSemanticColors] and the component themes, never hex values.
 abstract final class AppTheme {
-  static final ThemeData light = _build(_lightScheme, AppSemanticColors.light);
-  static final ThemeData dark = _build(_darkScheme, AppSemanticColors.dark);
+  static final ThemeData light = _build(_lightScheme, AppSemanticColors.light, AppSeverityColors.light);
+  static final ThemeData dark = _build(_darkScheme, AppSemanticColors.dark, AppSeverityColors.dark);
 
   static const ColorScheme _lightScheme = ColorScheme(
     brightness: Brightness.light,
@@ -70,7 +71,7 @@ abstract final class AppTheme {
     scrim: Colors.black,
   );
 
-  static ThemeData _build(ColorScheme scheme, AppSemanticColors semantic) {
+  static ThemeData _build(ColorScheme scheme, AppSemanticColors semantic, AppSeverityColors severity) {
     final textTheme = AppTextStyles.textTheme.apply(
       bodyColor: scheme.onSurface,
       displayColor: scheme.onSurface,
@@ -91,7 +92,7 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: scheme.surface,
       canvasColor: scheme.surfaceContainerLow,
       textTheme: textTheme,
-      extensions: [semantic],
+      extensions: [semantic, severity],
       dividerTheme: DividerThemeData(color: scheme.outlineVariant, thickness: 1, space: 1),
       appBarTheme: AppBarTheme(
         backgroundColor: scheme.surface,
@@ -175,6 +176,17 @@ abstract final class AppTheme {
         linearTrackColor: scheme.outlineVariant,
       ),
       listTileTheme: ListTileThemeData(iconColor: semantic.accent),
+      // Flat like the rest of the system: the shell draws a 1 px divider above it.
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: scheme.surface,
+        elevation: 0,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: scheme.primary,
+        unselectedItemColor: scheme.onSurfaceVariant,
+        selectedLabelStyle: textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+        unselectedLabelStyle: textTheme.labelMedium,
+        showUnselectedLabels: true,
+      ),
       visualDensity: VisualDensity.standard,
     );
   }

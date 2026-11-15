@@ -243,7 +243,7 @@ You can run VIGÍA across multiple platforms:
 
 VIGÍA has a single kind of user (the citizen), so there is one flow to demonstrate; repeat it with a second account (different email and city) to show it works for any user. Start the app with `flutter run -d chrome` (or any device) with the Supabase setup above done.
 
-1. **Splash:** the app checks for a persisted session. With none, it opens the **Login** screen. With one, it jumps straight to the profile summary (step 5).
+1. **Splash:** the app checks for a persisted session. With none, it opens the **Login** screen. With one, it jumps straight to the home screen on the **Mapa** tab (the profile summary is the **Mi perfil** tab, step 5).
 2. **Create an account:** on the Login screen tap **Regístrate**.
 3. **Registration form:** fill in
    - *Nombre completo* with at least two words (e.g. `Ana Gomez`),
@@ -251,11 +251,11 @@ VIGÍA has a single kind of user (the citizen), so there is one flow to demonstr
    - *Ciudad de residencia*: pick it from the list **or** tap **Detectar mi ciudad por GPS**,
    - *Password* (6+ characters with an uppercase letter, a lowercase letter and a number; the chips turn green as each rule is met) and *Confirmar contraseña*.
    
-   Tap **Crear cuenta**. The app creates the Auth account and then the `user_profile` row, and lands on the summary.
+   Tap **Crear cuenta**. The app creates the Auth account and then the `user_profile` row, and lands on the **Mapa** tab.
 4. **Errors you can show:** a repeated email, a one-word name, a weak password, mismatched passwords or no city selected all stop the registration with a clear message.
-5. **Profile summary (Mi perfil):** shows the rank seal, the name, an "active session" chip, reputation points, email, residence city and civic rank (`Nivel 1 · Observador Urbano`).
+5. **Profile summary:** tap **Mi perfil** in the bottom bar. It shows the rank seal, the name, an "active session" chip, reputation points, email, residence city and civic rank (`Nivel 1 · Observador Urbano`).
 6. **Log out:** tap **Cerrar sesión**. The app returns to Login and the back button no longer reaches the summary.
-7. **Log in:** enter the same email and password and tap **Ingresar**. You land on the summary again. Wrong credentials show an inline notice ("Correo o contraseña incorrectos…") and stay on the form.
+7. **Log in:** enter the same email and password and tap **Ingresar**. You land on the **Mapa** tab again. Wrong credentials show an inline notice ("Correo o contraseña incorrectos…") and stay on the form.
 
 ---
 

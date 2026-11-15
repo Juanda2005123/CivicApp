@@ -10,6 +10,7 @@ import 'package:vigia_app/core/widgets/app_status_chip.dart';
 import 'package:vigia_app/core/widgets/app_text_field.dart';
 import 'package:vigia_app/core/widgets/brand_mark.dart';
 import 'package:vigia_app/core/widgets/dotted_spinner.dart';
+import 'package:vigia_app/core/widgets/location_blocked_dialog.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/core/widgets/rank_seal.dart';
 
@@ -199,6 +200,54 @@ void main() {
       expect(normalizeSearchText('Bogotá'), 'bogota');
       expect(normalizeSearchText('NARIÑO'), 'narino');
       expect(normalizeSearchText('Cúcuta (Norte de Santander)'), 'cucuta (norte de santander)');
+    });
+  });
+
+  group('showLocationBlockedDialog', () {
+    Widget opener(ThemeData theme, VoidCallback onOpenSettings) => host(
+          Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showLocationBlockedDialog(
+                context,
+                message: 'El permiso de ubicación está bloqueado.',
+                onOpenSettings: onOpenSettings,
+              ),
+              child: const Text('Abrir'),
+            ),
+          ),
+          theme: theme,
+        );
+
+    for (final theme in {'light': AppTheme.light, 'dark': AppTheme.dark}.entries) {
+      testWidgets('explains the block and offers the settings in ${theme.key}', (tester) async {
+        await tester.pumpWidget(opener(theme.value, () {}));
+        await tester.tap(find.text('Abrir'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Ubicación bloqueada'), findsOneWidget);
+        expect(find.text('El permiso de ubicación está bloqueado.'), findsOneWidget);
+        expect(find.text('Ahora no'), findsOneWidget);
+        expect(find.text('Abrir ajustes'), findsOneWidget);
+      });
+    }
+
+    testWidgets('"Abrir ajustes" closes the modal and calls back; "Ahora no" only closes', (tester) async {
+      var opened = 0;
+      await tester.pumpWidget(opener(AppTheme.light, () => opened++));
+
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ahora no'));
+      await tester.pumpAndSettle();
+      expect(find.text('Ubicación bloqueada'), findsNothing);
+      expect(opened, 0);
+
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Abrir ajustes'));
+      await tester.pumpAndSettle();
+      expect(find.text('Ubicación bloqueada'), findsNothing);
+      expect(opened, 1);
     });
   });
 }

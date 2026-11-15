@@ -1,6 +1,9 @@
 import 'dart:math';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
+import 'package:vigia_app/features/reports/domain/entities/incident.dart';
+import 'package:vigia_app/features/reports/domain/entities/incident_marker.dart';
 import 'package:vigia_app/features/reports/domain/entities/nearby_incident.dart';
 
 import '../models/incident_model.dart';
@@ -145,6 +148,43 @@ class IncidentRemoteDataSource {
       throw Exception('No pudimos consultar reportes cercanos.');
     }
   }
+
+  /// Reports of [city] for the map, newest first. Capped at [_mapLimit] so a
+  /// busy city does not download every row.
+  Future<List<IncidentMarker>> getCityIncidents(String city) async {
+    try {
+      final rows = await _client
+          .from('road_incident')
+          .select('id_incident, tracking_code, title, severity, latitude, longitude, incident_category(name, icon)')
+          .eq('city', city)
+          .order('created_at', ascending: false)
+          .limit(_mapLimit);
+
+      return (rows as List<dynamic>).map((raw) {
+        final row = raw as Map<String, dynamic>;
+        final category = row['incident_category'] as Map<String, dynamic>?;
+        return IncidentMarker(
+          id: row['id_incident'] as String,
+          trackingCode: row['tracking_code'] as String,
+          title: row['title'] as String,
+          categoryName: (category?['name'] as String?) ?? 'Otro daño vial',
+          categoryIcon: (category?['icon'] as String?) ?? 'more_horiz',
+          severity: IncidentSeverity.fromDbValue((row['severity'] as String?) ?? 'MEDIUM'),
+          coordinates: Coordinates(
+            latitude: (row['latitude'] as num).toDouble(),
+            longitude: (row['longitude'] as num).toDouble(),
+          ),
+        );
+      }).toList();
+    } on PostgrestException catch (e) {
+      throw Exception('No pudimos cargar los reportes del mapa: ${e.message}');
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception('No pudimos cargar los reportes del mapa.');
+    }
+  }
+
+  static const _mapLimit = 200;
 
   /// Fetches full incident detail by ID or tracking code.
   Future<IncidentModel> getIncidentById(String idOrTrackingCode) async {

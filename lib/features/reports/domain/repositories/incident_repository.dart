@@ -1,5 +1,6 @@
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import '../entities/incident.dart';
+import '../entities/incident_marker.dart';
 import '../entities/nearby_incident.dart';
 import '../entities/picked_photo.dart';
 
@@ -26,6 +27,9 @@ abstract class IncidentRepository {
     required int categoryId,
     double radiusInMeters = 150.0,
   });
+
+  /// Reports of [city] to draw on the map, newest first (HU-13).
+  Future<List<IncidentMarker>> getCityIncidents(String city);
 
   /// Fetches an incident by its primary UUID or civic tracking code (e.g. #VIG-8492).
   Future<Incident> getIncidentById(String idOrTrackingCode);

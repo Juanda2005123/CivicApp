@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
         if (state.status == LoginStatus.success) {
-          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.dashboard, (route) => false);
+          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);
         }
       },
       builder: (context, state) {

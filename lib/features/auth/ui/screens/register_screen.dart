@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_dropdown_field.dart';
 import '../../../../core/widgets/app_notice.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/dotted_spinner.dart';
+import '../../../../core/widgets/location_blocked_dialog.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/widgets/theme_toggle_button.dart';
 import '../../domain/validators/password_policy.dart';
@@ -85,13 +86,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // A blocked permission (HU-29) opens a modal once per GPS attempt.
+    return BlocListener<RegisterBloc, RegisterState>(
+      listenWhen: (previous, current) =>
+          previous.gpsStatus != GpsStatus.blocked && current.gpsStatus == GpsStatus.blocked,
+      listener: (context, state) {
+        final message = state.gpsMessage;
+        if (message == null) return;
+        final bloc = context.read<RegisterBloc>();
+        showLocationBlockedDialog(
+          context,
+          message: message,
+          onOpenSettings: () => bloc.add(LocationSettingsRequested()),
+        );
+      },
+      child: _buildForm(context),
+    );
+  }
+
+  Widget _buildForm(BuildContext context) {
     final theme = Theme.of(context);
 
     return BlocConsumer<RegisterBloc, RegisterState>(
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
         if (state.status == RegisterStatus.success) {
-          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.dashboard, (route) => false);
+          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);
         }
       },
       builder: (context, state) {
@@ -200,24 +220,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               : const Icon(Icons.my_location, size: 18),
                           label: Text(isDetectingGps ? 'Detectando tu ubicación…' : 'Detectar mi ciudad por GPS'),
                         ),
-                        if (state.gpsMessage != null) ...[
+                        // A blocked permission is explained in the modal instead.
+                        if (state.gpsMessage != null && state.gpsStatus != GpsStatus.blocked) ...[
                           const SizedBox(height: AppSpacing.sm),
                           AppNotice(
                             kind: gpsSuccess ? NoticeKind.success : NoticeKind.error,
                             message: state.gpsMessage!,
-                          ),
-                        ],
-                        if (state.gpsStatus == GpsStatus.blocked) ...[
-                          const SizedBox(height: AppSpacing.sm),
-                          OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size.fromHeight(AppSizes.buttonCompact),
-                            ),
-                            onPressed: isLoading
-                                ? null
-                                : () => context.read<RegisterBloc>().add(LocationSettingsRequested()),
-                            icon: const Icon(Icons.settings_outlined, size: 18),
-                            label: const Text('Abrir ajustes'),
                           ),
                         ],
                         const SizedBox(height: AppSpacing.field),
