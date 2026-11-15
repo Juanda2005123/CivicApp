@@ -19,6 +19,9 @@ import 'package:vigia_app/features/reports/domain/usecases/get_categories_usecas
 import 'package:vigia_app/features/reports/domain/usecases/get_current_location_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/get_nearby_incidents_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/pick_photo_usecase.dart';
+import 'package:vigia_app/features/reports/domain/usecases/suggest_address_usecase.dart';
+import 'package:vigia_app/features/reports/domain/entities/geocoded_place.dart';
+import 'package:vigia_app/features/reports/domain/entities/suggested_address.dart';
 import 'package:vigia_app/features/reports/ui/bloc/report_wizard_bloc.dart';
 import 'package:vigia_app/features/reports/ui/bloc/report_wizard_event.dart';
 import 'package:vigia_app/features/reports/ui/bloc/report_wizard_state.dart';
@@ -35,6 +38,7 @@ void main() {
     late FakeLocationRepository fakeLocationRepo;
     late FakeCityRepository fakeCityRepo;
     late FakePhotoPickerRepository fakePhotoPickerRepo;
+    late FakeGeocodingRepository fakeGeocodingRepo;
     late ReportWizardBloc bloc;
 
     setUp(() {
@@ -61,6 +65,7 @@ void main() {
         const City(id: 1, name: 'Cali', department: 'Valle del Cauca', latitude: 3.4516, longitude: -76.5320, isCapital: true),
       ]);
       fakePhotoPickerRepo = FakePhotoPickerRepository();
+      fakeGeocodingRepo = FakeGeocodingRepository();
 
       bloc = ReportWizardBloc(
         GetCategoriesUseCase(fakeCategoryRepo),
@@ -72,6 +77,7 @@ void main() {
         PickPhotoUseCase(fakePhotoPickerRepo),
         DetectNearestCityUseCase(fakeLocationRepo, fakeCityRepo),
         OpenLocationSettingsUseCase(fakeLocationRepo),
+        SuggestAddressUseCase(fakeGeocodingRepo),
       );
     });
 
@@ -82,7 +88,7 @@ void main() {
     test('WizardStarted loads categories and detects current Popayán coordinates', () async {
       final states = await emittedStates(bloc, WizardStarted());
 
-      expect(states.map((s) => s.status), [
+      expect(states.map((s) => s.status).toSet().toList(), [
         WizardStatus.loading,
         WizardStatus.ready,
       ]);
@@ -92,6 +98,40 @@ void main() {
       expect(states.last.city, 'Popayán');
     });
 
+    test('WizardStarted suggests the address of the GPS position without a "Mi GPS" tap (HU-26)', () async {
+      fakeGeocodingRepo.place = const GeocodedPlace(road: 'Calle 12', houseNumber: '5-37', neighborhood: 'San Pedro');
+
+      final states = await emittedStates(bloc, WizardStarted());
+
+      expect(states.any((s) => s.isSuggestingAddress), true);
+      expect(states.last.isSuggestingAddress, false);
+      expect(
+        states.last.suggestedAddress,
+        const SuggestedAddress(roadType: 'Calle', mainRoad: '12', crossRoad: '5', plot: '37', neighborhood: 'San Pedro'),
+      );
+    });
+
+    test('WizardStarted without a GPS position suggests nothing', () async {
+      bloc = ReportWizardBloc(
+        GetCategoriesUseCase(fakeCategoryRepo),
+        GetNearbyIncidentsUseCase(fakeIncidentRepo),
+        CreateIncidentUseCase(fakeIncidentRepo),
+        EndorseIncidentUseCase(fakeIncidentRepo),
+        GetCurrentProfileUseCase(fakeAuthRepo, fakeProfileRepo),
+        GetCurrentLocationUseCase(FakeLocationRepository(error: Exception('Sin señal de GPS.'))),
+        PickPhotoUseCase(fakePhotoPickerRepo),
+        DetectNearestCityUseCase(fakeLocationRepo, fakeCityRepo),
+        OpenLocationSettingsUseCase(fakeLocationRepo),
+        SuggestAddressUseCase(fakeGeocodingRepo),
+      );
+
+      final states = await emittedStates(bloc, WizardStarted());
+
+      expect(fakeGeocodingRepo.calls, 0);
+      expect(states.any((s) => s.isSuggestingAddress), false);
+      expect(states.last.addressSuggestionMessage, isNull);
+    });
+
     test('CurrentLocationRequested updates coordinates and city with feedback', () async {
       final states = await emittedStates(bloc, CurrentLocationRequested());
 
@@ -99,6 +139,72 @@ void main() {
       expect(states.last.coordinates?.latitude, 2.4448);
       expect(states.last.locationStatusMessage, contains('GPS detectado'));
       expect(states.last.isLocationBlocked, false);
+    });
+
+    test('CurrentLocationRequested suggests the address from the GPS (HU-26)', () async {
+      fakeGeocodingRepo.place = const GeocodedPlace(road: 'Calle 12', houseNumber: '5-37', neighborhood: 'San Pedro');
+
+      final states = await emittedStates(bloc, CurrentLocationRequested());
+
+      expect(fakeGeocodingRepo.calls, 1);
+      expect(
+        states.last.suggestedAddress,
+        const SuggestedAddress(roadType: 'Calle', mainRoad: '12', crossRoad: '5', plot: '37', neighborhood: 'San Pedro'),
+      );
+      expect(states.last.coordinates?.latitude, 2.4448);
+    });
+
+    test('the address arrives first and the cross street later, flagged as loading meanwhile', () async {
+      fakeGeocodingRepo
+        ..place = const GeocodedPlace(
+          road: 'Calle 10A Bis',
+          roadPath: [Coordinates(latitude: 2.4448, longitude: -76.6150), Coordinates(latitude: 2.4448, longitude: -76.6140)],
+        )
+        ..streetAnswers = const [GeocodedPlace(road: 'Carrera 67A')];
+
+      final states = await emittedStates(bloc, CurrentLocationRequested());
+
+      final suggesting = states.where((s) => s.isSuggestingAddress).toList();
+      expect(suggesting.first.suggestedAddress, isNull);
+      expect(suggesting.map((s) => s.suggestedAddress?.crossRoad), containsAllInOrder([null, '67A']));
+      expect(suggesting.any((s) => s.suggestedAddress?.mainRoad == '10A Bis' && s.suggestedAddress?.crossRoad == null), true);
+      expect(states.last.isSuggestingAddress, false);
+      expect(states.last.suggestedAddress?.crossRoad, '67A');
+      expect(states.last.addressSuggestionMessage, isNull);
+    });
+
+    test('an address without a cross street or without a known road says what is missing', () async {
+      fakeGeocodingRepo.place = const GeocodedPlace(road: 'Calle 12');
+      var states = await emittedStates(bloc, CurrentLocationRequested());
+      expect(states.last.addressSuggestionMessage, 'No encontramos el cruce. Escríbelo a mano.');
+
+      fakeGeocodingRepo.place = const GeocodedPlace(road: 'Vía al Mar', neighborhood: 'Dapa');
+      states = await emittedStates(bloc, CurrentLocationRequested());
+      expect(states.first.addressSuggestionMessage, isNull);
+      expect(states.last.addressSuggestionMessage, 'No reconocimos la vía en este punto. Escribe la dirección a mano.');
+    });
+
+    test('a failing address suggestion says why and keeps the GPS result', () async {
+      fakeGeocodingRepo.error = Exception('La sugerencia de dirección tardó demasiado.');
+
+      final states = await emittedStates(bloc, CurrentLocationRequested());
+
+      expect(states.last.suggestedAddress, isNull);
+      expect(states.last.isSuggestingAddress, false);
+      expect(states.last.addressSuggestionMessage, 'La sugerencia de dirección tardó demasiado. Escríbela a mano.');
+      expect(states.last.coordinates?.latitude, 2.4448);
+      expect(states.last.locationStatusMessage, contains('GPS detectado'));
+      expect(states.last.errorMessage, isNull);
+    });
+
+    test('every "Mi GPS" tap clears the previous suggestion first', () async {
+      fakeGeocodingRepo.place = const GeocodedPlace(road: 'Calle 12');
+      await emittedStates(bloc, CurrentLocationRequested());
+
+      final states = await emittedStates(bloc, CurrentLocationRequested());
+
+      expect(states.first.suggestedAddress, isNull);
+      expect(states.last.suggestedAddress?.mainRoad, '12');
     });
 
     test('CurrentLocationRequested flags a blocked permission', () async {
@@ -114,6 +220,7 @@ void main() {
         PickPhotoUseCase(fakePhotoPickerRepo),
         DetectNearestCityUseCase(fakeLocationRepo, fakeCityRepo),
         OpenLocationSettingsUseCase(fakeLocationRepo),
+        SuggestAddressUseCase(fakeGeocodingRepo),
       );
 
       final states = await emittedStates(bloc, CurrentLocationRequested());

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:vigia_app/core/theme/app_spacing.dart';
 import 'package:vigia_app/core/theme/app_text_styles.dart';
+import 'package:vigia_app/core/widgets/app_notice.dart';
 import 'package:vigia_app/core/widgets/app_text_field.dart';
+import 'package:vigia_app/core/widgets/dotted_spinner.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
+import 'package:vigia_app/features/reports/domain/entities/suggested_address.dart';
 import 'package:vigia_app/features/reports/domain/validators/report_validators.dart';
 
 /// Step 1: Location georeferencing and Colombian address confirmation (HU-07).
@@ -14,6 +17,17 @@ class LocationPinPicker extends StatefulWidget {
   final String? initialCity;
   final bool isLocating;
   final String? locationStatusMessage;
+
+  /// Address suggested from the GPS (HU-26): it overwrites the fields it has
+  /// data for, and every field stays editable.
+  final SuggestedAddress? suggestedAddress;
+
+  /// The suggestion is still arriving: the main road field shows the loading
+  /// ring until the address comes, and the cross street field until the end.
+  final bool isSuggestingAddress;
+
+  /// Why the suggestion is missing or incomplete; shown as a notice.
+  final String? suggestionMessage;
   final VoidCallback? onDetectLocation;
   final void Function({
     required Coordinates coordinates,
@@ -30,6 +44,9 @@ class LocationPinPicker extends StatefulWidget {
     this.initialCity,
     this.isLocating = false,
     this.locationStatusMessage,
+    this.suggestedAddress,
+    this.isSuggestingAddress = false,
+    this.suggestionMessage,
     this.onDetectLocation,
     required this.onLocationConfirmed,
   });
@@ -54,6 +71,9 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
 
   late Coordinates _coordinates;
   late String _city;
+
+  /// Shows the "review the suggestion" notice once a suggestion was applied.
+  bool _suggestionApplied = false;
 
   static const List<String> _roadTypes = [
     'Carrera',
@@ -88,6 +108,11 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
     // If initial address contains structured tokens, populate or fall back to free mode
     if (widget.initialAddress != null && widget.initialAddress!.isNotEmpty) {
       _tryParseInitialAddress(widget.initialAddress!);
+    } else {
+      // The wizard suggests the address on opening (HU-26); it may already
+      // be here when the step is first drawn.
+      final suggestion = widget.suggestedAddress;
+      if (suggestion != null) _fillFromSuggestion(suggestion, null);
     }
   }
 
@@ -152,6 +177,43 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
         _city = widget.initialCity!;
       });
     }
+    final suggestion = widget.suggestedAddress;
+    if (suggestion != null && suggestion != oldWidget.suggestedAddress) {
+      setState(() => _fillFromSuggestion(suggestion, oldWidget.suggestedAddress));
+    }
+  }
+
+  /// Overwrites only the fields the suggestion has data for (HU-26). The
+  /// cross street arrives later as an update of the [previous] suggestion;
+  /// that update leaves alone the fields it does not change, which the
+  /// citizen may already be correcting.
+  void _fillFromSuggestion(SuggestedAddress suggestion, SuggestedAddress? previous) {
+    final roadType = suggestion.roadType;
+    final mainRoad = suggestion.mainRoad;
+    final roadChanged = roadType != previous?.roadType || mainRoad != previous?.mainRoad;
+    if (roadType != null && mainRoad != null && roadChanged) {
+      _useStructuredAddress = true;
+      _selectedRoadType = roadType;
+      _mainRoadNumberController.text = mainRoad;
+    }
+    final crossRoad = suggestion.crossRoad;
+    if (crossRoad != null && crossRoad != previous?.crossRoad) _crossRoadNumberController.text = crossRoad;
+    final plot = suggestion.plot;
+    if (plot != null && plot != previous?.plot) _plaqueNumberController.text = plot;
+    final neighborhood = suggestion.neighborhood;
+    if (neighborhood != null && neighborhood != previous?.neighborhood) {
+      _neighborhoodController.text = neighborhood;
+    }
+    _suggestionApplied = true;
+  }
+
+  /// Loading ring at the end of a field the suggestion has not filled yet.
+  Widget _searchingRing(String semanticLabel) {
+    return Center(
+      widthFactor: 1,
+      heightFactor: 1,
+      child: DottedSpinner(size: AppSizes.icon, semanticLabel: semanticLabel),
+    );
   }
 
   @override
@@ -195,6 +257,9 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final searchingCrossRoad = widget.isSuggestingAddress;
+    final searchingMainRoad = searchingCrossRoad && widget.suggestedAddress == null;
+    final suggestionMessage = widget.suggestionMessage;
 
     return Form(
       key: _formKey,
@@ -312,6 +377,17 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
           ),
           const SizedBox(height: AppSpacing.md),
 
+          if (_suggestionApplied) ...[
+            const AppNotice(
+              message: 'Sugerimos la dirección según tu GPS. Revísala antes de continuar.',
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
+          if (suggestionMessage != null) ...[
+            AppNotice(message: suggestionMessage, kind: NoticeKind.error),
+            const SizedBox(height: AppSpacing.md),
+          ],
+
           // Structured Nomenclature Form
           if (_useStructuredAddress) ...[
             Row(
@@ -322,6 +398,9 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
                   child: AppFieldLabel(
                     label: 'Tipo de vía',
                     child: DropdownButtonFormField<String>(
+                      // initialValue is read once; the key rebuilds the field
+                      // when a GPS suggestion changes the road type.
+                      key: ValueKey('road-type-$_selectedRoadType'),
                       initialValue: _selectedRoadType,
                       isExpanded: true,
                       style: theme.textTheme.bodyLarge?.copyWith(
@@ -379,7 +458,8 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
                   child: AppTextField(
                     label: 'Vía principal',
                     controller: _mainRoadNumberController,
-                    hint: 'Ej. 9 o 15 Norte',
+                    hint: searchingMainRoad ? 'Buscando…' : 'Ej. 9 o 15 Norte',
+                    suffix: searchingMainRoad ? _searchingRing('Buscando la vía') : null,
                     validator: (v) {
                       if (!_useStructuredAddress) return null;
                       if (v == null || v.trim().isEmpty) {
@@ -402,8 +482,9 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
                   child: AppTextField(
                     label: 'Cruce o generadora (#)',
                     controller: _crossRoadNumberController,
-                    hint: 'Ej. 45 o 2B',
+                    hint: searchingCrossRoad ? 'Buscando…' : 'Ej. 45 o 2B',
                     prefixIcon: Icons.tag,
+                    suffix: searchingCrossRoad ? _searchingRing('Buscando el cruce') : null,
                     validator: (v) {
                       if (!_useStructuredAddress) return null;
                       if (v == null || v.trim().isEmpty) {

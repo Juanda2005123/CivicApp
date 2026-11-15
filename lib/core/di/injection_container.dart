@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
 
 import '../theme/theme_cubit.dart';
@@ -45,6 +46,10 @@ import '../../features/reports/domain/usecases/get_current_location_usecase.dart
 import '../../features/reports/domain/usecases/get_incident_by_id_usecase.dart';
 import '../../features/reports/domain/usecases/get_nearby_incidents_usecase.dart';
 import '../../features/reports/domain/usecases/pick_photo_usecase.dart';
+import '../../features/reports/data/datasources/nominatim_data_source.dart';
+import '../../features/reports/data/repositories/geocoding_repository_impl.dart';
+import '../../features/reports/domain/repositories/geocoding_repository.dart';
+import '../../features/reports/domain/usecases/suggest_address_usecase.dart';
 import '../../features/reports/ui/bloc/incident_detail_bloc.dart';
 import '../../features/reports/ui/bloc/report_wizard_bloc.dart';
 
@@ -66,11 +71,13 @@ Future<void> initDependencies({
   CategoryRepository? categoryRepository,
   IncidentRepository? incidentRepository,
   PhotoPickerRepository? photoPickerRepository,
+  GeocodingRepository? geocodingRepository,
 }) async {
   await sl.reset();
 
   // Infrastructure
   sl.registerLazySingleton<SupabaseClient>(() => client ?? Supabase.instance.client);
+  sl.registerLazySingleton<http.Client>(() => http.Client());
 
   // Data sources
   sl.registerLazySingleton(() => AuthRemoteDataSource(sl()));
@@ -82,6 +89,7 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => PhotoStorageDataSource(sl()));
   sl.registerLazySingleton(() => IncidentRemoteDataSource(sl()));
   sl.registerLazySingleton(() => PhotoPickerDataSource());
+  sl.registerLazySingleton(() => NominatimDataSource(sl()));
 
   // Repositories, registered under their contract
   sl.registerLazySingleton<AuthRepository>(
@@ -105,6 +113,9 @@ Future<void> initDependencies({
   sl.registerLazySingleton<PhotoPickerRepository>(
     () => photoPickerRepository ?? PhotoPickerRepositoryImpl(sl()),
   );
+  sl.registerLazySingleton<GeocodingRepository>(
+    () => geocodingRepository ?? GeocodingRepositoryImpl(sl()),
+  );
 
   // Use cases
   sl.registerLazySingleton(() => SignUpUseCase(sl(), sl()));
@@ -121,6 +132,7 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => GetCityMapUseCase(sl(), sl(), sl(), sl()));
   sl.registerLazySingleton(() => EndorseIncidentUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentLocationUseCase(sl()));
+  sl.registerLazySingleton(() => SuggestAddressUseCase(sl()));
   sl.registerLazySingleton(() => PickPhotoUseCase(sl()));
 
   // Blocs: a new instance per screen
@@ -132,6 +144,7 @@ Future<void> initDependencies({
   sl.registerFactory(() => MapBloc(sl(), sl(), sl()));
   sl.registerFactory(
     () => ReportWizardBloc(
+      sl(),
       sl(),
       sl(),
       sl(),

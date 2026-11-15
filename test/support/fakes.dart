@@ -8,6 +8,7 @@ import 'package:vigia_app/features/auth/domain/repositories/auth_repository.dart
 import 'package:vigia_app/features/auth/domain/repositories/city_repository.dart';
 import 'package:vigia_app/features/auth/domain/repositories/location_repository.dart';
 import 'package:vigia_app/features/auth/domain/repositories/profile_repository.dart';
+import 'package:vigia_app/features/reports/domain/entities/geocoded_place.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_category.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_marker.dart';
@@ -15,6 +16,7 @@ import 'package:vigia_app/features/reports/domain/entities/incident_photo.dart';
 import 'package:vigia_app/features/reports/domain/entities/nearby_incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/picked_photo.dart';
 import 'package:vigia_app/features/reports/domain/repositories/category_repository.dart';
+import 'package:vigia_app/features/reports/domain/repositories/geocoding_repository.dart';
 import 'package:vigia_app/features/reports/domain/repositories/incident_repository.dart';
 import 'package:vigia_app/features/reports/domain/repositories/photo_picker_repository.dart';
 
@@ -122,6 +124,34 @@ class FakeLocationRepository implements LocationRepository {
   Future<bool> openSettings() async {
     openSettingsCalls++;
     return canOpenSettings;
+  }
+}
+
+class FakeGeocodingRepository implements GeocodingRepository {
+  GeocodedPlace place;
+  Exception? error;
+  int calls = 0;
+
+  /// Answers of [streetAt], in order; past the end it answers an empty place.
+  List<GeocodedPlace> streetAnswers;
+  Exception? streetError;
+  final List<Coordinates> streetQueries = [];
+
+  FakeGeocodingRepository({this.place = const GeocodedPlace(), this.error, this.streetAnswers = const []});
+
+  @override
+  Future<GeocodedPlace> reverseGeocode(Coordinates coordinates) async {
+    calls++;
+    if (error != null) throw error!;
+    return place;
+  }
+
+  @override
+  Future<GeocodedPlace> streetAt(Coordinates coordinates) async {
+    streetQueries.add(coordinates);
+    if (streetError != null) throw streetError!;
+    final index = streetQueries.length - 1;
+    return index < streetAnswers.length ? streetAnswers[index] : const GeocodedPlace();
   }
 }
 

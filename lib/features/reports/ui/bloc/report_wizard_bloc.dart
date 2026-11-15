@@ -12,6 +12,8 @@ import '../../domain/usecases/get_categories_usecase.dart';
 import '../../domain/usecases/get_current_location_usecase.dart';
 import '../../domain/usecases/get_nearby_incidents_usecase.dart';
 import '../../domain/usecases/pick_photo_usecase.dart';
+import '../../domain/entities/suggested_address.dart';
+import '../../domain/usecases/suggest_address_usecase.dart';
 import '../../domain/validators/report_validators.dart';
 import 'report_wizard_event.dart';
 import 'report_wizard_state.dart';
@@ -26,6 +28,7 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
   final PickPhotoUseCase _pickPhoto;
   final DetectNearestCityUseCase _detectNearestCity;
   final OpenLocationSettingsUseCase _openLocationSettings;
+  final SuggestAddressUseCase _suggestAddress;
 
   ReportWizardBloc(
     this._getCategories,
@@ -37,6 +40,7 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
     this._pickPhoto,
     this._detectNearestCity,
     this._openLocationSettings,
+    this._suggestAddress,
   ) : super(const ReportWizardState()) {
     on<WizardStarted>(_onWizardStarted);
     on<CurrentLocationRequested>(_onCurrentLocationRequested);
@@ -66,8 +70,9 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
       String? initialCity = state.city ?? profile?.cityName;
 
       // Proactively detect real device GPS or fall back to user's registered city
+      Coordinates? deviceCoords;
       try {
-        final deviceCoords = await _getCurrentLocation();
+        deviceCoords = await _getCurrentLocation();
         initialCoords = deviceCoords;
         try {
           final detectedCity = await _detectNearestCity();
@@ -89,6 +94,10 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
         city: initialCity,
         clearErrorMessage: true,
       ));
+
+      // With a real position, the address is suggested without waiting for
+      // a "Mi GPS" tap (HU-26).
+      if (deviceCoords != null) await _suggestAddressAt(deviceCoords, emit);
     } on Exception catch (e) {
       emit(state.copyWith(
         status: WizardStatus.failure,
@@ -106,6 +115,8 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
       isLocationBlocked: false,
       clearLocationStatusMessage: true,
       clearErrorMessage: true,
+      clearSuggestedAddress: true,
+      clearAddressSuggestionMessage: true,
     ));
     try {
       final coords = await _getCurrentLocation();
@@ -123,6 +134,7 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
             'GPS detectado: (${coords.latitude.toStringAsFixed(4)}, ${coords.longitude.toStringAsFixed(4)}) en $cityName',
         clearErrorMessage: true,
       ));
+      await _suggestAddressAt(coords, emit);
     } on Exception catch (e) {
       final message = _cleanExceptionMessage(e);
       final blocked = message == LocationRepository.blockedMessage;
@@ -132,6 +144,32 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
         locationStatusMessage: blocked ? message : 'No se pudo obtener el GPS: $message',
       ));
     }
+  }
+
+  /// HU-26: suggests the address of [coords]; the cross street arrives a few
+  /// seconds after the rest. A failure (slow, offline, rate-limited) or a
+  /// missing piece never blocks the form: a message asks to type it by hand.
+  Future<void> _suggestAddressAt(Coordinates coords, Emitter<ReportWizardState> emit) async {
+    emit(state.copyWith(
+      isSuggestingAddress: true,
+      clearSuggestedAddress: true,
+      clearAddressSuggestionMessage: true,
+    ));
+    String? message;
+    try {
+      SuggestedAddress? suggestion;
+      await for (suggestion in _suggestAddress(coords)) {
+        emit(state.copyWith(suggestedAddress: suggestion));
+      }
+      if (suggestion?.mainRoad == null) {
+        message = 'No reconocimos la vía en este punto. Escribe la dirección a mano.';
+      } else if (suggestion?.crossRoad == null) {
+        message = 'No encontramos el cruce. Escríbelo a mano.';
+      }
+    } on Exception catch (e) {
+      message = '${_cleanExceptionMessage(e)} Escríbela a mano.';
+    }
+    emit(state.copyWith(isSuggestingAddress: false, addressSuggestionMessage: message));
   }
 
   /// No emit on success: the notice stays until the user tries the GPS again.

@@ -4,6 +4,7 @@ import '../../domain/entities/incident.dart';
 import '../../domain/entities/incident_category.dart';
 import '../../domain/entities/nearby_incident.dart';
 import '../../domain/entities/picked_photo.dart';
+import '../../domain/entities/suggested_address.dart';
 
 enum WizardStatus {
   initial,
@@ -33,6 +34,18 @@ class ReportWizardState extends Equatable {
   /// The user blocked the location permission; Step 1 offers to open the
   /// system settings.
   final bool isLocationBlocked;
+
+  /// Address suggested from the GPS for Step 1 (HU-26). Cleared on every "Mi
+  /// GPS" tap, so a new suggestion always reaches the form, even an equal one.
+  final SuggestedAddress? suggestedAddress;
+
+  /// The suggestion is still arriving: the cross street can take several
+  /// seconds more than the rest of the address.
+  final bool isSuggestingAddress;
+
+  /// Why the suggestion is missing or incomplete, for the citizen to finish
+  /// the address by hand. Null while it arrives and when it came complete.
+  final String? addressSuggestionMessage;
   final List<PickedPhoto> photos;
   final String title;
   final String description;
@@ -56,6 +69,9 @@ class ReportWizardState extends Equatable {
     this.isLocating = false,
     this.locationStatusMessage,
     this.isLocationBlocked = false,
+    this.suggestedAddress,
+    this.isSuggestingAddress = false,
+    this.addressSuggestionMessage,
     this.photos = const [],
     this.title = '',
     this.description = '',
@@ -98,6 +114,11 @@ class ReportWizardState extends Equatable {
     String? locationStatusMessage,
     bool clearLocationStatusMessage = false,
     bool? isLocationBlocked,
+    SuggestedAddress? suggestedAddress,
+    bool clearSuggestedAddress = false,
+    bool? isSuggestingAddress,
+    String? addressSuggestionMessage,
+    bool clearAddressSuggestionMessage = false,
     List<PickedPhoto>? photos,
     String? title,
     String? description,
@@ -123,6 +144,10 @@ class ReportWizardState extends Equatable {
       isLocating: isLocating ?? this.isLocating,
       locationStatusMessage: clearLocationStatusMessage ? null : (locationStatusMessage ?? this.locationStatusMessage),
       isLocationBlocked: isLocationBlocked ?? this.isLocationBlocked,
+      suggestedAddress: clearSuggestedAddress ? null : (suggestedAddress ?? this.suggestedAddress),
+      isSuggestingAddress: isSuggestingAddress ?? this.isSuggestingAddress,
+      addressSuggestionMessage:
+          clearAddressSuggestionMessage ? null : (addressSuggestionMessage ?? this.addressSuggestionMessage),
       photos: photos ?? this.photos,
       title: title ?? this.title,
       description: description ?? this.description,
@@ -149,6 +174,9 @@ class ReportWizardState extends Equatable {
         isLocating,
         locationStatusMessage,
         isLocationBlocked,
+        suggestedAddress,
+        isSuggestingAddress,
+        addressSuggestionMessage,
         photos,
         title,
         description,
