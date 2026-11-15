@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 
+/// The four severity levels of the design system (section 3.3). The theme
+/// layer has its own copy so shared widgets never depend on a feature's domain;
+/// a feature maps its own severity to it.
+enum SeverityLevel { low, medium, high, critical }
+
 /// Severity colors (docs/design/03-design-system.md, section 3.3). Color is
 /// never the only signal: every level also has a shape and a text label.
 /// Read them with `context.severity`.
@@ -56,6 +61,22 @@ class AppSeverityColors extends ThemeExtension<AppSeverityColors> {
     onCritical: AppColors.inkDeep,
     markerOutline: AppColors.inkDeep,
   );
+
+  /// Background of [level].
+  Color fillOf(SeverityLevel level) => switch (level) {
+        SeverityLevel.low => low,
+        SeverityLevel.medium => medium,
+        SeverityLevel.high => high,
+        SeverityLevel.critical => critical,
+      };
+
+  /// Text and icon color drawn on [fillOf].
+  Color onFillOf(SeverityLevel level) => switch (level) {
+        SeverityLevel.low => onLow,
+        SeverityLevel.medium => onMedium,
+        SeverityLevel.high => onHigh,
+        SeverityLevel.critical => onCritical,
+      };
 
   @override
   AppSeverityColors copyWith({
