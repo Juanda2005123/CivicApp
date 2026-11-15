@@ -61,6 +61,16 @@ class NearbyCheckDismissed extends ReportWizardEvent {}
 /// Fired when citizen requests detecting current physical GPS location in Step 1.
 class CurrentLocationRequested extends ReportWizardEvent {}
 
+/// Fired when the citizen confirms a point chosen on the Step 1 map (HU-27).
+class MapPointSelected extends ReportWizardEvent {
+  final Coordinates coordinates;
+
+  const MapPointSelected(this.coordinates);
+
+  @override
+  List<Object?> get props => [coordinates];
+}
+
 /// Fired when citizen taps "Abrir ajustes" after blocking the location permission.
 class LocationSettingsRequested extends ReportWizardEvent {}
 

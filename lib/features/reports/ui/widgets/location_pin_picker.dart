@@ -8,6 +8,7 @@ import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import 'package:vigia_app/features/reports/domain/entities/suggested_address.dart';
 import 'package:vigia_app/features/reports/domain/validators/report_validators.dart';
+import 'map_point_selector.dart';
 
 /// Step 1: Location georeferencing and Colombian address confirmation (HU-07).
 class LocationPinPicker extends StatefulWidget {
@@ -28,7 +29,15 @@ class LocationPinPicker extends StatefulWidget {
 
   /// Why the suggestion is missing or incomplete; shown as a notice.
   final String? suggestionMessage;
+
+  /// Reads the device GPS; offered on the map as "Centrar en mi ubicación".
   final VoidCallback? onDetectLocation;
+
+  /// The citizen confirmed a point on the map (HU-27).
+  final ValueChanged<Coordinates>? onMapPointSelected;
+
+  /// Height the step has on screen, so the map can fill it.
+  final double? availableHeight;
   final void Function({
     required Coordinates coordinates,
     required String formattedAddress,
@@ -48,6 +57,8 @@ class LocationPinPicker extends StatefulWidget {
     this.isSuggestingAddress = false,
     this.suggestionMessage,
     this.onDetectLocation,
+    this.onMapPointSelected,
+    this.availableHeight,
     required this.onLocationConfirmed,
   });
 
@@ -74,6 +85,10 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
 
   /// Shows the "review the suggestion" notice once a suggestion was applied.
   bool _suggestionApplied = false;
+
+  /// Step 1 shows the map instead of the address form (HU-27). The form stays
+  /// in this State, so its fields keep what was typed.
+  bool _pickingOnMap = false;
 
   static const List<String> _roadTypes = [
     'Carrera',
@@ -254,8 +269,27 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
     }
   }
 
+  void _onMapPointConfirmed(Coordinates point) {
+    setState(() {
+      _coordinates = point;
+      _pickingOnMap = false;
+    });
+    widget.onMapPointSelected?.call(point);
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_pickingOnMap) {
+      return MapPointSelector(
+        coordinates: _coordinates,
+        isLocating: widget.isLocating,
+        onUseMyLocation: widget.onDetectLocation,
+        onConfirmed: _onMapPointConfirmed,
+        onCancel: () => setState(() => _pickingOnMap = false),
+        availableHeight: widget.availableHeight,
+      );
+    }
+
     final theme = Theme.of(context);
     final searchingCrossRoad = widget.isSuggestingAddress;
     final searchingMainRoad = searchingCrossRoad && widget.suggestedAddress == null;
@@ -272,7 +306,7 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Verifica la posición GPS de tu dispositivo y confirma la dirección con nomenclatura o punto de referencia.',
+            'Verifica el punto del daño en el mapa y confirma la dirección con nomenclatura o punto de referencia.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -316,23 +350,13 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
                         ],
                       ),
                     ),
-                    if (widget.onDetectLocation != null)
-                      widget.isLocating
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : OutlinedButton.icon(
-                              onPressed: widget.onDetectLocation,
-                              icon: const Icon(Icons.my_location, size: 16),
-                              label: const Text('Mi GPS', style: TextStyle(fontSize: 12)),
-                              style: OutlinedButton.styleFrom(
-                                visualDensity: VisualDensity.compact,
-                                padding: const EdgeInsets.symmetric(horizontal: 10),
-                              ),
-                            ),
                   ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                OutlinedButton.icon(
+                  onPressed: () => setState(() => _pickingOnMap = true),
+                  icon: const Icon(Icons.map_outlined),
+                  label: const Text('Seleccionar ubicación'),
                 ),
                 if (widget.locationStatusMessage != null) ...[
                   const SizedBox(height: AppSpacing.xs),
@@ -379,7 +403,7 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
 
           if (_suggestionApplied) ...[
             const AppNotice(
-              message: 'Sugerimos la dirección según tu GPS. Revísala antes de continuar.',
+              message: 'Sugerimos la dirección de este punto. Revísala antes de continuar.',
             ),
             const SizedBox(height: AppSpacing.md),
           ],

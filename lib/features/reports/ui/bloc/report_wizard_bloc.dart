@@ -44,6 +44,7 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
   ) : super(const ReportWizardState()) {
     on<WizardStarted>(_onWizardStarted);
     on<CurrentLocationRequested>(_onCurrentLocationRequested);
+    on<MapPointSelected>(_onMapPointSelected);
     on<LocationSettingsRequested>(_onLocationSettingsRequested);
     on<LocationPitched>(_onLocationPitched);
     on<CategoryAndSeveritySelected>(_onCategoryAndSeveritySelected);
@@ -96,7 +97,7 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
       ));
 
       // With a real position, the address is suggested without waiting for
-      // a "Mi GPS" tap (HU-26).
+      // the citizen to open the map (HU-26).
       if (deviceCoords != null) await _suggestAddressAt(deviceCoords, emit);
     } on Exception catch (e) {
       emit(state.copyWith(
@@ -144,6 +145,28 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
         locationStatusMessage: blocked ? message : 'No se pudo obtener el GPS: $message',
       ));
     }
+  }
+
+  /// HU-27: the point chosen on the map replaces the coordinates, and its city
+  /// and address are looked up like those of a GPS reading.
+  Future<void> _onMapPointSelected(
+    MapPointSelected event,
+    Emitter<ReportWizardState> emit,
+  ) async {
+    emit(state.copyWith(
+      coordinates: event.coordinates,
+      clearLocationStatusMessage: true,
+      clearErrorMessage: true,
+      clearSuggestedAddress: true,
+      clearAddressSuggestionMessage: true,
+    ));
+    try {
+      final city = await _detectNearestCity(at: event.coordinates);
+      emit(state.copyWith(city: city.name));
+    } on Exception {
+      // The previous city stays; the citizen can still publish.
+    }
+    await _suggestAddressAt(event.coordinates, emit);
   }
 
   /// HU-26: suggests the address of [coords]; the cross street arrives a few

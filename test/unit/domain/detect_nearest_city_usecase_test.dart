@@ -71,6 +71,14 @@ void main() {
     expect(await useCase(), _cali);
   });
 
+  test('resolves a point picked on the map without reading the GPS (HU-27)', () async {
+    final useCase = DetectNearestCityUseCase(
+      FakeLocationRepository(error: Exception('GPS off')),
+      FakeCityRepository(cities),
+    );
+    expect(await useCase(at: const Coordinates(latitude: 1.30, longitude: -77.30)), _pasto);
+  });
+
   test('propagates location errors with their message', () async {
     final useCase = DetectNearestCityUseCase(
       FakeLocationRepository(error: Exception('Location services are disabled')),

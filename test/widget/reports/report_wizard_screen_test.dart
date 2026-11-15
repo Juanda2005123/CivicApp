@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vigia_app/core/theme/app_spacing.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
 import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
 import 'package:vigia_app/features/auth/domain/entities/city.dart';
@@ -87,6 +89,57 @@ void main() {
       );
     }
 
+    /// Opens the Step 1 map, reads the GPS from it and goes back to the form.
+    Future<void> useMyLocationOnMap(WidgetTester tester) async {
+      await tester.tap(find.text('Seleccionar ubicación'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Centrar en mi ubicación'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Volver'));
+      await tester.tap(find.text('Volver'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('"Seleccionar ubicación" opens the map inside Step 1 and "Confirmar punto" fills the address (HU-27)', (tester) async {
+      final bloc = newBloc();
+      await tester.pumpWidget(createWidgetUnderTest(bloc));
+      await tester.pumpAndSettle();
+      fakeGeocodingRepo.place = const GeocodedPlace(road: 'Calle 12', houseNumber: '5-37', neighborhood: 'San Pedro');
+
+      await tester.tap(find.text('Seleccionar ubicación'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Paso 1 de 5'), findsOneWidget);
+      expect(find.text('Selecciona el punto en el mapa'), findsOneWidget);
+      expect(find.bySemanticsLabel('Punto del daño'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('Confirmar punto'));
+      await tester.tap(find.text('Confirmar punto'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Paso 1 de 5'), findsOneWidget);
+      expect(find.text('Confirmar ubicación'), findsOneWidget);
+      expect(find.text('12'), findsOneWidget);
+      expect(find.text('San Pedro'), findsOneWidget);
+      expect(bloc.state.coordinates?.latitude, closeTo(3.4516, 1e-6));
+    });
+
+    testWidgets('on a tall screen the Step 1 map fills the space below the header (HU-27)', (tester) async {
+      tester.view.physicalSize = const Size(480, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final bloc = newBloc();
+      await tester.pumpWidget(createWidgetUnderTest(bloc));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Seleccionar ubicación'));
+      await tester.pumpAndSettle();
+
+      expect(tester.getSize(find.byType(FlutterMap)).height, greaterThan(AppSizes.mapPicker));
+      expect(find.text('Paso 1 de 5'), findsOneWidget);
+      expect(tester.getBottomLeft(find.text('Volver')).dy, lessThanOrEqualTo(900));
+    });
+
     testWidgets('renders Step 1 with GPS coordinates, nomenclature fields, and confirm action', (tester) async {
       final bloc = newBloc();
       await tester.pumpWidget(createWidgetUnderTest(bloc));
@@ -98,10 +151,10 @@ void main() {
       expect(find.text('Nomenclatura vial'), findsOneWidget);
       expect(find.text('Punto de referencia'), findsOneWidget);
       expect(find.text('Barrio o sector'), findsOneWidget);
-      expect(find.text('Mi GPS'), findsOneWidget);
+      expect(find.text('Seleccionar ubicación'), findsOneWidget);
     });
 
-    testWidgets('"Mi GPS" fills the nomenclature and neighborhood, all still editable (HU-26)', (tester) async {
+    testWidgets('the GPS on the map fills the nomenclature and neighborhood, all still editable (HU-26)', (tester) async {
       final bloc = newBloc();
       await tester.pumpWidget(createWidgetUnderTest(bloc));
       await tester.pumpAndSettle();
@@ -109,8 +162,7 @@ void main() {
 
       // Something typed before the tap is overwritten by the suggestion.
       await tester.enterText(find.byType(TextField).at(3), 'Centro');
-      await tester.tap(find.text('Mi GPS'));
-      await tester.pumpAndSettle();
+      await useMyLocationOnMap(tester);
 
       expect(find.text('Calle'), findsOneWidget);
       expect(find.text('12'), findsOneWidget);
@@ -118,14 +170,14 @@ void main() {
       expect(find.text('37'), findsOneWidget);
       expect(find.text('San Pedro'), findsOneWidget);
       expect(find.text('Centro'), findsNothing);
-      expect(find.textContaining('Sugerimos la dirección según tu GPS'), findsOneWidget);
+      expect(find.textContaining('Sugerimos la dirección de este punto'), findsOneWidget);
 
       await tester.enterText(find.byType(TextField).at(0), '13');
       await tester.pump();
       expect(find.text('13'), findsOneWidget);
     });
 
-    testWidgets('opening the wizard fills the address from the GPS without tapping "Mi GPS" (HU-26)', (tester) async {
+    testWidgets('opening the wizard fills the address from the GPS without opening the map (HU-26)', (tester) async {
       fakeGeocodingRepo.place = const GeocodedPlace(road: 'Calle 12', houseNumber: '5-37', neighborhood: 'San Pedro');
       final bloc = newBloc();
       await tester.pumpWidget(createWidgetUnderTest(bloc));
@@ -137,7 +189,7 @@ void main() {
       expect(find.text('San Pedro'), findsOneWidget);
     });
 
-    testWidgets('without a plate, "Mi GPS" takes the cross street from a nearby corner', (tester) async {
+    testWidgets('without a plate, the GPS takes the cross street from a nearby corner', (tester) async {
       // The GPS gives (3.4516, -76.5320), on the street's line: the first
       // probe beside it answers Carrera 67A.
       final bloc = newBloc();
@@ -150,20 +202,21 @@ void main() {
         )
         ..streetAnswers = const [GeocodedPlace(road: 'Carrera 67A')];
 
-      await tester.tap(find.text('Mi GPS'));
-      await tester.pumpAndSettle();
+      await useMyLocationOnMap(tester);
 
       expect(find.text('10A Bis'), findsOneWidget);
       expect(find.text('67A'), findsOneWidget);
     });
 
-    testWidgets('"Mi GPS" with a blocked permission opens the settings modal', (tester) async {
+    testWidgets('the GPS with a blocked permission opens the settings modal', (tester) async {
       fakeLocationRepo = FakeLocationRepository(error: Exception(LocationRepository.blockedMessage));
       final bloc = newBloc();
       await tester.pumpWidget(createWidgetUnderTest(bloc));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Mi GPS'));
+      await tester.tap(find.text('Seleccionar ubicación'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Centrar en mi ubicación'));
       await tester.pumpAndSettle();
 
       expect(find.text('Ubicación bloqueada'), findsOneWidget);

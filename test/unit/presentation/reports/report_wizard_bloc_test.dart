@@ -98,7 +98,7 @@ void main() {
       expect(states.last.city, 'Popayán');
     });
 
-    test('WizardStarted suggests the address of the GPS position without a "Mi GPS" tap (HU-26)', () async {
+    test('WizardStarted suggests the address of the GPS position without opening the map (HU-26)', () async {
       fakeGeocodingRepo.place = const GeocodedPlace(road: 'Calle 12', houseNumber: '5-37', neighborhood: 'San Pedro');
 
       final states = await emittedStates(bloc, WizardStarted());
@@ -197,7 +197,7 @@ void main() {
       expect(states.last.errorMessage, isNull);
     });
 
-    test('every "Mi GPS" tap clears the previous suggestion first', () async {
+    test('every GPS reading clears the previous suggestion first', () async {
       fakeGeocodingRepo.place = const GeocodedPlace(road: 'Calle 12');
       await emittedStates(bloc, CurrentLocationRequested());
 
@@ -205,6 +205,19 @@ void main() {
 
       expect(states.first.suggestedAddress, isNull);
       expect(states.last.suggestedAddress?.mainRoad, '12');
+    });
+
+    test('MapPointSelected takes the picked point, its city and its address (HU-27)', () async {
+      fakeGeocodingRepo.place = const GeocodedPlace(road: 'Calle 12', houseNumber: '5-37', neighborhood: 'San Pedro');
+      const picked = Coordinates(latitude: 3.4520, longitude: -76.5330);
+
+      final states = await emittedStates(bloc, const MapPointSelected(picked));
+
+      expect(states.first.suggestedAddress, isNull);
+      expect(states.last.coordinates, picked);
+      expect(states.last.city, 'Cali');
+      expect(states.last.suggestedAddress?.mainRoad, '12');
+      expect(states.last.isSuggestingAddress, false);
     });
 
     test('CurrentLocationRequested flags a blocked permission', () async {

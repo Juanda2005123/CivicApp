@@ -5,7 +5,8 @@ import '../entities/coordinates.dart';
 import '../repositories/city_repository.dart';
 import '../repositories/location_repository.dart';
 
-/// Use case: find the coverage city that corresponds to the device position.
+/// Use case: find the coverage city that corresponds to the device position,
+/// or to a point the citizen picked on the map (HU-27).
 ///
 /// Hierarchical calibrated-radii algorithm, so metropolitan conurbations are
 /// resolved correctly (a point in southern Cali is closer to Jamundí's centre
@@ -19,8 +20,8 @@ class DetectNearestCityUseCase {
 
   DetectNearestCityUseCase(this._location, this._cities);
 
-  Future<City> call() async {
-    final position = await _location.currentCoordinates();
+  Future<City> call({Coordinates? at}) async {
+    final position = at ?? await _location.currentCoordinates();
     final cities = await _cities.getCities();
     if (cities.isEmpty) throw Exception('No hay ciudades disponibles.');
     return resolve(position, cities);

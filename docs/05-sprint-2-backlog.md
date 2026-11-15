@@ -58,8 +58,8 @@
 | **HU-19** | Paginated Community Feed | Explore / Feed | **PENDING** | 20-item chunks, pull-to-refresh, status badges |
 | **HU-21** | Smart City Switcher | Explore / Modal | **PENDING** | Assistive modal with fuzzy search across Colombian cities |
 | **HU-22** | Guest Browsing Mode | Auth / Explore | **PENDING** | Read-only mode without login; prompt auth on action |
-| **HU-26** | Reverse Geocoding (Nominatim) | Reports / Location | **COMPLETED** | Opening the wizard with the location permission granted, and every "Mi GPS" tap, asks Nominatim (3 s timeout, identifying User-Agent) and overwrites road type, main road, cross street and number (when the plate comes as "5-37") and the neighborhood; the plate may use a hyphen or a typographic dash; without a plate, the cross street comes from a nearby corner: Nominatim returns the street's line, and up to four probes beside it (30 m to each side, 30 m ahead of and behind the citizen) answer a crossing street when a corner is within about 60 m, which must run the other way (on a Calle, a Carrera); a tap sends at most 6 requests; the address fills in first and the cross street afterwards, with the dotted ring and "Buscando…" in the main road and cross street fields meanwhile; requests are spaced 1.1 s apart (Nominatim's 1 per second rule); a failure or a missing cross street shows a notice asking to type it by hand; every field stays editable, with a "review it" notice (the OpenStreetMap credit stays on the map) |
-| **HU-27** | Interactive Map Pin Picker | Reports / Location | **PENDING** | Map widget with draggable pin in Step 1 |
+| **HU-26** | Reverse Geocoding (Nominatim) | Reports / Location | **COMPLETED** | Opening the wizard with the location permission granted, every GPS reading ("Centrar en mi ubicación" on the Step 1 map) and every point confirmed on the map (HU-27) asks Nominatim (3 s timeout, identifying User-Agent) and overwrites road type, main road, cross street and number (when the plate comes as "5-37") and the neighborhood; the plate may use a hyphen or a typographic dash; without a plate, the cross street comes from a nearby corner: Nominatim returns the street's line, and up to four probes beside it (30 m to each side, 30 m ahead of and behind the citizen) answer a crossing street when a corner is within about 60 m, which must run the other way (on a Calle, a Carrera); a tap sends at most 6 requests; the address fills in first and the cross street afterwards, with the dotted ring and "Buscando…" in the main road and cross street fields meanwhile; requests are spaced 1.1 s apart (Nominatim's 1 per second rule); a failure or a missing cross street shows a notice asking to type it by hand; every field stays editable, with a "review it" notice (the OpenStreetMap credit stays on the map) |
+| **HU-27** | Interactive Map Pin Picker | Reports / Location | **COMPLETED** | In Step 1 the "Seleccionar ubicación" button (it replaced "Mi GPS") swaps the address form for an OpenStreetMap map inside the same step, so the "Paso 1 de 5" header stays; the citizen pans the map under a fixed center pin, the coordinates update live, and "Confirmar punto" takes the point, resolves its city and suggests its address (HU-26) back in the form, which keeps what was typed; "Volver" returns without changes; the GPS lives on the map as the "Centrar en mi ubicación" button (blocked permission → HU-29 modal) |
 | **HU-28** | Direct Address Geocoding | Reports / Location | **PENDING** | Text address to coordinates calculation |
 | **HU-29** | Recover a Blocked Location Permission | Auth + Reports / Location | **COMPLETED** | Fixes KI-01: "Abrir ajustes" button when the permission is blocked |
 
@@ -258,7 +258,7 @@
 **So that** I do not have to type the street name manually when I am standing right at the scene.
 
 #### Acceptance Criteria
-1. **Given that** I open the wizard or tap *"Mi GPS"* in Step 1, **when** valid coordinates are detected, **then** the app asynchronously queries the free OpenStreetMap Nominatim reverse geocoding endpoint with compliant headers (User-Agent).
+1. **Given that** I open the wizard, use *"Centrar en mi ubicación"* or confirm a point on the Step 1 map (HU-27), **when** valid coordinates are detected, **then** the app asynchronously queries the free OpenStreetMap Nominatim reverse geocoding endpoint with compliant headers (User-Agent).
 2. **Given that** Nominatim returns structured address tokens (`road`, `suburb`/`neighbourhood`, `city`), **when** received, **then** the form pre-populates the road type, road number, and neighborhood automatically.
 3. **Given that** reverse geocoding is slow (>3s), rate-limited, or unavailable offline, **when** it fails, **then** the app keeps manual entry enabled without blocking the user and a notice says why the suggestion is missing or incomplete. (Changed in Sprint 2: the failure was silent; the citizen now gets feedback.)
 4. **Given that** the suggested address is populated, **when** viewed by the user, **then** all fields remain fully editable for human verification.
@@ -271,7 +271,7 @@
 **So that** I can accurately report issues located blocks away from my current physical position.
 
 #### Acceptance Criteria
-1. **Given that** I am on Step 1, **when** I switch to *"Seleccionar en mapa"*, **then** an interactive map (`flutter_map` with OpenStreetMap raster tiles) renders centered on the current coordinates or default city center.
+1. **Given that** I am on Step 1, **when** I tap *"Seleccionar ubicación"*, **then** an interactive map (`flutter_map` with OpenStreetMap raster tiles) renders centered on the current coordinates or default city center.
 2. **Given that** I pan the map, **when** movement stops, **then** the central crosshair/pin updates the active report coordinates.
 3. **Given that** I tap *"Confirmar punto"*, **when** pressed, **then** the coordinates are locked into the wizard draft and the user returns to address confirmation.
 
@@ -295,7 +295,7 @@
 **So that** I can use GPS detection again without reinstalling the app or searching the phone settings on my own.
 
 #### Acceptance Criteria
-1. **Given that** location permission is blocked (Android: denied twice; iOS: denied once), **when** I tap *"Detectar mi ciudad por GPS"* at registration or *"Mi GPS"* in Step 1 of the wizard (HU-07), **then** I see *"El permiso de ubicación está bloqueado. Toca "Abrir ajustes" y luego Permisos → Ubicación."* with an *"Abrir ajustes"* button.
+1. **Given that** location permission is blocked (Android: denied twice; iOS: denied once), **when** I tap *"Detectar mi ciudad por GPS"* at registration or *"Centrar en mi ubicación"* on the Step 1 map of the wizard (HU-07, HU-27), **then** I see *"El permiso de ubicación está bloqueado. Toca "Abrir ajustes" y luego Permisos → Ubicación."* with an *"Abrir ajustes"* button.
 2. **Given that** I tap *"Abrir ajustes"*, **when** the operating system allows it, **then** the app's system settings screen opens.
 3. **Given that** I enabled location in the settings, **when** I return to the app and tap the GPS button again, **then** the location is detected normally, with no restart.
 4. **Given that** I return without enabling location, **when** I come back to the app, **then** the blocked notice remains and the city list or the manual address stays fully usable.
