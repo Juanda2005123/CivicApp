@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
+import 'package:vigia_app/core/widgets/dotted_spinner.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_photo.dart';
@@ -81,6 +84,24 @@ void main() {
       expect(find.text('Hueco profundo en carril rápido'), findsOneWidget);
     });
 
+    testWidgets('while the report loads it shows the spinner, never the error view', (tester) async {
+      final pending = Completer<Incident>();
+      final bloc = IncidentDetailBloc(GetIncidentByIdUseCase(_SlowIncidentRepository(pending.future)));
+      addTearDown(bloc.close);
+
+      await tester.pumpWidget(createWidgetUnderTest(bloc, incidentIdOrCode: '#VIG-1001'));
+      await tester.pump();
+
+      expect(find.byType(DottedSpinner), findsOneWidget);
+      expect(find.text('No fue posible cargar el reporte vial.'), findsNothing);
+      expect(find.text('Reintentar'), findsNothing);
+
+      pending.complete(sampleIncident);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Hueco profundo en carril rápido'), findsOneWidget);
+    });
+
     testWidgets('renders all incident details correctly on success', (tester) async {
       repository.stored['#VIG-1001'] = sampleIncident;
       final bloc = newBloc();
@@ -150,4 +171,15 @@ void main() {
       expect(find.text('Reintentar'), findsOneWidget);
     });
   });
+}
+
+/// Answers only when the test completes [_answer], so the loading state stays
+/// on screen long enough to be checked.
+class _SlowIncidentRepository extends FakeIncidentRepository {
+  final Future<Incident> _answer;
+
+  _SlowIncidentRepository(this._answer);
+
+  @override
+  Future<Incident> getIncidentById(String idOrTrackingCode) => _answer;
 }

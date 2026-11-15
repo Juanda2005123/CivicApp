@@ -76,7 +76,12 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
                 child: DottedSpinner(size: 36, semanticLabel: 'Cargando reporte vial...'),
               );
 
+            // An empty case falls through in Dart: loading needs its own body,
+            // or the screen shows the failure view until the report arrives.
             case IncidentDetailStatus.loading:
+              return const Center(
+                child: DottedSpinner(size: 36, semanticLabel: 'Cargando reporte vial...'),
+              );
 
             case IncidentDetailStatus.failure:
               return Padding(
