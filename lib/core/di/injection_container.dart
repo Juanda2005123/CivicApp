@@ -34,6 +34,7 @@ import '../../features/explore/domain/usecases/get_city_options_usecase.dart';
 import '../../features/explore/domain/usecases/search_cities_usecase.dart';
 import '../../features/explore/domain/usecases/switch_city_usecase.dart';
 import '../../features/explore/ui/bloc/city_switcher_bloc.dart';
+import '../../features/explore/ui/bloc/feed_bloc.dart';
 import '../../features/explore/ui/bloc/map_bloc.dart';
 import '../../features/reports/data/datasources/category_remote_data_source.dart';
 import '../../features/reports/data/datasources/incident_remote_data_source.dart';
@@ -48,6 +49,7 @@ import '../../features/reports/domain/repositories/photo_picker_repository.dart'
 import '../../features/reports/domain/usecases/create_incident_usecase.dart';
 import '../../features/reports/domain/usecases/endorse_incident_usecase.dart';
 import '../../features/reports/domain/usecases/get_categories_usecase.dart';
+import '../../features/reports/domain/usecases/get_city_feed_usecase.dart';
 import '../../features/reports/domain/usecases/get_city_map_usecase.dart';
 import '../../features/reports/domain/usecases/get_current_location_usecase.dart';
 import '../../features/reports/domain/usecases/get_incident_by_id_usecase.dart';
@@ -139,6 +141,7 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => CreateIncidentUseCase(sl()));
   sl.registerLazySingleton(() => GetIncidentByIdUseCase(sl()));
   sl.registerLazySingleton(() => GetCityMapUseCase(sl(), sl(), sl(), sl(), sl()));
+  sl.registerLazySingleton(() => GetCityFeedUseCase(sl()));
   sl.registerLazySingleton(() => EndorseIncidentUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentLocationUseCase(sl()));
   sl.registerLazySingleton(() => SuggestAddressUseCase(sl()));
@@ -155,6 +158,7 @@ Future<void> initDependencies({
   sl.registerFactory(() => ProfileBloc(sl(), sl()));
   sl.registerFactory(() => MapBloc(sl(), sl(), sl(), sl()));
   sl.registerFactory(() => CitySwitcherBloc(sl(), sl()));
+  sl.registerFactory(() => FeedBloc(sl()));
   sl.registerFactory(
     () => ReportWizardBloc(
       sl(),

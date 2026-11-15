@@ -12,6 +12,7 @@ import '../../features/auth/ui/screens/splash_screen.dart';
 import '../../features/dashboard/ui/bloc/profile_bloc.dart';
 import '../../features/dashboard/ui/bloc/profile_event.dart';
 import '../../features/explore/ui/bloc/city_switcher_bloc.dart';
+import '../../features/explore/ui/bloc/feed_bloc.dart';
 import '../../features/explore/ui/bloc/map_bloc.dart';
 import '../../features/explore/ui/bloc/map_event.dart';
 import '../../features/explore/ui/screens/home_screen.dart';
@@ -50,6 +51,7 @@ class AppRoutes {
                 BlocProvider(create: (_) => sl<ProfileBloc>()..add(ProfileStarted())),
                 BlocProvider(create: (_) => sl<MapBloc>()..add(MapStarted())),
                 BlocProvider(create: (_) => sl<CitySwitcherBloc>()),
+                BlocProvider(create: (_) => sl<FeedBloc>()),
               ],
               child: const HomeScreen(),
             ),

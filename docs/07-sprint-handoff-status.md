@@ -5,7 +5,7 @@
 **Arquitectura:** Clean Architecture + BLoC + Supabase + GetIt  
 **Rama de integración:** `develop` (cada HU entra con su rama `feat/hu-XX-…` y un merge commit)  
 **Fecha de corte:** 14 de noviembre de 2026  
-**Progreso Sprint 2:** 15 de 17 historias completadas (~88 %). Pendientes: HU-19 y HU-28.
+**Progreso Sprint 2:** 16 de 17 historias completadas (~94 %). Pendiente: HU-28.
 
 ---
 
@@ -32,6 +32,7 @@ En el segundo bloque se construyó la **exploración territorial**: el shell con
 | **HU-29** | Recuperar un Permiso Bloqueado (KI-01) | Si el permiso de ubicación está bloqueado, los tres botones de GPS (registro, mapa y Paso 1) abren el modal **"Ubicación bloqueada"** con **"Abrir ajustes"**. |
 | **HU-26** | Sugerencia Automática de Dirección | Al abrir el asistente con GPS, al usar "Centrar en mi ubicación" o al confirmar un punto en el mapa, se consulta **Nominatim** (OpenStreetMap) y se rellenan tipo de vía, vía principal, cruce, número y barrio. El cruce sale de la placa ("5-37") o de una esquina cercana. Anillo de carga y "Buscando…" mientras llega; si falla o queda incompleta, un aviso pide escribirla a mano. Todo sigue editable. |
 | **HU-27** | Selector de Punto en el Mapa (Paso 1) | El botón **"Seleccionar ubicación"** cambia el formulario por un mapa **dentro del mismo Paso 1** (el encabezado "Paso 1 de 5" se mantiene). El mapa llena el alto libre de la pantalla, el ciudadano lo mueve bajo un pin fijo y toca **"Confirmar punto"**: se toman esas coordenadas, se detecta su ciudad y se sugiere su dirección. "Volver" regresa sin cambios. |
+| **HU-19** | Feed Comunitario de Incidentes | Tercera pestaña **"Comunidad"** del shell: los reportes de la ciudad activa, del más reciente al más antiguo, de 20 en 20 al hacer scroll, con *pull-to-refresh*. La ciudad es la del mapa (también la que cambia el selector de HU-21). Cada tarjeta muestra la foto (o el ícono de la categoría si no hay), el código `#VIG`, la gravedad (forma + color + texto), el barrio, el título, el autor con su sello de rango, apoyos, comentarios, estado y fecha, y la distancia solo si se conoce la ubicación; toda la tarjeta abre el detalle. Si falla la recarga, la lista se queda con un aviso y "Reintentar"; si falla una página, aparece "Reintentar" bajo la lista; una ciudad sin reportes invita a publicar el primero. Funciona también para el invitado. |
 | **HU-21** | Selector Asistido de Ciudad | Botón con la ciudad del mapa (arriba a la izquierda) que abre un sheet **"Cambiar ciudad"**: búsqueda sin tildes ni mayúsculas por ciudad o departamento (hasta 8 resultados), hasta 3 ciudades recientes (guardadas en el dispositivo) y chips rápidos (Bogotá, Medellín, Cali, Barranquilla, Bucaramanga). Al elegir, un ciudadano guarda `last_city` en su perfil y el mapa abre ahí en la siguiente sesión; un invitado solo cambia la ciudad que ve. |
 | **HU-22** | Modo Invitado (Sin Cuenta) | **"Explorar sin cuenta"** en el login abre el shell sin sesión. El invitado ve el mapa y el detalle de los reportes (políticas `anon` de `schema.sql`); el mapa abre en la ciudad cubierta más cercana al GPS, o en Cali sin GPS. **"Reportar daño"** sigue visible y abre el modal **"Necesitas iniciar sesión"** (Ahora no · Crear cuenta · Iniciar sesión) sin abrir el asistente. **"Mi perfil"** muestra una invitación a iniciar sesión y oculta "Cerrar sesión". |
 
@@ -43,12 +44,25 @@ Para que el equipo pueda auditar, extender o revisar la implementación, los arc
 
 ```text
 lib/
-├── features/explore/                   # SHELL Y MAPA (HU-13, HU-03, HU-22)
+├── features/explore/                   # SHELL, MAPA, SELECTOR DE CIUDAD Y FEED (HU-13, HU-03, HU-22, HU-21, HU-19)
+│   ├── domain/                         # Selector de ciudad (HU-21)
+│   │   ├── entities/city_options.dart          # Catálogo, recientes y atajos del selector
+│   │   ├── repositories/recent_cities_repository.dart
+│   │   └── usecases/                           # get_city_options · search_cities · switch_city
+│   ├── data/                           # Ciudades recientes guardadas en el dispositivo (shared_preferences)
+│   │   ├── datasources/recent_cities_local_data_source.dart
+│   │   └── repositories/recent_cities_repository_impl.dart
 │   └── ui/
-│       ├── bloc/map_bloc.dart          # Ciudad, marcadores y "Centrar en mi ubicación"
+│       ├── bloc/map_bloc.dart          # Ciudad, marcadores, "Centrar en mi ubicación" y cambio de ciudad
+│       ├── bloc/city_switcher_*.dart   # Búsqueda del selector de ciudad (HU-21)
+│       ├── bloc/feed_*.dart            # Feed: eventos, estado y Bloc (HU-19)
 │       ├── pages/map_page.dart         # Pestaña Mapa (flutter_map + OpenStreetMap)
-│       ├── screens/home_screen.dart    # Shell: pestañas, "Reportar daño" y modal del invitado
-│       └── widgets/incident_map_marker.dart  # Marcador con forma y color de gravedad
+│       ├── pages/feed_page.dart        # Pestaña Comunidad: lista, scroll infinito, refresh (HU-19)
+│       ├── screens/home_screen.dart    # Shell: 3 pestañas, "Reportar daño", modal del invitado y reenvío de la ciudad al feed
+│       └── widgets/
+│           ├── incident_map_marker.dart        # Marcador con forma y color de gravedad
+│           ├── city_switcher_sheet.dart        # Sheet "Cambiar ciudad" (HU-21)
+│           └── feed_incident_card.dart         # Tarjeta de reporte del feed (HU-19)
 │
 ├── features/dashboard/ui/              # MI PERFIL (resumen, invitación al invitado)
 │   ├── bloc/profile_bloc.dart          # Estados success · guest · signedOut
@@ -61,6 +75,7 @@ lib/
 │   │   │   ├── incident_category.dart  # Categorías de daño y nombres oficiales en español
 │   │   │   ├── incident_photo.dart     # Evidencia fotográfica asociada
 │   │   │   ├── incident_marker.dart    # Marcador liviano para el mapa
+│   │   │   ├── feed_incident.dart      # Resumen de un reporte para la tarjeta del feed (HU-19)
 │   │   │   ├── nearby_incident.dart    # Modelo liviano para duplicados en radio de 150m
 │   │   │   ├── geocoded_place.dart     # Respuesta de Nominatim traducida al dominio
 │   │   │   ├── suggested_address.dart  # Dirección sugerida (vía, cruce, placa, barrio)
@@ -74,7 +89,8 @@ lib/
 │   │   │   ├── create_incident_usecase.dart       # Valida, sube fotos, persiste y suma +100 XP
 │   │   │   ├── endorse_incident_usecase.dart      # Registra apoyo a reporte existente
 │   │   │   ├── get_categories_usecase.dart        # Carga taxonomía de daños
-│   │   │   ├── get_city_map_usecase.dart          # Ciudad del mapa y sus reportes (perfil, o GPS para el invitado)
+│   │   │   ├── get_city_feed_usecase.dart         # Una página del feed: tamaño de página y "hay más" (HU-19)
+│   │   │   ├── get_city_map_usecase.dart          # Ciudad del mapa y sus reportes (last_city, o GPS para el invitado)
 │   │   │   ├── get_current_location_usecase.dart  # Posición GPS del dispositivo
 │   │   │   ├── get_incident_by_id_usecase.dart    # Carga detalle por ID o código #VIG
 │   │   │   ├── get_nearby_incidents_usecase.dart  # Consulta duplicados a 150m
@@ -91,6 +107,7 @@ lib/
 │   │   │   ├── photo_picker_data_source.dart      # image_picker con compresión
 │   │   │   └── photo_storage_data_source.dart     # Supabase Storage bucket incident-evidence
 │   │   ├── models/
+│   │   │   ├── feed_incident_model.dart           # Fila del feed (consulta anidada) <-> entidad
 │   │   │   ├── incident_category_model.dart
 │   │   │   ├── incident_model.dart                # Serialización JSON snake_case <-> camelCase
 │   │   │   └── incident_photo_model.dart
@@ -134,11 +151,9 @@ lib/
 
 ## 3. Lo que queda pendiente del Sprint 2 (Para el resto del equipo)
 
-La creación de reportes, el mapa y el selector de ciudad ya están listos. Faltan dos historias:
+La creación de reportes, el mapa, el selector de ciudad y el feed comunitario ya están listos. Falta una historia:
 
-1. **HU-19: Feed Comunitario de Incidentes**
-   - *Objetivo:* Tercera pestaña del shell ("Comunidad") con el listado cronológico de reportes, paginación de 20 en 20, tarjetas con foto, estado y distancia, y *pull-to-refresh*. Debe funcionar también para el invitado (HU-22) y leer la ciudad activa del shell (la que cambia el selector de HU-21; hoy vive en `MapBloc`).
-2. **HU-28: Geocodificación Directa**
+1. **HU-28: Geocodificación Directa**
    - *Objetivo:* Convertir la dirección escrita en el Paso 1 en coordenadas estimadas, y usar el centro de la ciudad si no hay resultados.
 
 **Regla para lo que venga:** toda acción que necesite cuenta (apoyar, comentar, seguir) debe abrir `showSignInRequiredDialog` cuando el usuario es invitado (`ProfileStatus.guest`), igual que "Reportar daño".
@@ -186,7 +201,7 @@ dart run tool/check.dart
 Debe arrojar:
 - `Architecture guards: OK`
 - `flutter analyze: No issues found!`
-- `flutter test: 284 tests passed!`
+- `flutter test: 383 tests passed!`
 
 ### Prueba Manual Paso a Paso (en Windows o Móvil)
 1. Ejecutar la app: `flutter run -d windows` (o tu emulador/dispositivo Android).
