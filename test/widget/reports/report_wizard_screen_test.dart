@@ -17,6 +17,8 @@ import 'package:vigia_app/features/reports/domain/usecases/get_categories_usecas
 import 'package:vigia_app/features/reports/domain/usecases/get_current_location_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/get_nearby_incidents_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/pick_photo_usecase.dart';
+import 'package:vigia_app/features/reports/domain/usecases/suggest_address_usecase.dart';
+import 'package:vigia_app/features/reports/domain/entities/geocoded_place.dart';
 import 'package:vigia_app/features/reports/ui/bloc/report_wizard_bloc.dart';
 import 'package:vigia_app/features/reports/ui/bloc/report_wizard_event.dart';
 import 'package:vigia_app/features/reports/ui/screens/report_wizard_screen.dart';
@@ -32,6 +34,7 @@ void main() {
     late FakeLocationRepository fakeLocationRepo;
     late FakeCityRepository fakeCityRepo;
     late FakePhotoPickerRepository fakePhotoPickerRepo;
+    late FakeGeocodingRepository fakeGeocodingRepo;
 
     setUp(() {
       fakeCategoryRepo = FakeCategoryRepository(categories: [
@@ -54,6 +57,7 @@ void main() {
         const City(id: 1, name: 'Cali', department: 'Valle del Cauca', latitude: 3.4516, longitude: -76.5320, isCapital: true),
       ]);
       fakePhotoPickerRepo = FakePhotoPickerRepository();
+      fakeGeocodingRepo = FakeGeocodingRepository();
     });
 
     ReportWizardBloc newBloc() {
@@ -67,6 +71,7 @@ void main() {
         PickPhotoUseCase(fakePhotoPickerRepo),
         DetectNearestCityUseCase(fakeLocationRepo, fakeCityRepo),
         OpenLocationSettingsUseCase(fakeLocationRepo),
+        SuggestAddressUseCase(fakeGeocodingRepo),
       )..add(WizardStarted());
       addTearDown(bloc.close);
       return bloc;
@@ -94,6 +99,62 @@ void main() {
       expect(find.text('Punto de referencia'), findsOneWidget);
       expect(find.text('Barrio o sector'), findsOneWidget);
       expect(find.text('Mi GPS'), findsOneWidget);
+    });
+
+    testWidgets('"Mi GPS" fills the nomenclature and neighborhood, all still editable (HU-26)', (tester) async {
+      final bloc = newBloc();
+      await tester.pumpWidget(createWidgetUnderTest(bloc));
+      await tester.pumpAndSettle();
+      fakeGeocodingRepo.place = const GeocodedPlace(road: 'Calle 12', houseNumber: '5-37', neighborhood: 'San Pedro');
+
+      // Something typed before the tap is overwritten by the suggestion.
+      await tester.enterText(find.byType(TextField).at(3), 'Centro');
+      await tester.tap(find.text('Mi GPS'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Calle'), findsOneWidget);
+      expect(find.text('12'), findsOneWidget);
+      expect(find.text('5'), findsOneWidget);
+      expect(find.text('37'), findsOneWidget);
+      expect(find.text('San Pedro'), findsOneWidget);
+      expect(find.text('Centro'), findsNothing);
+      expect(find.textContaining('Sugerimos la dirección según tu GPS'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField).at(0), '13');
+      await tester.pump();
+      expect(find.text('13'), findsOneWidget);
+    });
+
+    testWidgets('opening the wizard fills the address from the GPS without tapping "Mi GPS" (HU-26)', (tester) async {
+      fakeGeocodingRepo.place = const GeocodedPlace(road: 'Calle 12', houseNumber: '5-37', neighborhood: 'San Pedro');
+      final bloc = newBloc();
+      await tester.pumpWidget(createWidgetUnderTest(bloc));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Calle'), findsOneWidget);
+      expect(find.text('12'), findsOneWidget);
+      expect(find.text('5'), findsOneWidget);
+      expect(find.text('San Pedro'), findsOneWidget);
+    });
+
+    testWidgets('without a plate, "Mi GPS" takes the cross street from a nearby corner', (tester) async {
+      // The GPS gives (3.4516, -76.5320), on the street's line: the first
+      // probe beside it answers Carrera 67A.
+      final bloc = newBloc();
+      await tester.pumpWidget(createWidgetUnderTest(bloc));
+      await tester.pumpAndSettle();
+      fakeGeocodingRepo
+        ..place = const GeocodedPlace(
+          road: 'Calle 10A Bis',
+          roadPath: [Coordinates(latitude: 3.4516, longitude: -76.5322), Coordinates(latitude: 3.4516, longitude: -76.5300)],
+        )
+        ..streetAnswers = const [GeocodedPlace(road: 'Carrera 67A')];
+
+      await tester.tap(find.text('Mi GPS'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('10A Bis'), findsOneWidget);
+      expect(find.text('67A'), findsOneWidget);
     });
 
     testWidgets('"Mi GPS" with a blocked permission opens the settings modal', (tester) async {

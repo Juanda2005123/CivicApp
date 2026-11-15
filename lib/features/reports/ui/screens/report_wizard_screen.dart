@@ -169,6 +169,9 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
           isLocating: state.isLocating,
           // A blocked permission is explained in the modal instead.
           locationStatusMessage: state.isLocationBlocked ? null : state.locationStatusMessage,
+          suggestedAddress: state.suggestedAddress,
+          isSuggestingAddress: state.isSuggestingAddress,
+          suggestionMessage: state.addressSuggestionMessage,
           onDetectLocation: () {
             context.read<ReportWizardBloc>().add(CurrentLocationRequested());
           },
