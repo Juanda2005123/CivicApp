@@ -48,8 +48,7 @@ The Stitch / Figma visual prototype is an **exploratory conceptual artifact**. T
 * **Mitigation Plans for Location Denial and Out-of-Coverage Areas:**
   - *Core Principle:* **Under no circumstance is the application blocked if a user denies location sharing.**
   1. *Permission Denied:*
-     - Displays a non-intrusive top banner: *"Location disabled: exploring default city"*.
-     - Includes an **"Enable Location"** button, re-prompting permission or opening OS settings via `openAppSettings()`.
+     - ~~Displays a non-intrusive top banner with an "Enable Location" button.~~ **Superseded in Sprint 2 (HU-03):** no banner; the always-visible **"Centrar en mi ubicación"** button re-prompts the permission or, when it is blocked, opens the "Ubicación bloqueada" modal with "Abrir ajustes" (RN-14, point 2).
      - Centers the map at the user's last known active city (`last_city`, initialized to `reference_city`).
   2. *Assisted City Switcher (Header Component):*
      - Header interactive bar that avoids mobile screen clutter.
