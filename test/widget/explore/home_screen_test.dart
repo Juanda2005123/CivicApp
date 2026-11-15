@@ -8,6 +8,7 @@ import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
 import 'package:vigia_app/features/auth/domain/entities/city.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import 'package:vigia_app/features/auth/domain/entities/profile.dart';
+import 'package:vigia_app/features/auth/domain/repositories/location_repository.dart';
 import 'package:vigia_app/features/auth/domain/usecases/get_current_profile_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/open_location_settings_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/sign_out_usecase.dart';
@@ -47,6 +48,7 @@ void main() {
   late FakeProfileRepository profiles;
   late FakeIncidentRepository incidents;
   late List<City> cities;
+  late FakeLocationRepository location;
 
   setUp(() {
     auth = FakeAuthRepository(user: const AuthUser(id: 'uid-1', email: 'ana@example.com'));
@@ -54,6 +56,7 @@ void main() {
       ..stored['uid-1'] = const Profile(id: 'uid-1', email: 'ana@example.com', fullName: 'Ana Gomez', cityName: 'Cali');
     incidents = FakeIncidentRepository()..cityMarkers = [_marker];
     cities = const [_cali];
+    location = FakeLocationRepository(coordinates: const Coordinates(latitude: 3.40, longitude: -76.55));
   });
 
   // Blocs are created inside each test so their event loop runs in the
@@ -61,7 +64,6 @@ void main() {
   Widget createShell() {
     final profileBloc = ProfileBloc(GetCurrentProfileUseCase(auth, profiles), SignOutUseCase(auth))
       ..add(ProfileStarted());
-    final location = FakeLocationRepository(coordinates: const Coordinates(latitude: 3.40, longitude: -76.55));
     final mapBloc = MapBloc(
       GetCityMapUseCase(auth, profiles, FakeCityRepository(cities), incidents),
       GetCurrentLocationUseCase(location),
@@ -127,6 +129,26 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.bySemanticsLabel('Tu ubicación'), findsOneWidget);
+  });
+
+  testWidgets('a blocked permission opens a modal that leads to the settings', (tester) async {
+    location = FakeLocationRepository(error: Exception(LocationRepository.blockedMessage));
+    await tester.pumpWidget(createShell());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.map_outlined));
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Centrar en mi ubicación'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ubicación bloqueada'), findsOneWidget);
+    expect(find.text(LocationRepository.blockedMessage), findsOneWidget);
+
+    await tester.tap(find.text('Abrir ajustes'));
+    await tester.pumpAndSettle();
+
+    expect(location.openSettingsCalls, 1);
+    expect(find.text('Ubicación bloqueada'), findsNothing);
   });
 
   testWidgets('publishing a report reloads the map; cancelling does not', (tester) async {

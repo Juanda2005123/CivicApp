@@ -181,7 +181,7 @@ Todos están en `mockups/components.html` con sus estados (normal, foco, presion
 | Sello de rango | Círculo con numeral, 4 variantes (§3.4) | `core/widgets/rank_seal.dart` |
 | Chip de gravedad | 28 dp, forma + color + texto | `core/widgets/severity_chip.dart` (se crea cuando exista la función) |
 | Barra de navegación inferior | Fondo = pantalla, plana con borde superior de 1 px (`divider`); seleccionado: color `primary` y etiqueta 600; siempre icono + texto | `BottomNavigationBarTheme` + `features/explore/ui/screens/home_screen.dart` |
-| Botón de mi ubicación | Botón de icono circular de 48 dp sobre el mapa (arriba a la derecha): superficie sólida con borde de 1 px, tooltip "Centrar en mi ubicación", anillo punteado mientras busca. La posición se dibuja como un punto `info` con aro de superficie, etiqueta semántica "Tu ubicación" | `features/explore/ui/pages/map_page.dart` |
+| Botón de mi ubicación | Botón de icono circular de 48 dp sobre el mapa (arriba a la derecha): superficie sólida con borde de 1 px, tooltip "Centrar en mi ubicación", anillo punteado mientras busca. La posición se dibuja como un punto `info` con aro de superficie, etiqueta semántica "Tu ubicación". Si el permiso está bloqueado abre un diálogo "Ubicación bloqueada" con "Ahora no" y "Abrir ajustes"; los demás errores van en un aviso | `features/explore/ui/pages/map_page.dart` |
 | Marcador de mapa | Forma de la gravedad (§3.3) de 36 dp con contorno de 2 px e icono de la categoría; objetivo táctil de 48 dp; etiqueta semántica con título, categoría y gravedad | `features/explore/ui/widgets/incident_map_marker.dart` (colores en `core/theme/severity_colors.dart`) |
 | Sello "Reporte validado" | Sello de arcilla 700 con anillo y texto circular | futuro |
 

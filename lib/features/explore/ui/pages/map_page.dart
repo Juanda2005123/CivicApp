@@ -49,16 +49,22 @@ class _MapPageState extends State<MapPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Moving the camera is a side effect, so it runs once per state in the
-    // listener, never in the builder.
+    // Moving the camera and opening the modal are side effects, so they run
+    // once per state in the listener, never in the builder.
     return BlocConsumer<MapBloc, MapState>(
-      listenWhen: (previous, current) =>
-          previous.myLocationStatus != current.myLocationStatus &&
-          current.myLocationStatus == MyLocationStatus.found,
+      listenWhen: (previous, current) => previous.myLocationStatus != current.myLocationStatus,
       listener: (context, state) {
-        final position = state.myLocation;
-        if (position == null) return;
-        _mapController.move(LatLng(position.latitude, position.longitude), MapPage.myLocationZoom);
+        switch (state.myLocationStatus) {
+          case MyLocationStatus.found:
+            final position = state.myLocation;
+            if (position == null) return;
+            _mapController.move(LatLng(position.latitude, position.longitude), MapPage.myLocationZoom);
+          case MyLocationStatus.blocked:
+            final message = state.myLocationMessage;
+            if (message != null) _showBlockedDialog(context, message);
+          default:
+            break;
+        }
       },
       builder: (context, state) {
         final city = state.city;
@@ -113,19 +119,9 @@ class _MapPageState extends State<MapPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (state.myLocationMessage != null)
+                  // A blocked permission is explained in the modal instead.
+                  if (state.myLocationMessage != null && state.myLocationStatus != MyLocationStatus.blocked)
                     AppNotice(kind: NoticeKind.error, message: state.myLocationMessage!),
-                  if (state.myLocationStatus == MyLocationStatus.blocked) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: FilledButton.icon(
-                        onPressed: () => context.read<MapBloc>().add(LocationSettingsRequested()),
-                        icon: const Icon(Icons.settings_outlined, size: AppSizes.icon),
-                        label: const Text('Abrir ajustes'),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -140,6 +136,35 @@ class _MapPageState extends State<MapPage> {
           ],
         );
       },
+    );
+  }
+
+  /// Explains the blocked permission and offers to open the system settings.
+  /// The Bloc is read before the dialog opens: the dialog's own context sits
+  /// above the page's providers.
+  void _showBlockedDialog(BuildContext context, String message) {
+    final bloc = context.read<MapBloc>();
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.location_disabled_outlined),
+        title: const Text('Ubicación bloqueada'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Ahora no'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              bloc.add(LocationSettingsRequested());
+            },
+            icon: const Icon(Icons.settings_outlined, size: AppSizes.icon),
+            label: const Text('Abrir ajustes'),
+          ),
+        ],
+      ),
     );
   }
 
