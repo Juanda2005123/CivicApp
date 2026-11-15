@@ -7,7 +7,7 @@
 * **Registration Form (Minimal Onboarding):**
   * Full name, email address, and password.
   * **Closed Dropdown City Selector:** Dropdown menu populated strictly from the `coverage_city` / `ciudad_cobertura` catalog (no free-form text input), with an auxiliary button *"Detect my nearest city by location (GPS)"*.
-* Automatic post-authentication redirection to the **Profile Summary Screen (Civic Dashboard)**.
+* Automatic post-authentication redirection to the home shell on the **Mapa** tab; the **Profile Summary Screen (Civic Dashboard)** is the **Mi perfil** tab (RN-14).
 * Direct access in *"Anonymous Visitor / Guest"* mode for friction-free browsing.
 
 ### Screen 1: General Public Works & Road Map (Cartographic Home)

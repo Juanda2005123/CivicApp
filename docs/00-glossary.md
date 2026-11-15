@@ -19,7 +19,7 @@ the **English name in Dart code** and the **database object** in `data model/sch
 | Distinguished overseer | Veedor Mayor | — | `civic_rank` (level 4) | Not a separate role: a citizen who reached the highest rank. Their badges add credibility to their posts. |
 | Profile | Mi perfil | `Profile`, `ProfileModel` | `user_profile` | Public data of a citizen. Its key `id_user` is the Auth UID. Created by `SignUpUseCase` right after the Auth account (AGENTS.md §8). |
 | Reference city | Ciudad de residencia | `Profile.cityName`, `City` | `user_profile.reference_city` | City chosen at registration from the closed `coverage_city` list. Stored by **name**, not id (RN-14). |
-| Last city | — | — | `user_profile.last_city` | Last city the user browsed. Used to place the map when GPS is denied or out of coverage (RN-14). |
+| Last city | — | — | `user_profile.last_city` | Last city the user browsed. Used to place the map when location is not available (RN-14). Saved at registration equal to the reference city; nothing updates it until the city switcher (HU-21) exists. |
 | Session | Sesión activa | — | Supabase Auth session | Exists after login or a sign-up with no e-mail confirmation pending. Logout always calls `signOut`. |
 
 ## 2. Reports
@@ -92,7 +92,7 @@ Proposal states: `PENDING`, `APPROVED_BY_AUTHOR` (the author proposed it, or acc
 | Experience points (XP) | Puntos de reputación | `Profile.experiencePoints` | `user_profile.experience_points` | Earned by taking part, using the schedule in RN-08 (+100 report, +10 vote cast or received, +15 comment, +500 validation, +50 accepted resolution, −10 when a vote is revoked). |
 | Civic rank | Rango cívico | `RankSeal` (UI) | `civic_rank` | Level picked by the highest `min_xp` ≤ the user's XP (RN-09). Names come from `civic_rank.name`. |
 | Badge | Insignia *(proposed)* | — | `civic_badge`, `user_badge` | Milestone award, granted automatically (RN-10). |
-| Civic dashboard | Mi perfil | `dashboard` feature | — | The profile summary screen users land on after login and registration: identity, rank, XP and impact metrics. |
+| Civic dashboard | Mi perfil | `dashboard` feature | — | The profile summary, the **Mi perfil** tab of the shell: identity, rank, XP and impact metrics. (Sprint 1 landed here; since HU-13 the app opens on Mapa.) |
 
 ### 5.1 Ranks
 
@@ -122,6 +122,7 @@ Proposal states: `PENDING`, `APPROVED_BY_AUTHOR` (the author proposed it, or acc
 | Conurbation calibration | — | `CityRepositoryImpl` | — | Per-city radii embedded in the app and merged with the remote rows (AGENTS.md §13, item 3). |
 | Bounding box | — | — | — | Valid coordinates: latitude −4.2° to 13.5°, longitude −79.0° to −66.8° (RN-12). |
 | Excluded roads | — | — | — | Rural trails (*trochas*) and national concession highways (ANI / Invías) are out of scope. |
+| Covered area / outside coverage | Fuera de cobertura *(proposed)* | — | `coverage_city` | The urban area of a coverage city, where VIGÍA works (RN-12). "Outside coverage" means a rural area, a highway between cities, or outside the bounding box. Since Sprint 2 the map centers on the citizen even outside coverage (RN-14, point 4). The catalog stores only each city's **center** (and a calibrated radius for some), not its urban boundary, so a feature that must tell "inside" from "outside" (e.g. HU-07 criterion 5, a pin outside covered cities) needs a rule such as "within X km of a catalog city's center"; that rule does not exist yet. |
 | Coordinates | Coordenadas geográficas | `Coordinates` | `latitude`, `longitude` | Shown in monospace. The domain uses its own `Coordinates` type, never `Position` from `geolocator`. |
 
 ## 7. Notifications (RN-13)
@@ -138,7 +139,7 @@ notifications sprint.
 | `HU-xx` | User story (*historia de usuario*), sprint backlogs `docs/05-…` and `docs/06-…`. |
 | `§N` | Section N of `AGENTS.md`, unless another document is named. |
 | Screen / Page / Component | Lab 2 vocabulary: a Screen is a routed `Scaffold`; a Page is hosted by a Screen and has no `Scaffold`; a Component is a small reusable widget (AGENTS.md §6). |
-| Shell | The host **Screen** with the `BottomNavigationBar` (Mapa · Comunidad · Mi perfil). It stays fixed and remembers the selected tab; each tab is a **Page** without its own `Scaffold`. Built in HU-13 as `HomeScreen` (route `/home`) with two tabs, Mapa and Mi perfil, plus the "Reportar daño" button; HU-19 adds Comunidad. Login and registration land here, on Mi perfil. |
+| Shell | The host **Screen** with the `BottomNavigationBar` (Mapa · Comunidad · Mi perfil). It stays fixed and remembers the selected tab; each tab is a **Page** without its own `Scaffold`. Built in HU-13 as `HomeScreen` (route `/home`) with two tabs, Mapa and Mi perfil, plus the "Reportar daño" button; HU-19 adds Comunidad. Login, registration and a persisted session land here, on the Mapa tab (RN-14). |
 | Entity, Repository, UseCase, DataSource, RepositoryImpl, Bloc | Clean Architecture pieces. Table and rules in AGENTS.md §4–5. |
 | Token | A design value (color, text style, spacing, radius, duration) defined in `lib/core/theme/`. Widgets use tokens, never literals (AGENTS.md §6b). |
 | Sello comunitario | The visual direction of the design system: paper surfaces, the seal, the dotted ring and monospace data. |

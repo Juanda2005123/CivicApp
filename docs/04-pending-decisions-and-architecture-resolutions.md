@@ -60,7 +60,8 @@ The Stitch / Figma visual prototype is an **exploratory conceptual artifact**. T
        - **User without GPS:** Selecting a city (e.g., Bogotá while physically in Cali) navigates the map to Bogotá's urban center and updates `user_profile.last_city = 'Bogotá'`. Subsequent launches without GPS start directly in Bogotá.
        - **User with active GPS:** Viewing another city is exploratory; a floating *"Center on my location"* button returns to their physical position at any time.
   3. *App Launch with GPS in Rural / Out-of-Coverage Area:*
-     - If coordinates fall outside cataloged cities, the app **does not guess or jump to unknown towns**: it preserves view on the **last active urban city** (`last_city`) with a subtle notification: *"You are currently outside VIGÍA urban coverage. Displaying your last active city"*.
+     - ~~If coordinates fall outside cataloged cities, the app preserves view on the last active urban city (`last_city`) with a subtle notification.~~
+     - **Superseded in Sprint 2 (HU-13):** with location enabled and the permission granted, the map opens on the citizen's current position, inside or outside coverage (RN-14, point 4).
   4. *Report Creation without GPS:* In Step 1 of the Wizard, the user can manually reposition the pin or search an approximate address.
 
 ---

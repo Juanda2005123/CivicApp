@@ -54,7 +54,7 @@
 | **HU-12** | Step 5: Review & Publish Report | Reports / Wizard | **COMPLETED** | #VIG-XXXX tracking code generation, Supabase insert, +100 XP credit |
 | **HU-14** | Report Detail Inspection View | Reports / UI | **COMPLETED** | `IncidentDetailScreen` with photo carousel, tracking badge, rank seal, full audit data |
 | **HU-03** | Location Permission on App Open | Explore / Shell | **PENDING** | Request location on entering map shell; handle denial gracefully |
-| **HU-13 (MVP)** | Cartographic Map View & Markers | Explore / Map | **COMPLETED** | Shell with Mapa + Mi perfil tabs and the "Reportar daño" button; `flutter_map` (OpenStreetMap) centered on the profile city with severity-shaped markers that open the detail; a "Centrar en mi ubicación" button (top right) moves the map to the GPS position, with "Abrir ajustes" when the permission is blocked. Automatic centering on open and the permission banners are left to HU-03 / HU-21 |
+| **HU-13 (MVP)** | Cartographic Map View & Markers | Explore / Map | **COMPLETED** | Shell with Mapa + Mi perfil tabs and the "Reportar daño" button; `flutter_map` (OpenStreetMap) centered on the profile city with severity-shaped markers that open the detail; a "Centrar en mi ubicación" button (top right) moves the map to the GPS position, with "Abrir ajustes" when the permission is blocked. With the permission already granted, the map opens centered on the citizen (no prompt on open); asking for the permission on open and the banners are left to HU-03 / HU-21 |
 | **HU-19** | Paginated Community Feed | Explore / Feed | **PENDING** | 20-item chunks, pull-to-refresh, status badges |
 | **HU-21** | Smart City Switcher | Explore / Modal | **PENDING** | Assistive modal with fuzzy search across Colombian cities |
 | **HU-22** | Guest Browsing Mode | Auth / Explore | **PENDING** | Read-only mode without login; prompt auth on action |
@@ -77,7 +77,7 @@
 2. **Given that** I granted location access, **when** I open the map (HU-13) or community feed (HU-19), **then** both center dynamically on my current coordinates.
 3. **Given that** I denied location access, **when** I open the screen, **then** the application operates without blocking or crashing, defaults to my last active city (`last_city`) (HU-21), and displays a non-intrusive banner with an *"Activar ubicación"* button.
 4. **Given that** I tap *"Activar ubicación"*, **when** the operating system permits re-prompting, **then** permission is requested again; otherwise, device system settings are opened.
-5. **Given that** my GPS coordinates are outside covered municipalities, **when** I enter the main screen, **then** the view remains centered on my last active city (`last_city`) accompanied by an explanatory message.
+5. **Given that** my GPS coordinates are outside covered municipalities, **when** I enter the main screen with the permission granted, **then** the map still centers on my current position (RN-14, point 4; changed in Sprint 2).
 
 ---
 
@@ -187,10 +187,10 @@
 **So that** I can visualize damage density across urban areas.
 
 #### Acceptance Criteria
-1. **Given that** I open the Map screen with active location, **when** loaded, **then** it centers on my position and displays markers for the current city.
+1. **Given that** I open the Map screen with location enabled and the permission granted, **when** loaded, **then** it centers on my current position and displays the markers of my city.
 2. **Given that** location permissions were denied, **when** I open Map, **then** it centers on `last_city` (HU-21) and displays a subtle banner with an *"Activar ubicación"* button.
 3. **Given that** markers are rendered, **when** compared, **then** each marker displays a typology-specific icon (HU-08) without relying solely on color.
-4. **Given that** my position is outside covered areas, **when** Map opens, **then** `last_city` view is preserved with an explanatory banner.
+4. **Given that** my position is outside covered areas, **when** Map opens with the permission granted, **then** it still centers on my current position (RN-14, point 4; changed in Sprint 2 — previously it kept the `last_city` view with a banner).
 
 ---
 
@@ -215,7 +215,7 @@
 **So that** I can stay informed about neighborhood road conditions.
 
 #### Acceptance Criteria
-1. **Given that** I am authenticated, **when** using the bottom navigation bar, **then** I can navigate between Mapa (HU-13), Comunidad, and Mi perfil, with Profile remaining the landing screen after authentication.
+1. **Given that** I am authenticated, **when** using the bottom navigation bar, **then** I can navigate between Mapa (HU-13), Comunidad, and Mi perfil, with **Mapa** as the landing tab after authentication (RN-14; changed from Profile during Sprint 2).
 2. **Given that** I open Comunidad, **when** data loads, **then** reports from my active city (HU-21) are displayed newest-first in 20-item chunks that expand as I scroll (infinite scroll).
 3. **Given that** a report card is rendered, **when** inspected, **then** it displays primary photo, title, neighborhood (*barrio*), author name and rank, severity badge (HU-08), vote counter, and comment counter.
 4. **Given that** a report has no photos, **when** its card is rendered, **then** a reserved space shows its category icon.
@@ -248,7 +248,7 @@
 2. **Given that** I am a guest and grant location, **when** I enter, **then** I see the nearest covered city; if denied or out of coverage, city selection is prompted (HU-21).
 3. **Given that** I am a guest, **when** I attempt to Report (HU-06), Upvote, or Comment, **then** an authentication prompt invites me to sign in or register without performing the action.
 4. **Given that** I am a guest, **when** I tap Perfil, **then** the same sign-in invitation replaces the civic dashboard.
-5. **Given that** I sign in from the invitation modal, **when** completed, **then** I land on my profile like any authenticated citizen.
+5. **Given that** I sign in from the invitation modal, **when** completed, **then** I land on the map like any authenticated citizen.
 
 ---
 
