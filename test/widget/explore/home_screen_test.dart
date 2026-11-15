@@ -65,7 +65,7 @@ void main() {
     final profileBloc = ProfileBloc(GetCurrentProfileUseCase(auth, profiles), SignOutUseCase(auth))
       ..add(ProfileStarted());
     final mapBloc = MapBloc(
-      GetCityMapUseCase(auth, profiles, FakeCityRepository(cities), incidents),
+      GetCityMapUseCase(auth, profiles, FakeCityRepository(cities), incidents, location),
       GetCurrentLocationUseCase(location),
       OpenLocationSettingsUseCase(location),
     )..add(MapStarted());
@@ -82,6 +82,8 @@ void main() {
         theme: AppTheme.light,
         home: const HomeScreen(),
         routes: {
+          AppRoutes.login: (context) => const Scaffold(body: Text('Login Screen Mock')),
+          AppRoutes.register: (context) => const Scaffold(body: Text('Register Screen Mock')),
           // Stand-in for the wizard: it pops with a report or with nothing.
           AppRoutes.reportWizard: (context) => Scaffold(
                 body: Column(
@@ -179,6 +181,68 @@ void main() {
     await tester.tap(find.text('Publicar'));
     await tester.pumpAndSettle();
     expect(incidents.calls.where((c) => c == 'incident.getCityIncidents'), hasLength(2));
+  });
+
+  group('guest (HU-22)', () {
+    setUp(() => auth = FakeAuthRepository());
+
+    testWidgets('sees the map and its reports without an account', (tester) async {
+      // No GPS: the guest lands on the fallback city view, where the report is.
+      location = FakeLocationRepository(error: Exception('Sin permiso de ubicación.'));
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+
+      expect(find.byType(IncidentMapMarker), findsOneWidget);
+      expect(find.text('Reportar daño'), findsOneWidget);
+      expect(find.text('Login Screen Mock'), findsNothing);
+    });
+
+    testWidgets('"Reportar daño" opens the sign-in modal instead of the wizard', (tester) async {
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Reportar daño'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Necesitas iniciar sesión'), findsOneWidget);
+      expect(find.text('Publicar'), findsNothing);
+
+      await tester.tap(find.text('Iniciar sesión'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Login Screen Mock'), findsOneWidget);
+    });
+
+    testWidgets('"Ahora no" closes the modal and stays on the map', (tester) async {
+      // No GPS: the guest lands on the fallback city view, where the report is.
+      location = FakeLocationRepository(error: Exception('Sin permiso de ubicación.'));
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Reportar daño'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ahora no'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Necesitas iniciar sesión'), findsNothing);
+      expect(find.byType(IncidentMapMarker), findsOneWidget);
+    });
+
+    testWidgets('Mi perfil shows the sign-in invitation and no logout', (tester) async {
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.person_outline));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Inicia sesión para ver tu perfil'), findsOneWidget);
+      expect(find.byTooltip('Cerrar sesión'), findsNothing);
+
+      await tester.tap(find.text('Crear cuenta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Register Screen Mock'), findsOneWidget);
+    });
   });
 
   testWidgets('a map that cannot load shows the message and a retry button', (tester) async {

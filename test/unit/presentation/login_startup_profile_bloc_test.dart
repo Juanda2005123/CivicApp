@@ -96,10 +96,10 @@ void main() {
       expect(states.last.profile, caliProfile);
     });
 
-    test('ProfileStarted without a session reports signedOut', () async {
+    test('ProfileStarted without a session reports a guest, not a closed session (HU-22)', () async {
       final states = await emittedStates(buildBloc(), ProfileStarted());
 
-      expect(states.last.status, ProfileStatus.signedOut);
+      expect(states.last.status, ProfileStatus.guest);
     });
 
     test('ProfileStarted reports the failure message when the profile cannot load', () async {

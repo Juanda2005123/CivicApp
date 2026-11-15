@@ -11,6 +11,7 @@ import 'package:vigia_app/core/widgets/app_text_field.dart';
 import 'package:vigia_app/core/widgets/brand_mark.dart';
 import 'package:vigia_app/core/widgets/dotted_spinner.dart';
 import 'package:vigia_app/core/widgets/location_blocked_dialog.dart';
+import 'package:vigia_app/core/widgets/sign_in_required_dialog.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/core/widgets/rank_seal.dart';
 
@@ -200,6 +201,62 @@ void main() {
       expect(normalizeSearchText('Bogotá'), 'bogota');
       expect(normalizeSearchText('NARIÑO'), 'narino');
       expect(normalizeSearchText('Cúcuta (Norte de Santander)'), 'cucuta (norte de santander)');
+    });
+  });
+
+  group('showSignInRequiredDialog', () {
+    Widget opener(ThemeData theme, {VoidCallback? onSignIn, VoidCallback? onRegister}) => host(
+          Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showSignInRequiredDialog(
+                context,
+                message: 'Para reportar un daño necesitas una cuenta.',
+                onSignIn: onSignIn ?? () {},
+                onRegister: onRegister ?? () {},
+              ),
+              child: const Text('Abrir'),
+            ),
+          ),
+          theme: theme,
+        );
+
+    for (final theme in {'light': AppTheme.light, 'dark': AppTheme.dark}.entries) {
+      testWidgets('explains why and offers to sign in or register in ${theme.key}', (tester) async {
+        await tester.pumpWidget(opener(theme.value));
+        await tester.tap(find.text('Abrir'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Necesitas iniciar sesión'), findsOneWidget);
+        expect(find.text('Para reportar un daño necesitas una cuenta.'), findsOneWidget);
+        expect(find.text('Ahora no'), findsOneWidget);
+        expect(find.text('Crear cuenta'), findsOneWidget);
+        expect(find.text('Iniciar sesión'), findsOneWidget);
+      });
+    }
+
+    testWidgets('each action closes the modal and calls back only its own callback', (tester) async {
+      var signIns = 0;
+      var registers = 0;
+      await tester.pumpWidget(opener(AppTheme.light, onSignIn: () => signIns++, onRegister: () => registers++));
+
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ahora no'));
+      await tester.pumpAndSettle();
+      expect((signIns, registers), (0, 0));
+
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Crear cuenta'));
+      await tester.pumpAndSettle();
+      expect((signIns, registers), (0, 1));
+
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Iniciar sesión'));
+      await tester.pumpAndSettle();
+      expect((signIns, registers), (1, 1));
+      expect(find.text('Necesitas iniciar sesión'), findsNothing);
     });
   });
 

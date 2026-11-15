@@ -163,6 +163,12 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
+                          // HU-22: browse the map and the reports without an account.
+                          TextButton.icon(
+                            onPressed: isLoading ? null : () => Navigator.pushNamed(context, AppRoutes.home),
+                            icon: const Icon(Icons.explore_outlined, size: AppSizes.icon),
+                            label: const Text('Explorar sin cuenta'),
+                          ),
                           const SizedBox(height: AppSpacing.lg),
                           Text(
                             'VEEDURÍA VIAL CIUDADANA',

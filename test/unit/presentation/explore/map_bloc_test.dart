@@ -42,7 +42,7 @@ void main() {
 
   MapBloc buildBloc() {
     final bloc = MapBloc(
-      GetCityMapUseCase(auth, profiles, FakeCityRepository(const [_cali]), incidents),
+      GetCityMapUseCase(auth, profiles, FakeCityRepository(const [_cali]), incidents, location),
       GetCurrentLocationUseCase(location),
       OpenLocationSettingsUseCase(location),
     );
@@ -114,12 +114,12 @@ void main() {
   });
 
   test('MapStarted emits the error message when the map cannot load', () async {
-    auth = FakeAuthRepository();
+    profiles.stored['uid-1'] = const Profile(id: 'uid-1', email: 'ana@example.com', fullName: 'Ana Gomez', cityName: 'Tumaco');
 
     final states = await emittedStates(buildBloc(), MapStarted());
 
     expect(states.last.status, MapStatus.failure);
-    expect(states.last.errorMessage, 'Inicia sesión para ver el mapa.');
+    expect(states.last.errorMessage, 'No encontramos tu ciudad en el mapa.');
   });
 
   group('MyLocationRequested', () {

@@ -129,7 +129,7 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => GetNearbyIncidentsUseCase(sl()));
   sl.registerLazySingleton(() => CreateIncidentUseCase(sl()));
   sl.registerLazySingleton(() => GetIncidentByIdUseCase(sl()));
-  sl.registerLazySingleton(() => GetCityMapUseCase(sl(), sl(), sl(), sl()));
+  sl.registerLazySingleton(() => GetCityMapUseCase(sl(), sl(), sl(), sl(), sl()));
   sl.registerLazySingleton(() => EndorseIncidentUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentLocationUseCase(sl()));
   sl.registerLazySingleton(() => SuggestAddressUseCase(sl()));

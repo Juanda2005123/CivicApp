@@ -1,6 +1,8 @@
 import '../../../auth/domain/entities/profile.dart';
 
-enum ProfileStatus { initial, loading, success, failure, signedOut }
+/// `guest`: browsing without an account (HU-22); `signedOut`: the citizen
+/// just closed the session and goes back to the login.
+enum ProfileStatus { initial, loading, success, failure, guest, signedOut }
 
 class ProfileState {
   final ProfileStatus status;
