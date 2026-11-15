@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vigia_app/core/constants/app_routes.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
 import 'package:vigia_app/core/theme/theme_cubit.dart';
 import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
@@ -75,7 +76,21 @@ void main() {
         BlocProvider<ProfileBloc>.value(value: profileBloc),
         BlocProvider<MapBloc>.value(value: mapBloc),
       ],
-      child: MaterialApp(theme: AppTheme.light, home: const HomeScreen()),
+      child: MaterialApp(
+        theme: AppTheme.light,
+        home: const HomeScreen(),
+        routes: {
+          // Stand-in for the wizard: it pops with a report or with nothing.
+          AppRoutes.reportWizard: (context) => Scaffold(
+                body: Column(
+                  children: [
+                    TextButton(onPressed: () => Navigator.pop(context, 'published'), child: const Text('Publicar')),
+                    TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+                  ],
+                ),
+              ),
+        },
+      ),
     );
   }
 
@@ -112,6 +127,24 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.bySemanticsLabel('Tu ubicación'), findsOneWidget);
+  });
+
+  testWidgets('publishing a report reloads the map; cancelling does not', (tester) async {
+    await tester.pumpWidget(createShell());
+    await tester.pumpAndSettle();
+    expect(incidents.calls.where((c) => c == 'incident.getCityIncidents'), hasLength(1));
+
+    await tester.tap(find.text('Reportar daño'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+    expect(incidents.calls.where((c) => c == 'incident.getCityIncidents'), hasLength(1));
+
+    await tester.tap(find.text('Reportar daño'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Publicar'));
+    await tester.pumpAndSettle();
+    expect(incidents.calls.where((c) => c == 'incident.getCityIncidents'), hasLength(2));
   });
 
   testWidgets('a map that cannot load shows the message and a retry button', (tester) async {

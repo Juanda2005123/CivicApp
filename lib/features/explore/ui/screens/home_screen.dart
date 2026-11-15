@@ -6,6 +6,8 @@ import '../../../../core/widgets/theme_toggle_button.dart';
 import '../../../dashboard/ui/bloc/profile_bloc.dart';
 import '../../../dashboard/ui/bloc/profile_event.dart';
 import '../../../dashboard/ui/pages/profile_page.dart';
+import '../bloc/map_bloc.dart';
+import '../bloc/map_event.dart';
 import '../pages/map_page.dart';
 
 /// The shell: host Screen with the bottom navigation bar. Each tab is a Page;
@@ -26,6 +28,14 @@ class _HomeScreenState extends State<HomeScreen> {
   int _tab = HomeScreen.profileTab;
 
   static const _titles = ['Mapa', 'Mi perfil'];
+
+  /// The wizard pops with the published report, or with nothing when the
+  /// citizen cancels. Only a new report makes the map reload its markers.
+  Future<void> _openReportWizard() async {
+    final published = await Navigator.pushNamed(context, AppRoutes.reportWizard);
+    if (!mounted || published == null) return;
+    context.read<MapBloc>().add(MapStarted());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.pushNamed(context, AppRoutes.reportWizard),
+        onPressed: _openReportWizard,
         icon: const Icon(Icons.add_location_alt_outlined),
         label: const Text('Reportar daño'),
       ),
