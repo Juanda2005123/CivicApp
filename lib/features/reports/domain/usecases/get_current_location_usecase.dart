@@ -7,8 +7,9 @@ class GetCurrentLocationUseCase {
 
   GetCurrentLocationUseCase(this._locationRepository);
 
-  /// Returns current [Coordinates] from device sensors.
-  Future<Coordinates> call() {
-    return _locationRepository.currentCoordinates();
+  /// Returns current [Coordinates] from device sensors. With [askPermission]
+  /// false it never opens the system permission dialog.
+  Future<Coordinates> call({bool askPermission = true}) {
+    return _locationRepository.currentCoordinates(askPermission: askPermission);
   }
 }

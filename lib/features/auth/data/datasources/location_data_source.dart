@@ -8,7 +8,7 @@ import '../../domain/repositories/location_repository.dart';
 /// The only class that uses the location SDK. It translates its types into the
 /// domain's [Coordinates] and its failures into user-facing messages.
 class LocationDataSource {
-  Future<Coordinates> currentCoordinates() async {
+  Future<Coordinates> currentCoordinates({bool askPermission = true}) async {
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
         throw Exception(
@@ -17,6 +17,9 @@ class LocationDataSource {
       }
 
       var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied && !askPermission) {
+        throw Exception('Sin permiso de ubicación. Elige tu ciudad en la lista.');
+      }
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {

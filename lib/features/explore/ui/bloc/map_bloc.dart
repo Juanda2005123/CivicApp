@@ -29,6 +29,18 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       emit(state.copyWith(status: MapStatus.success, city: city, markers: markers));
     } on Exception catch (e) {
       emit(state.copyWith(status: MapStatus.failure, errorMessage: _message(e)));
+      return;
+    }
+
+    // First load only: if the permission is already granted, center on the
+    // citizen. Never asks for it and stays silent on failure (the button and
+    // its modal handle that), so the map keeps the city view.
+    if (state.myLocation != null) return;
+    try {
+      final position = await _getCurrentLocation(askPermission: false);
+      emit(state.copyWith(myLocationStatus: MyLocationStatus.found, myLocation: position));
+    } on Exception {
+      return;
     }
   }
 

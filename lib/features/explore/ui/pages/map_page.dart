@@ -40,6 +40,27 @@ class _MapPageState extends State<MapPage> {
 
   final _mapController = MapController();
 
+  // The camera cannot move before the map's first frame: a position that
+  // arrives earlier waits here and is applied in `onMapReady`.
+  bool _mapReady = false;
+  LatLng? _pendingCenter;
+
+  void _centerOn(LatLng point) {
+    if (_mapReady) {
+      _mapController.move(point, MapPage.myLocationZoom);
+    } else {
+      _pendingCenter = point;
+    }
+  }
+
+  void _onMapReady() {
+    _mapReady = true;
+    final pending = _pendingCenter;
+    if (pending == null) return;
+    _pendingCenter = null;
+    _mapController.move(pending, MapPage.myLocationZoom);
+  }
+
   @override
   void dispose() {
     _mapController.dispose();
@@ -59,7 +80,7 @@ class _MapPageState extends State<MapPage> {
           case MyLocationStatus.found:
             final position = state.myLocation;
             if (position == null) return;
-            _mapController.move(LatLng(position.latitude, position.longitude), MapPage.myLocationZoom);
+            _centerOn(LatLng(position.latitude, position.longitude));
           case MyLocationStatus.blocked:
             final message = state.myLocationMessage;
             if (message == null) return;
@@ -93,9 +114,14 @@ class _MapPageState extends State<MapPage> {
           children: [
             FlutterMap(
               mapController: _mapController,
+              // A position known before the first frame becomes the starting
+              // view; one that arrives later moves the camera in the listener.
               options: MapOptions(
-                initialCenter: LatLng(city.latitude, city.longitude),
-                initialZoom: MapPage.initialZoom,
+                initialCenter: myLocation != null
+                    ? LatLng(myLocation.latitude, myLocation.longitude)
+                    : LatLng(city.latitude, city.longitude),
+                initialZoom: myLocation != null ? MapPage.myLocationZoom : MapPage.initialZoom,
+                onMapReady: _onMapReady,
               ),
               children: [
                 TileLayer(

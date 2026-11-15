@@ -67,11 +67,39 @@ void main() {
   });
 
   test('MapStarted emits loading and then the city with its markers', () async {
+    location = FakeLocationRepository(permissionGranted: false);
+
     final states = await emittedStates(buildBloc(), MapStarted());
 
     expect(states.map((s) => s.status), [MapStatus.loading, MapStatus.success]);
     expect(states.last.city, _cali);
     expect(states.last.markers, [_marker]);
+  });
+
+  test('with the permission already granted, MapStarted also finds the citizen', () async {
+    final states = await emittedStates(buildBloc(), MapStarted());
+
+    expect(states.last.status, MapStatus.success);
+    expect(states.last.myLocationStatus, MyLocationStatus.found);
+    expect(states.last.myLocation?.latitude, 3.40);
+  });
+
+  test('without the permission, MapStarted stays silent: no dialog, no error', () async {
+    location = FakeLocationRepository(permissionGranted: false);
+
+    final states = await emittedStates(buildBloc(), MapStarted());
+
+    expect(states.last.myLocationStatus, MyLocationStatus.idle);
+    expect(states.last.myLocationMessage, isNull);
+  });
+
+  test('a blocked permission on open does not trigger the blocked modal', () async {
+    location = FakeLocationRepository(error: Exception(LocationRepository.blockedMessage));
+
+    final states = await emittedStates(buildBloc(), MapStarted());
+
+    expect(states.last.status, MapStatus.success);
+    expect(states.last.myLocationStatus, MyLocationStatus.idle);
   });
 
   test('MapStarted emits the error message when the map cannot load', () async {

@@ -16,7 +16,8 @@ import '../pages/map_page.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  /// The profile stays the landing tab after login (HU-19, criterion 1).
+  /// The app opens on the map (RN-14, HU-19 criterion 1); the profile is one tap away.
+  static const int mapTab = 0;
   static const int profileTab = 1;
 
   @override
@@ -25,7 +26,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // Ephemeral UI state of the host screen, so setState is the right tool.
-  int _tab = HomeScreen.profileTab;
+  int _tab = HomeScreen.mapTab;
 
   static const _titles = ['Mapa', 'Mi perfil'];
 

@@ -96,32 +96,46 @@ void main() {
     );
   }
 
-  testWidgets('opens on Mi perfil with the bottom bar and the report button', (tester) async {
+  testWidgets('opens on Mapa with the bottom bar and the report button', (tester) async {
     await tester.pumpWidget(createShell());
     await tester.pumpAndSettle();
 
-    expect(find.text('Ana Gomez'), findsOneWidget);
-    expect(find.text('Mapa'), findsOneWidget);
-    expect(find.text('Mi perfil'), findsNWidgets(2)); // app bar title + tab label
+    expect(find.text('Mapa'), findsNWidgets(2)); // app bar title + tab label
+    expect(find.byTooltip('Centrar en mi ubicación'), findsOneWidget);
     expect(find.text('Reportar daño'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.person_outline));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mi perfil'), findsNWidgets(2));
+    expect(find.text('Ana Gomez'), findsOneWidget);
   });
 
   testWidgets('the Mapa tab shows a marker per report of the city', (tester) async {
+    // No permission yet: the map keeps the city view, where the report is.
+    location = FakeLocationRepository(permissionGranted: false);
     await tester.pumpWidget(createShell());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.map_outlined));
-    await tester.pump();
 
     expect(find.byType(IncidentMapMarker), findsOneWidget);
     expect(find.bySemanticsLabel('Hueco en la Calle 5, Hueco o bache en calzada, gravedad Alta'), findsOneWidget);
   });
 
-  testWidgets('"Centrar en mi ubicación" shows the citizen on the map', (tester) async {
+  testWidgets('with the permission granted the map opens centered on the citizen', (tester) async {
     await tester.pumpWidget(createShell());
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.map_outlined));
-    await tester.pump();
+
+    expect(find.bySemanticsLabel('Tu ubicación'), findsOneWidget);
+  });
+
+  testWidgets('"Centrar en mi ubicación" shows the citizen on the map', (tester) async {
+    location = FakeLocationRepository(
+      coordinates: const Coordinates(latitude: 3.40, longitude: -76.55),
+      permissionGranted: false,
+    );
+    await tester.pumpWidget(createShell());
+    await tester.pumpAndSettle();
 
     expect(find.bySemanticsLabel('Tu ubicación'), findsNothing);
 
@@ -135,8 +149,6 @@ void main() {
     location = FakeLocationRepository(error: Exception(LocationRepository.blockedMessage));
     await tester.pumpWidget(createShell());
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.map_outlined));
-    await tester.pump();
 
     await tester.tap(find.byTooltip('Centrar en mi ubicación'));
     await tester.pumpAndSettle();
@@ -174,8 +186,6 @@ void main() {
     await tester.pumpWidget(createShell());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.map_outlined));
-    await tester.pump();
 
     expect(find.text('No pudimos cargar el mapa'), findsOneWidget);
     expect(find.text('Reintentar'), findsOneWidget);
