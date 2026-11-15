@@ -19,8 +19,9 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     emit(state.copyWith(status: ProfileStatus.loading, clearErrorMessage: true));
     try {
       final profile = await _getCurrentProfile();
+      // No session: a guest browsing without an account (HU-22).
       if (profile == null) {
-        emit(state.copyWith(status: ProfileStatus.signedOut));
+        emit(state.copyWith(status: ProfileStatus.guest));
         return;
       }
       emit(state.copyWith(status: ProfileStatus.success, profile: profile));

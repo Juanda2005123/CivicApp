@@ -108,6 +108,16 @@ void main() {
       expect(find.text('Register Screen Mock'), findsOneWidget);
     });
 
+    testWidgets('"Explorar sin cuenta" opens the app as a guest (HU-22)', (tester) async {
+      await tester.pumpWidget(createLoginTestWidget(newBloc()));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Explorar sin cuenta'));
+      await tester.tap(find.text('Explorar sin cuenta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Dashboard Screen Mock'), findsOneWidget);
+    });
+
     testWidgets('valid credentials sign in and land on the dashboard', (tester) async {
       await tester.pumpWidget(createLoginTestWidget(newBloc()));
       await tester.pumpAndSettle();

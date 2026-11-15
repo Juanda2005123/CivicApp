@@ -39,15 +39,17 @@ void main() {
   late FakeAuthRepository auth;
   late FakeProfileRepository profiles;
   late FakeIncidentRepository incidents;
+  late FakeLocationRepository location;
 
   GetCityMapUseCase useCase({List<City> cities = const [_cali, _pasto]}) =>
-      GetCityMapUseCase(auth, profiles, FakeCityRepository(cities), incidents);
+      GetCityMapUseCase(auth, profiles, FakeCityRepository(cities), incidents, location);
 
   setUp(() {
     auth = FakeAuthRepository(user: const AuthUser(id: 'uid-1', email: 'ana@example.com'));
     profiles = FakeProfileRepository()
       ..stored['uid-1'] = const Profile(id: 'uid-1', email: 'ana@example.com', fullName: 'Ana Gomez', cityName: 'Pasto');
     incidents = FakeIncidentRepository()..cityMarkers = [_pothole];
+    location = FakeLocationRepository(coordinates: const Coordinates(latitude: 1.22, longitude: -77.28));
   });
 
   test('returns the profile city and the reports of that city', () async {
@@ -58,11 +60,29 @@ void main() {
     expect(incidents.lastCity, 'Pasto');
   });
 
-  test('without a session it fails before querying reports', () async {
+  test('a guest sees the city nearest to the GPS (HU-22)', () async {
     auth = FakeAuthRepository();
 
-    await expectLater(useCase()(), throwsA(isA<Exception>()));
-    expect(incidents.calls, isEmpty);
+    final (city, markers) = await useCase()();
+
+    expect(city, _pasto);
+    expect(markers, [_pothole]);
+    expect(incidents.lastCity, 'Pasto');
+  });
+
+  test('a guest without GPS starts on the fallback city', () async {
+    auth = FakeAuthRepository();
+    location = FakeLocationRepository(error: Exception('Sin permiso de ubicación.'));
+
+    final (city, _) = await useCase()();
+
+    expect(city.name, GetCityMapUseCase.guestFallbackCity);
+  });
+
+  test('a signed-in citizen never reads the GPS for the map city', () async {
+    await useCase()();
+
+    expect(location.calls, 0);
   });
 
   test('a profile city missing from the catalog gives a clear message', () async {
