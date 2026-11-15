@@ -87,7 +87,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // A blocked permission (HU-29) opens a modal once per "Mi GPS" attempt: the
+    // A blocked permission (HU-29) opens a modal once per "Centrar en mi ubicación" attempt: the
     // flag goes false while locating and back to true when it fails again.
     return BlocListener<ReportWizardBloc, ReportWizardState>(
       listenWhen: (previous, current) => !previous.isLocationBlocked && current.isLocationBlocked,
@@ -144,9 +144,16 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
                       ),
                     ),
                   Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      child: _buildCurrentStep(context, state),
+                    // The viewport height lets the Step 1 map fill the screen.
+                    child: LayoutBuilder(
+                      builder: (context, constraints) => SingleChildScrollView(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: _buildCurrentStep(
+                          context,
+                          state,
+                          constraints.maxHeight - AppSpacing.md * 2,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -158,7 +165,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
     );
   }
 
-  Widget _buildCurrentStep(BuildContext context, ReportWizardState state) {
+  Widget _buildCurrentStep(BuildContext context, ReportWizardState state, double availableHeight) {
     switch (state.currentStep) {
       case 1:
         return LocationPinPicker(
@@ -172,8 +179,12 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
           suggestedAddress: state.suggestedAddress,
           isSuggestingAddress: state.isSuggestingAddress,
           suggestionMessage: state.addressSuggestionMessage,
+          availableHeight: availableHeight,
           onDetectLocation: () {
             context.read<ReportWizardBloc>().add(CurrentLocationRequested());
+          },
+          onMapPointSelected: (point) {
+            context.read<ReportWizardBloc>().add(MapPointSelected(point));
           },
           onLocationConfirmed: ({
             required coordinates,

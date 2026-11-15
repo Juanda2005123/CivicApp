@@ -8,7 +8,7 @@ import 'package:vigia_app/features/reports/domain/entities/geocoded_place.dart';
 
 /// The only class that talks to OpenStreetMap's Nominatim reverse geocoding
 /// (HU-26). Usage policy: at most 1 request per second and an identifying
-/// User-Agent. A "Mi GPS" tap sends up to 6 requests, so this class spaces
+/// User-Agent. A GPS reading or a map point sends up to 6 requests, so this class spaces
 /// them by [minInterval].
 class NominatimDataSource {
   final http.Client _client;
