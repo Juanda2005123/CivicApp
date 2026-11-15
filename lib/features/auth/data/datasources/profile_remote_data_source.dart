@@ -29,4 +29,12 @@ class ProfileRemoteDataSource {
       throw Exception('No pudimos cargar tu perfil: ${e.message}');
     }
   }
+
+  Future<void> updateLastCity(String id, String cityName) async {
+    try {
+      await _client.from('user_profile').update({'last_city': cityName}).eq('id_user', id);
+    } on PostgrestException catch (e) {
+      throw Exception('No pudimos guardar tu ciudad: ${e.message}');
+    }
+  }
 }

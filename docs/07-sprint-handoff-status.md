@@ -5,7 +5,7 @@
 **Arquitectura:** Clean Architecture + BLoC + Supabase + GetIt  
 **Rama de integración:** `develop` (cada HU entra con su rama `feat/hu-XX-…` y un merge commit)  
 **Fecha de corte:** 14 de noviembre de 2026  
-**Progreso Sprint 2:** 14 de 17 historias completadas (~82 %). Pendientes: HU-19, HU-21 y HU-28.
+**Progreso Sprint 2:** 15 de 17 historias completadas (~88 %). Pendientes: HU-19 y HU-28.
 
 ---
 
@@ -32,6 +32,7 @@ En el segundo bloque se construyó la **exploración territorial**: el shell con
 | **HU-29** | Recuperar un Permiso Bloqueado (KI-01) | Si el permiso de ubicación está bloqueado, los tres botones de GPS (registro, mapa y Paso 1) abren el modal **"Ubicación bloqueada"** con **"Abrir ajustes"**. |
 | **HU-26** | Sugerencia Automática de Dirección | Al abrir el asistente con GPS, al usar "Centrar en mi ubicación" o al confirmar un punto en el mapa, se consulta **Nominatim** (OpenStreetMap) y se rellenan tipo de vía, vía principal, cruce, número y barrio. El cruce sale de la placa ("5-37") o de una esquina cercana. Anillo de carga y "Buscando…" mientras llega; si falla o queda incompleta, un aviso pide escribirla a mano. Todo sigue editable. |
 | **HU-27** | Selector de Punto en el Mapa (Paso 1) | El botón **"Seleccionar ubicación"** cambia el formulario por un mapa **dentro del mismo Paso 1** (el encabezado "Paso 1 de 5" se mantiene). El mapa llena el alto libre de la pantalla, el ciudadano lo mueve bajo un pin fijo y toca **"Confirmar punto"**: se toman esas coordenadas, se detecta su ciudad y se sugiere su dirección. "Volver" regresa sin cambios. |
+| **HU-21** | Selector Asistido de Ciudad | Botón con la ciudad del mapa (arriba a la izquierda) que abre un sheet **"Cambiar ciudad"**: búsqueda sin tildes ni mayúsculas por ciudad o departamento (hasta 8 resultados), hasta 3 ciudades recientes (guardadas en el dispositivo) y chips rápidos (Bogotá, Medellín, Cali, Barranquilla, Bucaramanga). Al elegir, un ciudadano guarda `last_city` en su perfil y el mapa abre ahí en la siguiente sesión; un invitado solo cambia la ciudad que ve. |
 | **HU-22** | Modo Invitado (Sin Cuenta) | **"Explorar sin cuenta"** en el login abre el shell sin sesión. El invitado ve el mapa y el detalle de los reportes (políticas `anon` de `schema.sql`); el mapa abre en la ciudad cubierta más cercana al GPS, o en Cali sin GPS. **"Reportar daño"** sigue visible y abre el modal **"Necesitas iniciar sesión"** (Ahora no · Crear cuenta · Iniciar sesión) sin abrir el asistente. **"Mi perfil"** muestra una invitación a iniciar sesión y oculta "Cerrar sesión". |
 
 ---
@@ -133,13 +134,11 @@ lib/
 
 ## 3. Lo que queda pendiente del Sprint 2 (Para el resto del equipo)
 
-La creación de reportes y el mapa ya están listos. Faltan tres historias:
+La creación de reportes, el mapa y el selector de ciudad ya están listos. Faltan dos historias:
 
 1. **HU-19: Feed Comunitario de Incidentes**
-   - *Objetivo:* Tercera pestaña del shell ("Comunidad") con el listado cronológico de reportes, paginación de 20 en 20, tarjetas con foto, estado y distancia, y *pull-to-refresh*. Debe funcionar también para el invitado (HU-22).
-2. **HU-21: Selector Asistido de Ciudad (Smart City Switcher)**
-   - *Objetivo:* Modal con búsqueda tolerante (sin tildes ni mayúsculas) para cambiar la ciudad del mapa sin reiniciar la sesión, guardando `last_city` en el perfil. Hoy el invitado sin GPS abre en Cali (`GetCityMapUseCase.guestFallbackCity`); este selector debe reemplazar ese valor fijo.
-3. **HU-28: Geocodificación Directa**
+   - *Objetivo:* Tercera pestaña del shell ("Comunidad") con el listado cronológico de reportes, paginación de 20 en 20, tarjetas con foto, estado y distancia, y *pull-to-refresh*. Debe funcionar también para el invitado (HU-22) y leer la ciudad activa del shell (la que cambia el selector de HU-21; hoy vive en `MapBloc`).
+2. **HU-28: Geocodificación Directa**
    - *Objetivo:* Convertir la dirección escrita en el Paso 1 en coordenadas estimadas, y usar el centro de la ciudad si no hay resultados.
 
 **Regla para lo que venga:** toda acción que necesite cuenta (apoyar, comentar, seguir) debe abrir `showSignInRequiredDialog` cuando el usuario es invitado (`ProfileStatus.guest`), igual que "Reportar daño".

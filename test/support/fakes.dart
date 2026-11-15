@@ -8,6 +8,7 @@ import 'package:vigia_app/features/auth/domain/repositories/auth_repository.dart
 import 'package:vigia_app/features/auth/domain/repositories/city_repository.dart';
 import 'package:vigia_app/features/auth/domain/repositories/location_repository.dart';
 import 'package:vigia_app/features/auth/domain/repositories/profile_repository.dart';
+import 'package:vigia_app/features/explore/domain/repositories/recent_cities_repository.dart';
 import 'package:vigia_app/features/reports/domain/entities/geocoded_place.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_category.dart';
@@ -82,6 +83,38 @@ class FakeProfileRepository implements ProfileRepository {
     if (profile == null) throw Exception('Civic profile not found');
     return profile;
   }
+
+  Exception? updateLastCityError;
+
+  @override
+  Future<void> updateLastCity(String id, String cityName) async {
+    calls.add('profile.updateLastCity');
+    if (updateLastCityError != null) throw updateLastCityError!;
+    final profile = stored[id];
+    if (profile == null) throw Exception('Civic profile not found');
+    stored[id] = Profile(
+      id: profile.id,
+      email: profile.email,
+      fullName: profile.fullName,
+      cityName: profile.cityName,
+      lastCityName: cityName,
+      rankId: profile.rankId,
+      rankName: profile.rankName,
+      experiencePoints: profile.experiencePoints,
+      isActive: profile.isActive,
+    );
+  }
+}
+
+class FakeRecentCitiesRepository implements RecentCitiesRepository {
+  List<String> names;
+  FakeRecentCitiesRepository([this.names = const []]);
+
+  @override
+  Future<List<String>> getRecentNames() async => names;
+
+  @override
+  Future<void> saveRecentNames(List<String> names) async => this.names = names;
 }
 
 class FakeCityRepository implements CityRepository {

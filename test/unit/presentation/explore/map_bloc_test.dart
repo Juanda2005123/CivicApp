@@ -10,6 +10,7 @@ import 'package:vigia_app/features/explore/ui/bloc/map_event.dart';
 import 'package:vigia_app/features/explore/ui/bloc/map_state.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_marker.dart';
+import 'package:vigia_app/features/explore/domain/usecases/switch_city_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/get_city_map_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/get_current_location_usecase.dart';
 
@@ -45,6 +46,7 @@ void main() {
       GetCityMapUseCase(auth, profiles, FakeCityRepository(const [_cali]), incidents, location),
       GetCurrentLocationUseCase(location),
       OpenLocationSettingsUseCase(location),
+      SwitchCityUseCase(auth, profiles, FakeRecentCitiesRepository()),
     );
     addTearDown(bloc.close);
     return bloc;
@@ -157,5 +159,51 @@ void main() {
     await emittedStates(buildBloc(), LocationSettingsRequested());
 
     expect(location.openSettingsCalls, 1);
+  });
+
+  group('CitySelected (HU-21)', () {
+    const pasto = City(
+      id: 2,
+      name: 'Pasto',
+      department: 'Nariño',
+      latitude: 1.2136,
+      longitude: -77.2811,
+      isCapital: true,
+    );
+
+    test('saves the city and shows its markers', () async {
+      final bloc = buildBloc();
+      await emittedStates(bloc, MapStarted());
+
+      final states = await emittedStates(bloc, CitySelected(pasto));
+
+      expect(states.map((s) => s.status), [MapStatus.loading, MapStatus.success]);
+      expect(states.last.city, pasto);
+      expect(incidents.lastCity, 'Pasto');
+      expect(profiles.stored['uid-1']!.lastCityName, 'Pasto');
+    });
+
+    test('a reload keeps the city the citizen picked', () async {
+      final bloc = buildBloc();
+      await emittedStates(bloc, MapStarted());
+      await emittedStates(bloc, CitySelected(pasto));
+
+      final states = await emittedStates(bloc, MapStarted());
+
+      expect(states.last.city, pasto);
+    });
+
+    test('when saving fails the map keeps the previous city and says why', () async {
+      final bloc = buildBloc();
+      await emittedStates(bloc, MapStarted());
+      profiles.updateLastCityError = Exception('No pudimos guardar tu ciudad.');
+
+      final states = await emittedStates(bloc, CitySelected(pasto));
+
+      expect(states.last.status, MapStatus.failure);
+      expect(states.last.errorMessage, 'No pudimos guardar tu ciudad.');
+      expect(states.last.city, _cali);
+      expect(states.last.markers, [_marker]);
+    });
   });
 }

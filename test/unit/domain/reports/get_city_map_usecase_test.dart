@@ -92,4 +92,28 @@ void main() {
     );
     expect(incidents.calls, isEmpty);
   });
+
+  test('opens on the last city of the profile, not on the reference city (HU-21)', () async {
+    profiles.stored['uid-1'] = const Profile(
+      id: 'uid-1',
+      email: 'ana@example.com',
+      fullName: 'Ana Gomez',
+      cityName: 'Pasto',
+      lastCityName: 'Cali',
+    );
+
+    final (city, _) = await useCase()();
+
+    expect(city, _cali);
+  });
+
+  test('a city chosen on the switcher skips the profile and the GPS', () async {
+    final (city, markers) = await useCase()(city: _cali);
+
+    expect(city, _cali);
+    expect(markers, [_pothole]);
+    expect(incidents.lastCity, 'Cali');
+    expect(profiles.calls, isEmpty);
+    expect(location.calls, 0);
+  });
 }

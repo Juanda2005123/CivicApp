@@ -27,6 +27,13 @@ import '../../features/auth/ui/bloc/login_bloc.dart';
 import '../../features/auth/ui/bloc/register_bloc.dart';
 import '../../features/auth/ui/bloc/startup_bloc.dart';
 import '../../features/dashboard/ui/bloc/profile_bloc.dart';
+import '../../features/explore/data/datasources/recent_cities_local_data_source.dart';
+import '../../features/explore/data/repositories/recent_cities_repository_impl.dart';
+import '../../features/explore/domain/repositories/recent_cities_repository.dart';
+import '../../features/explore/domain/usecases/get_city_options_usecase.dart';
+import '../../features/explore/domain/usecases/search_cities_usecase.dart';
+import '../../features/explore/domain/usecases/switch_city_usecase.dart';
+import '../../features/explore/ui/bloc/city_switcher_bloc.dart';
 import '../../features/explore/ui/bloc/map_bloc.dart';
 import '../../features/reports/data/datasources/category_remote_data_source.dart';
 import '../../features/reports/data/datasources/incident_remote_data_source.dart';
@@ -90,6 +97,7 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => IncidentRemoteDataSource(sl()));
   sl.registerLazySingleton(() => PhotoPickerDataSource());
   sl.registerLazySingleton(() => NominatimDataSource(sl()));
+  sl.registerLazySingleton(() => RecentCitiesLocalDataSource());
 
   // Repositories, registered under their contract
   sl.registerLazySingleton<AuthRepository>(
@@ -113,6 +121,7 @@ Future<void> initDependencies({
   sl.registerLazySingleton<PhotoPickerRepository>(
     () => photoPickerRepository ?? PhotoPickerRepositoryImpl(sl()),
   );
+  sl.registerLazySingleton<RecentCitiesRepository>(() => RecentCitiesRepositoryImpl(sl()));
   sl.registerLazySingleton<GeocodingRepository>(
     () => geocodingRepository ?? GeocodingRepositoryImpl(sl()),
   );
@@ -134,6 +143,9 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => GetCurrentLocationUseCase(sl()));
   sl.registerLazySingleton(() => SuggestAddressUseCase(sl()));
   sl.registerLazySingleton(() => PickPhotoUseCase(sl()));
+  sl.registerLazySingleton(() => GetCityOptionsUseCase(sl(), sl()));
+  sl.registerLazySingleton(() => SearchCitiesUseCase());
+  sl.registerLazySingleton(() => SwitchCityUseCase(sl(), sl(), sl()));
 
   // Blocs: a new instance per screen
   sl.registerFactory(() => ThemeCubit());
@@ -141,7 +153,8 @@ Future<void> initDependencies({
   sl.registerFactory(() => LoginBloc(sl()));
   sl.registerFactory(() => RegisterBloc(sl(), sl(), sl(), sl()));
   sl.registerFactory(() => ProfileBloc(sl(), sl()));
-  sl.registerFactory(() => MapBloc(sl(), sl(), sl()));
+  sl.registerFactory(() => MapBloc(sl(), sl(), sl(), sl()));
+  sl.registerFactory(() => CitySwitcherBloc(sl(), sl()));
   sl.registerFactory(
     () => ReportWizardBloc(
       sl(),

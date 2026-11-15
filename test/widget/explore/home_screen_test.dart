@@ -14,12 +14,16 @@ import 'package:vigia_app/features/auth/domain/usecases/open_location_settings_u
 import 'package:vigia_app/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:vigia_app/features/dashboard/ui/bloc/profile_bloc.dart';
 import 'package:vigia_app/features/dashboard/ui/bloc/profile_event.dart';
+import 'package:vigia_app/features/explore/domain/usecases/get_city_options_usecase.dart';
+import 'package:vigia_app/features/explore/domain/usecases/search_cities_usecase.dart';
+import 'package:vigia_app/features/explore/ui/bloc/city_switcher_bloc.dart';
 import 'package:vigia_app/features/explore/ui/bloc/map_bloc.dart';
 import 'package:vigia_app/features/explore/ui/bloc/map_event.dart';
 import 'package:vigia_app/features/explore/ui/screens/home_screen.dart';
 import 'package:vigia_app/features/explore/ui/widgets/incident_map_marker.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_marker.dart';
+import 'package:vigia_app/features/explore/domain/usecases/switch_city_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/get_city_map_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/get_current_location_usecase.dart';
 
@@ -49,6 +53,7 @@ void main() {
   late FakeIncidentRepository incidents;
   late List<City> cities;
   late FakeLocationRepository location;
+  late FakeRecentCitiesRepository recents;
 
   setUp(() {
     auth = FakeAuthRepository(user: const AuthUser(id: 'uid-1', email: 'ana@example.com'));
@@ -56,6 +61,7 @@ void main() {
       ..stored['uid-1'] = const Profile(id: 'uid-1', email: 'ana@example.com', fullName: 'Ana Gomez', cityName: 'Cali');
     incidents = FakeIncidentRepository()..cityMarkers = [_marker];
     cities = const [_cali];
+    recents = FakeRecentCitiesRepository();
     location = FakeLocationRepository(coordinates: const Coordinates(latitude: 3.40, longitude: -76.55));
   });
 
@@ -68,15 +74,22 @@ void main() {
       GetCityMapUseCase(auth, profiles, FakeCityRepository(cities), incidents, location),
       GetCurrentLocationUseCase(location),
       OpenLocationSettingsUseCase(location),
+      SwitchCityUseCase(auth, profiles, recents),
     )..add(MapStarted());
+    final switcherBloc = CitySwitcherBloc(
+      GetCityOptionsUseCase(FakeCityRepository(cities), recents),
+      SearchCitiesUseCase(),
+    );
     addTearDown(profileBloc.close);
     addTearDown(mapBloc.close);
+    addTearDown(switcherBloc.close);
 
     return MultiBlocProvider(
       providers: [
         BlocProvider<ThemeCubit>(create: (_) => ThemeCubit()),
         BlocProvider<ProfileBloc>.value(value: profileBloc),
         BlocProvider<MapBloc>.value(value: mapBloc),
+        BlocProvider<CitySwitcherBloc>.value(value: switcherBloc),
       ],
       child: MaterialApp(
         theme: AppTheme.light,
@@ -253,5 +266,69 @@ void main() {
 
     expect(find.text('No pudimos cargar el mapa'), findsOneWidget);
     expect(find.text('Reintentar'), findsOneWidget);
+  });
+
+  group('city switcher (HU-21)', () {
+    const pasto = City(
+      id: 2,
+      name: 'Pasto',
+      department: 'Nariño',
+      latitude: 1.2136,
+      longitude: -77.2811,
+      isCapital: true,
+    );
+
+    testWidgets('the map shows its city and the sheet changes it by search', (tester) async {
+      cities = const [_cali, pasto];
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cali, Valle del Cauca'), findsOneWidget);
+
+      await tester.tap(find.text('Cali, Valle del Cauca'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cambiar ciudad'), findsOneWidget);
+      expect(find.widgetWithText(ActionChip, 'Cali'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField), 'narino');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pasto, Nariño'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cambiar ciudad'), findsNothing);
+      expect(find.text('Pasto, Nariño'), findsOneWidget);
+      expect(profiles.stored['uid-1']!.lastCityName, 'Pasto');
+      expect(recents.names, ['Pasto']);
+    });
+
+    testWidgets('a search without matches says so', (tester) async {
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cali, Valle del Cauca'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'zzz');
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('No encontramos esa ciudad'), findsOneWidget);
+    });
+
+    testWidgets('a guest can switch city too, and nothing is saved in a profile', (tester) async {
+      auth = FakeAuthRepository();
+      cities = const [_cali, pasto];
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Cali, Valle del Cauca'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'pasto');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pasto, Nariño'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pasto, Nariño'), findsOneWidget);
+      expect(profiles.calls.where((c) => c == 'profile.updateLastCity'), isEmpty);
+    });
   });
 }
