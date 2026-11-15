@@ -170,7 +170,7 @@ Debe arrojar:
 2. Iniciar sesión o registrar un usuario (ej. en Popayán o Cali).
 3. En la pantalla principal, presionar el botón de acción rápida **"Reportar daño vial"**.
 4. **Paso 1 (Ubicación):**
-   - Presionar **"Mi GPS"**: se leen las coordenadas del equipo y se detecta la ciudad más cercana.
+   - Presionar **"Seleccionar ubicación"**: se abre el mapa dentro del Paso 1; mover el mapa bajo el pin y tocar **"Confirmar punto"** (o **"Centrar en mi ubicación"** para leer el GPS del equipo). Se detecta la ciudad más cercana y se sugiere la dirección.
    - En *Nomenclatura vial*, seleccionar *Tipo de vía* (ej. Carrera), ingresar *Vía principal* (`9`) y *Cruce* (`45`). Dejar *Número/predio* vacío (verificar que es opcional). Ingresar barrio (ej. `Centro`).
    - Tocar **"Confirmar ubicación"**.
 5. **Paso 2 (Categoría & Gravedad):**
