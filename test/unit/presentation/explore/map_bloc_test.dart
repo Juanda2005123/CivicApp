@@ -67,7 +67,7 @@ void main() {
   });
 
   test('MapStarted emits loading and then the city with its markers', () async {
-    location = FakeLocationRepository(permissionGranted: false);
+    location = FakeLocationRepository(error: Exception('Sin permiso de ubicación. Elige tu ciudad en la lista.'));
 
     final states = await emittedStates(buildBloc(), MapStarted());
 
@@ -76,21 +76,32 @@ void main() {
     expect(states.last.markers, [_marker]);
   });
 
-  test('with the permission already granted, MapStarted also finds the citizen', () async {
+  test('MapStarted asks for the location once and centers on the citizen (HU-03)', () async {
     final states = await emittedStates(buildBloc(), MapStarted());
 
+    expect(location.calls, 1);
     expect(states.last.status, MapStatus.success);
     expect(states.last.myLocationStatus, MyLocationStatus.found);
     expect(states.last.myLocation?.latitude, 3.40);
   });
 
-  test('without the permission, MapStarted stays silent: no dialog, no error', () async {
-    location = FakeLocationRepository(permissionGranted: false);
+  test('denying the permission on open stays silent: city view, no error', () async {
+    location = FakeLocationRepository(error: Exception('Sin permiso de ubicación. Elige tu ciudad en la lista.'));
 
     final states = await emittedStates(buildBloc(), MapStarted());
 
+    expect(states.last.status, MapStatus.success);
     expect(states.last.myLocationStatus, MyLocationStatus.idle);
     expect(states.last.myLocationMessage, isNull);
+  });
+
+  test('a reload after publishing does not ask for the location again', () async {
+    final bloc = buildBloc();
+    await emittedStates(bloc, MapStarted());
+
+    await emittedStates(bloc, MapStarted());
+
+    expect(location.calls, 1);
   });
 
   test('a blocked permission on open does not trigger the blocked modal', () async {

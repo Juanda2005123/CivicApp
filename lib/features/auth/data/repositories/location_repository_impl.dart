@@ -8,8 +8,7 @@ class LocationRepositoryImpl implements LocationRepository {
   LocationRepositoryImpl(this._dataSource);
 
   @override
-  Future<Coordinates> currentCoordinates({bool askPermission = true}) =>
-      _dataSource.currentCoordinates(askPermission: askPermission);
+  Future<Coordinates> currentCoordinates() => _dataSource.currentCoordinates();
 
   @override
   Future<bool> openSettings() => _dataSource.openSettings();

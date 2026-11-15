@@ -112,8 +112,8 @@ void main() {
   });
 
   testWidgets('the Mapa tab shows a marker per report of the city', (tester) async {
-    // No permission yet: the map keeps the city view, where the report is.
-    location = FakeLocationRepository(permissionGranted: false);
+    // Permission denied on open: the map keeps the city view, where the report is.
+    location = FakeLocationRepository(error: Exception('Sin permiso de ubicación. Elige tu ciudad en la lista.'));
     await tester.pumpWidget(createShell());
     await tester.pumpAndSettle();
 
@@ -129,10 +129,10 @@ void main() {
     expect(find.bySemanticsLabel('Tu ubicación'), findsOneWidget);
   });
 
-  testWidgets('"Centrar en mi ubicación" shows the citizen on the map', (tester) async {
+  testWidgets('denied on open, "Centrar en mi ubicación" asks again and shows the citizen', (tester) async {
     location = FakeLocationRepository(
       coordinates: const Coordinates(latitude: 3.40, longitude: -76.55),
-      permissionGranted: false,
+      firstCallError: Exception('Sin permiso de ubicación. Elige tu ciudad en la lista.'),
     );
     await tester.pumpWidget(createShell());
     await tester.pumpAndSettle();

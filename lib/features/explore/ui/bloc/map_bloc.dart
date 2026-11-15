@@ -32,12 +32,14 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       return;
     }
 
-    // First load only: if the permission is already granted, center on the
-    // citizen. Never asks for it and stays silent on failure (the button and
-    // its modal handle that), so the map keeps the city view.
+    // First load only (HU-03): center on the citizen. If the permission is not
+    // granted yet this opens the system dialog; the OS stops showing it once
+    // the permission is blocked (Android after two denials, iOS after one).
+    // Any failure stays silent and keeps the city view: the "Centrar en mi
+    // ubicación" button and its modal handle a later attempt.
     if (state.myLocation != null) return;
     try {
-      final position = await _getCurrentLocation(askPermission: false);
+      final position = await _getCurrentLocation();
       emit(state.copyWith(myLocationStatus: MyLocationStatus.found, myLocation: position));
     } on Exception {
       return;
