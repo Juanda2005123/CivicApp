@@ -4,6 +4,7 @@ import 'package:vigia_app/core/theme/app_spacing.dart';
 import 'package:vigia_app/core/theme/app_text_styles.dart';
 import 'package:vigia_app/core/widgets/app_notice.dart';
 import 'package:vigia_app/core/widgets/app_text_field.dart';
+import 'package:vigia_app/core/widgets/location_blocked_dialog.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_category.dart';
@@ -86,6 +87,25 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // A blocked permission (HU-29) opens a modal once per "Mi GPS" attempt: the
+    // flag goes false while locating and back to true when it fails again.
+    return BlocListener<ReportWizardBloc, ReportWizardState>(
+      listenWhen: (previous, current) => !previous.isLocationBlocked && current.isLocationBlocked,
+      listener: (context, state) {
+        final message = state.locationStatusMessage;
+        if (message == null) return;
+        final bloc = context.read<ReportWizardBloc>();
+        showLocationBlockedDialog(
+          context,
+          message: message,
+          onOpenSettings: () => bloc.add(LocationSettingsRequested()),
+        );
+      },
+      child: _buildWizard(context),
+    );
+  }
+
+  Widget _buildWizard(BuildContext context) {
     return BlocConsumer<ReportWizardBloc, ReportWizardState>(
       listener: (context, state) {
         if (state.status == WizardStatus.success) {
@@ -147,13 +167,10 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
           initialNeighborhood: state.neighborhood,
           initialCity: state.city,
           isLocating: state.isLocating,
-          locationStatusMessage: state.locationStatusMessage,
-          isLocationBlocked: state.isLocationBlocked,
+          // A blocked permission is explained in the modal instead.
+          locationStatusMessage: state.isLocationBlocked ? null : state.locationStatusMessage,
           onDetectLocation: () {
             context.read<ReportWizardBloc>().add(CurrentLocationRequested());
-          },
-          onOpenLocationSettings: () {
-            context.read<ReportWizardBloc>().add(LocationSettingsRequested());
           },
           onLocationConfirmed: ({
             required coordinates,

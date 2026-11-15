@@ -6,6 +6,7 @@ import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
 import 'package:vigia_app/features/auth/domain/entities/city.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import 'package:vigia_app/features/auth/domain/entities/profile.dart';
+import 'package:vigia_app/features/auth/domain/repositories/location_repository.dart';
 import 'package:vigia_app/features/auth/domain/usecases/detect_nearest_city_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/open_location_settings_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/get_current_profile_usecase.dart';
@@ -93,6 +94,25 @@ void main() {
       expect(find.text('Punto de referencia'), findsOneWidget);
       expect(find.text('Barrio o sector'), findsOneWidget);
       expect(find.text('Mi GPS'), findsOneWidget);
+    });
+
+    testWidgets('"Mi GPS" with a blocked permission opens the settings modal', (tester) async {
+      fakeLocationRepo = FakeLocationRepository(error: Exception(LocationRepository.blockedMessage));
+      final bloc = newBloc();
+      await tester.pumpWidget(createWidgetUnderTest(bloc));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Mi GPS'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ubicación bloqueada'), findsOneWidget);
+      expect(find.text(LocationRepository.blockedMessage), findsOneWidget);
+
+      await tester.tap(find.text('Abrir ajustes'));
+      await tester.pumpAndSettle();
+
+      expect(fakeLocationRepo.openSettingsCalls, 1);
+      expect(find.text('Ubicación bloqueada'), findsNothing);
     });
 
     testWidgets('completing Step 1 advances to Step 2 with Colombian category and severity selection', (tester) async {

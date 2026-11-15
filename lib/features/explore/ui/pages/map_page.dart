@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_notice.dart';
 import '../../../../core/widgets/dotted_spinner.dart';
+import '../../../../core/widgets/location_blocked_dialog.dart';
 import '../../../reports/domain/entities/incident_marker.dart';
 import '../bloc/map_bloc.dart';
 import '../bloc/map_event.dart';
@@ -61,7 +62,13 @@ class _MapPageState extends State<MapPage> {
             _mapController.move(LatLng(position.latitude, position.longitude), MapPage.myLocationZoom);
           case MyLocationStatus.blocked:
             final message = state.myLocationMessage;
-            if (message != null) _showBlockedDialog(context, message);
+            if (message == null) return;
+            final bloc = context.read<MapBloc>();
+            showLocationBlockedDialog(
+              context,
+              message: message,
+              onOpenSettings: () => bloc.add(LocationSettingsRequested()),
+            );
           default:
             break;
         }
@@ -136,35 +143,6 @@ class _MapPageState extends State<MapPage> {
           ],
         );
       },
-    );
-  }
-
-  /// Explains the blocked permission and offers to open the system settings.
-  /// The Bloc is read before the dialog opens: the dialog's own context sits
-  /// above the page's providers.
-  void _showBlockedDialog(BuildContext context, String message) {
-    final bloc = context.read<MapBloc>();
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        icon: const Icon(Icons.location_disabled_outlined),
-        title: const Text('Ubicación bloqueada'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Ahora no'),
-          ),
-          FilledButton.icon(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              bloc.add(LocationSettingsRequested());
-            },
-            icon: const Icon(Icons.settings_outlined, size: AppSizes.icon),
-            label: const Text('Abrir ajustes'),
-          ),
-        ],
-      ),
     );
   }
 

@@ -202,7 +202,7 @@ void main() {
       expect(bloc.state.selectedCity, isNull);
     });
 
-    testWidgets('a blocked permission offers to open the system settings', (tester) async {
+    testWidgets('a blocked permission opens the modal that leads to the settings', (tester) async {
       useTallScreen(tester);
       location = FakeLocationRepository(error: Exception(LocationRepository.blockedMessage));
 
@@ -212,12 +212,15 @@ void main() {
       await tester.tap(find.text('Detectar mi ciudad por GPS'));
       await tester.pumpAndSettle();
 
+      // Shown once, in the modal: the inline notice is hidden for this case.
+      expect(find.text('Ubicación bloqueada'), findsOneWidget);
       expect(find.text(LocationRepository.blockedMessage), findsOneWidget);
 
       await tester.tap(find.text('Abrir ajustes'));
       await tester.pumpAndSettle();
 
       expect(location.openSettingsCalls, 1);
+      expect(find.text('Ubicación bloqueada'), findsNothing);
     });
 
     testWidgets('typing in the city field filters the list ignoring accents and case', (tester) async {
