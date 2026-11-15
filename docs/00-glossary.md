@@ -15,7 +15,7 @@ the **English name in Dart code** and the **database object** in `data model/sch
 | Term | UI (Spanish) | Code | Database | Definition |
 |---|---|---|---|---|
 | Citizen | Ciudadano | `AuthUser`, `Profile` | `auth.users` + `user_profile` | The single role of the app: a registered user who reports and interacts. There is no admin role in the mobile client. |
-| Guest / anonymous visitor | Visitante *(proposed)* | — | — | Browses the map, feed and details without an account. Cannot report, vote, comment or earn XP. |
+| Guest / anonymous visitor | Visitante · Explorar sin cuenta | `ProfileStatus.guest`, `showSignInRequiredDialog` | — | Enters from "Explorar sin cuenta" on the login (HU-22). Browses the map and report details without an account; the map opens on the covered city nearest to the GPS, or on Cali without it. Cannot report, vote, comment or earn XP: "Reportar daño" opens the "Necesitas iniciar sesión" modal, and "Mi perfil" shows a sign-in invitation. |
 | Distinguished overseer | Veedor Mayor | — | `civic_rank` (level 4) | Not a separate role: a citizen who reached the highest rank. Their badges add credibility to their posts. |
 | Profile | Mi perfil | `Profile`, `ProfileModel` | `user_profile` | Public data of a citizen. Its key `id_user` is the Auth UID. Created by `SignUpUseCase` right after the Auth account (AGENTS.md §8). |
 | Reference city | Ciudad de residencia | `Profile.cityName`, `City` | `user_profile.reference_city` | City chosen at registration from the closed `coverage_city` list. Stored by **name**, not id (RN-14). |
