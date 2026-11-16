@@ -1,6 +1,6 @@
 # VIGÍA: sistema de diseño, dirección E "Sello comunitario"
 
-Rama: `design/design-system-proposal`. Estado: **implementado** en la app (tokens, tema claro y oscuro, widgets compartidos, splash, login, registro, resumen del perfil, ícono y splash nativo). Pendiente: lo que depende de funciones que aún no existen (sello de validación) y la prueba en dispositivo.
+Rama: `design/design-system-proposal`. Estado: **implementado** en la app (tokens, tema claro y oscuro, widgets compartidos, splash, login, registro, resumen del perfil, ícono y splash nativo). Pendiente: la prueba en dispositivo. El sello de validación llegó con HU-16.
 
 Maquetas navegables (se abren en cualquier navegador, son archivos autónomos):
 - [`mockups/screens.html`](mockups/screens.html): splash, login (claro, oscuro, errores), registro (vacío, con errores, completo), resumen del perfil (claro, oscuro, error de carga).
@@ -187,7 +187,7 @@ Todos están en `mockups/components.html` con sus estados (normal, foco, presion
 | Diálogo de inicio de sesión requerido | Modal para el visitante sin cuenta (HU-22) cuando intenta una acción que necesita cuenta: icono de candado, título "Necesitas iniciar sesión", el motivo y tres acciones: "Ahora no" (texto), "Crear cuenta" (texto) e "Iniciar sesión" (primario con icono). No realiza la acción. Hoy lo abre "Reportar daño"; los futuros botones de apoyar y comentar deben usarlo | `core/widgets/sign_in_required_dialog.dart` (`showSignInRequiredDialog`) |
 | Marcador de mapa | Forma de la gravedad (§3.3) de 36 dp con contorno de 2 px e icono de la categoría; objetivo táctil de 48 dp; etiqueta semántica con título, categoría y gravedad | `features/explore/ui/widgets/incident_map_marker.dart` (colores en `core/theme/severity_colors.dart`) |
 | Tarjeta de reporte (feed) | HU-19. Tarjeta de §7 (papel, borde 1 px, radio 12) que se toca entera. Arriba la portada 16:9 (la foto principal, o el icono de la categoría sobre `surfaceContainerHighest` si no hay foto o no carga) con el código `#VIG-XXXX` en monoespaciada sobre una pastilla de superficie. Debajo: chip de gravedad + barrio (y "a 350 m" / "a 1,2 km" solo si se conoce la posición); título; autor con `RankSeal` de 24 dp y "Nombre · Rango" ("Ciudadano anónimo" si no hay autor); contadores de apoyos y comentarios (icono + número monoespaciado), `AppStatusChip` del estado (con check solo si está validado o resuelto) y la fecha `dd/mm/aaaa`. Crece con el texto (sin truncar a 200 %); una sola etiqueta semántica para toda la tarjeta | `features/explore/ui/widgets/feed_incident_card.dart` |
-| Sello "Reporte validado" | Sello de arcilla 700 con anillo y texto circular | futuro |
+| Sello "Reporte validado" | HU-16. Tarjeta de papel con borde de 2 px en `secondary` (arcilla 700 en claro, arcilla 300 en oscuro), un anillo con check a la izquierda y el texto "Reporte validado por la comunidad" con el número de apoyos en monoespaciada. Forma (anillo y check), color y texto dicen lo mismo. Aparece cuando el reporte llegó a 10 apoyos y **se queda** aunque después baje de 10 (el bono ya está consolidado). Una sola etiqueta semántica | `core/widgets/validation_seal.dart` |
 
 ## 8. Voz y textos en español (mazo de textos)
 
