@@ -107,6 +107,7 @@ CREATE TABLE road_incident (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     resolved_at TIMESTAMPTZ NULL,
     id_resolver_user UUID NULL,
+    validated_at TIMESTAMPTZ NULL, -- first time the report reached 10 endorsements (migration 004)
     
     CONSTRAINT fk_incident_reporter_user 
         FOREIGN KEY (id_reporter_user) 
