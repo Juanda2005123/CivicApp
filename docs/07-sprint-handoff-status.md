@@ -5,7 +5,7 @@
 **Arquitectura:** Clean Architecture + BLoC + Supabase + GetIt  
 **Rama de integración:** `develop` (cada HU entra con su rama `feat/hu-XX-…` y un merge commit)  
 **Fecha de corte:** 14 de noviembre de 2026  
-**Progreso Sprint 2:** 16 de 17 historias completadas (~94 %). Pendiente: HU-28.
+**Progreso Sprint 2:** 17 de 17 historias completadas (100 % en código; falta validarlas en un dispositivo).
 
 ---
 
@@ -29,6 +29,7 @@ En el segundo bloque se construyó la **exploración territorial**: el shell con
 | **HU-14** | Inspección del Detalle del Reporte | Pantalla completa (`IncidentDetailScreen`) que consulta por UUID o código `#VIG-XXXX`: carrusel de fotos con badge `1/N`, sello de rango cívico del autor (`RankSeal`), estado del reporte, coordenadas y barra de validación comunitaria (0 a 10 apoyos). El botón para apoyar llega con HU-15 (Sprint 3). |
 | **HU-13 (MVP)** | Mapa de la Ciudad con Marcadores | Shell con pestañas **Mapa** y **Mi perfil**. `flutter_map` con teselas de OpenStreetMap (oscurecidas en tema oscuro), centrado en la ciudad del perfil, con un marcador por reporte cuya **forma y color indican la gravedad** y que abre el detalle. Botón **"Centrar en mi ubicación"**. El mapa recarga los marcadores al publicar un reporte. |
 | **HU-03** | Permiso de Ubicación al Abrir | El mapa pide el permiso en su primera carga y se centra en el ciudadano si lo concede. Si lo niega, la app no se bloquea: se queda en la vista de la ciudad y el botón "Centrar en mi ubicación" reemplaza el banner "Activar ubicación". |
+| **HU-28** | Geocodificación Directa | "Confirmar ubicación" convierte la dirección escrita en un punto cuando el punto no es decisión del ciudadano. El GPS y el punto marcado en el mapa mandan y la dirección nunca los reemplaza; el centro de la ciudad (ahora tomado del catálogo de 51 ciudades, ya no de 6 escritas a mano) y el punto de otra dirección sí se buscan. Antes de buscar, la dirección se reescribe como la nombra OpenStreetMap: `Cra`, `Cl`, `Av`, `Kr`… pasan a `Carrera`, `Calle`, `Avenida`…; `6N` a `6 Norte`; `No.`/`Nº` equivalen a `#`; `Cra 9 5-45` (sin `#`) también se entiende. Prueba con 7 direcciones de Popayán, Cali y Pasto: 0 m de error cuando OpenStreetMap tiene el número, 200–340 m sobre la calle correcta si no. El Paso 1 queda abierto tras la búsqueda (dos toques: buscar, luego continuar). Cinco resultados con su mensaje y su siguiente paso: encontrada, solo la calle ("Ajustar en el mapa"), no encontrada, formato no entendido y servicio caído ("Reintentar"), todos con salida al mapa. La tarjeta de coordenadas dice de dónde viene el punto (GPS, mapa, según la dirección, centro de la ciudad). |
 | **HU-29** | Recuperar un Permiso Bloqueado (KI-01) | Si el permiso de ubicación está bloqueado, los tres botones de GPS (registro, mapa y Paso 1) abren el modal **"Ubicación bloqueada"** con **"Abrir ajustes"**. |
 | **HU-26** | Sugerencia Automática de Dirección | Al abrir el asistente con GPS, al usar "Centrar en mi ubicación" o al confirmar un punto en el mapa, se consulta **Nominatim** (OpenStreetMap) y se rellenan tipo de vía, vía principal, cruce, número y barrio. El cruce sale de la placa ("5-37") o de una esquina cercana. Anillo de carga y "Buscando…" mientras llega; si falla o queda incompleta, un aviso pide escribirla a mano. Todo sigue editable. |
 | **HU-27** | Selector de Punto en el Mapa (Paso 1) | El botón **"Seleccionar ubicación"** cambia el formulario por un mapa **dentro del mismo Paso 1** (el encabezado "Paso 1 de 5" se mantiene). El mapa llena el alto libre de la pantalla, el ciudadano lo mueve bajo un pin fijo y toca **"Confirmar punto"**: se toman esas coordenadas, se detecta su ciudad y se sugiere su dirección. "Volver" regresa sin cambios. |
@@ -89,6 +90,8 @@ lib/
 │   │   │   ├── create_incident_usecase.dart       # Valida, sube fotos, persiste y suma +100 XP
 │   │   │   ├── endorse_incident_usecase.dart      # Registra apoyo a reporte existente
 │   │   │   ├── get_categories_usecase.dart        # Carga taxonomía de daños
+│   │   │   ├── geocode_address_usecase.dart       # Dirección escrita -> punto, con centro de ciudad de respaldo (HU-28)
+│   │   │   ├── get_city_center_usecase.dart       # Centro de una ciudad del catálogo (HU-28)
 │   │   │   ├── get_city_feed_usecase.dart         # Una página del feed: tamaño de página y "hay más" (HU-19)
 │   │   │   ├── get_city_map_usecase.dart          # Ciudad del mapa y sus reportes (last_city, o GPS para el invitado)
 │   │   │   ├── get_current_location_usecase.dart  # Posición GPS del dispositivo
@@ -97,6 +100,7 @@ lib/
 │   │   │   ├── pick_photo_usecase.dart            # Solicita foto al dispositivo
 │   │   │   └── suggest_address_usecase.dart       # Sugiere la dirección de un punto (HU-26)
 │   │   └── validators/
+│   │       ├── address_normalizer.dart  # Reescribe la dirección como la nombra OpenStreetMap (HU-28)
 │   │       └── report_validators.dart  # Validaciones de coordenadas Colombia, textos y fotos
 │   │
 │   ├── data/                           # PERSISTENCIA & SERVICIOS EXTERNOS (Supabase/SDKs)
@@ -151,10 +155,11 @@ lib/
 
 ## 3. Lo que queda pendiente del Sprint 2 (Para el resto del equipo)
 
-La creación de reportes, el mapa, el selector de ciudad y el feed comunitario ya están listos. Falta una historia:
+Las 17 historias del Sprint 2 están implementadas. Lo que queda no es una historia nueva, sino validar en un dispositivo real:
 
-1. **HU-28: Geocodificación Directa**
-   - *Objetivo:* Convertir la dirección escrita en el Paso 1 en coordenadas estimadas, y usar el centro de la ciudad si no hay resultados.
+1. **Feed y geocodificación contra Supabase y Nominatim reales.** Los tests usan dobles; la consulta anidada del feed y la búsqueda de direcciones no se han probado en un teléfono.
+2. **Precisión de la geocodificación (HU-28).** Depende de qué tan bien esté mapeada cada ciudad en OpenStreetMap. Se probó con 7 direcciones, casi todas céntricas. Conviene probar barrios periféricos y otras ciudades.
+3. **Límites conocidos de HU-28:** `Carrera 9 con Calle 5` no se entiende (y lo dice); el radio de 25 km es un supuesto; si el ciudadano fija el punto con el GPS y luego escribe una dirección de otro lugar, el punto no se mueve (se corrige con el mapa).
 
 **Regla para lo que venga:** toda acción que necesite cuenta (apoyar, comentar, seguir) debe abrir `showSignInRequiredDialog` cuando el usuario es invitado (`ProfileStatus.guest`), igual que "Reportar daño".
 
@@ -201,7 +206,7 @@ dart run tool/check.dart
 Debe arrojar:
 - `Architecture guards: OK`
 - `flutter analyze: No issues found!`
-- `flutter test: 383 tests passed!`
+- `flutter test: 454 tests passed!`
 
 ### Prueba Manual Paso a Paso (en Windows o Móvil)
 1. Ejecutar la app: `flutter run -d windows` (o tu emulador/dispositivo Android).
@@ -228,6 +233,14 @@ Debe arrojar:
    - Tocar **"Publicar reporte (+100 XP)"**.
    - Aparecerá el diálogo con el código oficial generado (ej. `#VIG-4821`).
    - Al aceptar, el reporte queda guardado en Supabase con sus fotos y los puntos se acreditan al perfil.
+
+### Prueba Manual de la Dirección Escrita (HU-28)
+1. Abrir el asistente **sin permiso de ubicación** (o con la ubicación apagada). La tarjeta de coordenadas dice "Aproximada: centro de la ciudad".
+2. En *Nomenclatura vial* escribir, por ejemplo, Carrera `9`, cruce `5`, número `45` y un barrio real de la ciudad. Tocar **"Confirmar ubicación"**.
+3. El Paso 1 sigue abierto, la tarjeta cambia a "Aproximada: según la dirección" y aparece un aviso (encontrada, solo la calle o no encontrada). Tocar **"Confirmar ubicación"** otra vez: pasa al Paso 2.
+4. Repetir con una dirección que no exista: el punto queda en el centro de la ciudad y el aviso ofrece **"Marcar en el mapa"**.
+5. Con el modo avión: aviso de conexión con **"Reintentar"** (vuelve a buscar al reactivar la red).
+6. Con el GPS activo: la dirección escrita **no** mueve el punto (la tarjeta dice "Tu ubicación (GPS)").
 
 ### Prueba Manual del Modo Invitado (HU-22)
 1. Cerrar sesión desde **Mi perfil** (o abrir la app sin sesión) y, en el login, tocar **"Explorar sin cuenta"**.
