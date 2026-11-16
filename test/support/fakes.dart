@@ -171,6 +171,12 @@ class FakeGeocodingRepository implements GeocodingRepository {
   Exception? streetError;
   final List<Coordinates> streetQueries = [];
 
+  /// The point each typed-address query answers (HU-28). A query that is not
+  /// here finds nothing, like the real service.
+  final Map<String, Coordinates> addressResults = {};
+  final List<String> addressQueries = [];
+  Exception? addressError;
+
   FakeGeocodingRepository({this.place = const GeocodedPlace(), this.error, this.streetAnswers = const []});
 
   @override
@@ -186,6 +192,13 @@ class FakeGeocodingRepository implements GeocodingRepository {
     if (streetError != null) throw streetError!;
     final index = streetQueries.length - 1;
     return index < streetAnswers.length ? streetAnswers[index] : const GeocodedPlace();
+  }
+
+  @override
+  Future<Coordinates> geocodeAddress(String query) async {
+    addressQueries.add(query);
+    if (addressError != null) throw addressError!;
+    return addressResults[query] ?? (throw Exception('No encontramos esa dirección.'));
   }
 }
 

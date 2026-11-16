@@ -15,4 +15,7 @@ class GeocodingRepositoryImpl implements GeocodingRepository {
 
   @override
   Future<GeocodedPlace> streetAt(Coordinates coordinates) => _dataSource.streetAt(coordinates);
+
+  @override
+  Future<Coordinates> geocodeAddress(String query) => _dataSource.search(query);
 }
