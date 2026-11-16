@@ -245,21 +245,47 @@ class IncidentRemoteDataSource {
     }
   }
 
-  /// Registers an upvote for the user on the given incident.
+  /// Registers an upvote for the user on the given incident. An endorsement that
+  /// already exists is left as it is (`ignoreDuplicates`), so a double tap or the
+  /// "Es este daño" of a report the citizen already backed adds nothing. XP,
+  /// the self-vote ban and the validation at 10 votes are database triggers.
   Future<void> endorseIncident({
     required String incidentId,
     required String userId,
   }) async {
     try {
-      await _client.from('incident_upvote').upsert({
-        'id_incident': incidentId,
-        'id_user': userId,
-      });
+      await _client.from('incident_upvote').upsert(
+        {
+          'id_incident': incidentId,
+          'id_user': userId,
+        },
+        onConflict: 'id_user,id_incident',
+        ignoreDuplicates: true,
+      );
     } on PostgrestException catch (e) {
       throw Exception('No pudimos registrar tu apoyo: ${e.message}');
     } catch (e) {
       if (e is Exception) rethrow;
       throw Exception('Error al apoyar el reporte.');
+    }
+  }
+
+  /// Removes the user's upvote from the given incident (HU-15, toggle).
+  Future<void> revokeEndorsement({
+    required String incidentId,
+    required String userId,
+  }) async {
+    try {
+      await _client
+          .from('incident_upvote')
+          .delete()
+          .eq('id_incident', incidentId)
+          .eq('id_user', userId);
+    } on PostgrestException catch (e) {
+      throw Exception('No pudimos retirar tu apoyo: ${e.message}');
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception('Error al retirar el apoyo.');
     }
   }
 

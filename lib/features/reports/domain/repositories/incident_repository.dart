@@ -39,8 +39,16 @@ abstract class IncidentRepository {
   /// Fetches an incident by its primary UUID or civic tracking code (e.g. #VIG-8492).
   Future<Incident> getIncidentById(String idOrTrackingCode);
 
-  /// Endorses (+1 upvote) an existing nearby report when user picks "Es este daño" (HU-09).
+  /// Endorses (+1 upvote) an existing report: "Es este daño" (HU-09) or "Apoyar" (HU-15).
+  /// Endorsing twice leaves a single endorsement; XP and validation are the server's job.
   Future<void> endorseIncident({
+    required String incidentId,
+    required String userId,
+  });
+
+  /// Removes the user's endorsement of a report (HU-15, toggle). Revoking an
+  /// endorsement that does not exist is not an error.
+  Future<void> revokeEndorsement({
     required String incidentId,
     required String userId,
   });

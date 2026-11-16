@@ -319,12 +319,52 @@ class FakeIncidentRepository implements IncidentRepository {
     return incident;
   }
 
+  Exception? endorseError;
+  Exception? revokeError;
+
+  /// When set, endorse and revoke wait for it: lets a test see the optimistic state.
+  Completer<void>? endorseGate;
+
   @override
   Future<void> endorseIncident({
     required String incidentId,
     required String userId,
   }) async {
     calls.add('incident.endorse');
+    if (endorseGate != null) await endorseGate!.future;
+    if (endorseError != null) throw endorseError!;
+    // Like the database trigger: the 10th endorsement validates the report.
+    _updateStored(incidentId, (incident) {
+      final endorsed = incident.withEndorsementBy(userId);
+      if (endorsed.upvotesCount >= Incident.validationTarget && !endorsed.isCommunityValidated) {
+        return endorsed.copyWith(
+          status: IncidentStatus.communityValidated,
+          validatedAt: DateTime(2026, 11, 16),
+        );
+      }
+      return endorsed;
+    });
+  }
+
+  @override
+  Future<void> revokeEndorsement({
+    required String incidentId,
+    required String userId,
+  }) async {
+    calls.add('incident.revoke');
+    if (endorseGate != null) await endorseGate!.future;
+    if (revokeError != null) throw revokeError!;
+    _updateStored(incidentId, (incident) => incident.withoutEndorsementBy(userId));
+  }
+
+  /// Mimics the server: the stored report reflects the endorsement, so a later
+  /// read of the report shows it.
+  void _updateStored(String incidentId, Incident Function(Incident) change) {
+    final current = stored[incidentId];
+    if (current == null) return;
+    final updated = change(current);
+    stored[current.id] = updated;
+    stored[current.trackingCode] = updated;
   }
 }
 
