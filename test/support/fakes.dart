@@ -9,6 +9,7 @@ import 'package:vigia_app/features/auth/domain/repositories/city_repository.dart
 import 'package:vigia_app/features/auth/domain/repositories/location_repository.dart';
 import 'package:vigia_app/features/auth/domain/repositories/profile_repository.dart';
 import 'package:vigia_app/features/explore/domain/repositories/recent_cities_repository.dart';
+import 'package:vigia_app/features/reports/domain/entities/address_match.dart';
 import 'package:vigia_app/features/reports/domain/entities/geocoded_place.dart';
 import 'package:vigia_app/features/reports/domain/entities/feed_incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
@@ -171,6 +172,12 @@ class FakeGeocodingRepository implements GeocodingRepository {
   Exception? streetError;
   final List<Coordinates> streetQueries = [];
 
+  /// What each typed-address query finds (HU-28). A query that is not here
+  /// finds nothing (null), like the real service; [addressError] makes it fail.
+  final Map<String, AddressMatch> addressResults = {};
+  final List<String> addressQueries = [];
+  Exception? addressError;
+
   FakeGeocodingRepository({this.place = const GeocodedPlace(), this.error, this.streetAnswers = const []});
 
   @override
@@ -186,6 +193,13 @@ class FakeGeocodingRepository implements GeocodingRepository {
     if (streetError != null) throw streetError!;
     final index = streetQueries.length - 1;
     return index < streetAnswers.length ? streetAnswers[index] : const GeocodedPlace();
+  }
+
+  @override
+  Future<AddressMatch?> geocodeAddress(String query) async {
+    addressQueries.add(query);
+    if (addressError != null) throw addressError!;
+    return addressResults[query];
   }
 }
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -15,7 +16,12 @@ import 'package:vigia_app/features/reports/domain/entities/nearby_incident.dart'
 import 'package:vigia_app/features/reports/domain/entities/picked_photo.dart';
 import 'package:vigia_app/features/reports/domain/usecases/create_incident_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/endorse_incident_usecase.dart';
+import 'package:vigia_app/features/reports/domain/entities/address_match.dart';
+import 'package:vigia_app/features/reports/domain/entities/address_outcome.dart';
+import 'package:vigia_app/features/reports/domain/entities/location_source.dart';
+import 'package:vigia_app/features/reports/domain/usecases/geocode_address_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/get_categories_usecase.dart';
+import 'package:vigia_app/features/reports/domain/usecases/get_city_center_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/get_current_location_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/get_nearby_incidents_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/pick_photo_usecase.dart';
@@ -78,6 +84,8 @@ void main() {
         DetectNearestCityUseCase(fakeLocationRepo, fakeCityRepo),
         OpenLocationSettingsUseCase(fakeLocationRepo),
         SuggestAddressUseCase(fakeGeocodingRepo),
+        GeocodeAddressUseCase(fakeGeocodingRepo, GetCityCenterUseCase(fakeCityRepo)),
+        GetCityCenterUseCase(fakeCityRepo),
       );
     });
 
@@ -123,6 +131,8 @@ void main() {
         DetectNearestCityUseCase(fakeLocationRepo, fakeCityRepo),
         OpenLocationSettingsUseCase(fakeLocationRepo),
         SuggestAddressUseCase(fakeGeocodingRepo),
+        GeocodeAddressUseCase(fakeGeocodingRepo, GetCityCenterUseCase(fakeCityRepo)),
+        GetCityCenterUseCase(fakeCityRepo),
       );
 
       final states = await emittedStates(bloc, WizardStarted());
@@ -234,6 +244,8 @@ void main() {
         DetectNearestCityUseCase(fakeLocationRepo, fakeCityRepo),
         OpenLocationSettingsUseCase(fakeLocationRepo),
         SuggestAddressUseCase(fakeGeocodingRepo),
+        GeocodeAddressUseCase(fakeGeocodingRepo, GetCityCenterUseCase(fakeCityRepo)),
+        GetCityCenterUseCase(fakeCityRepo),
       );
 
       final states = await emittedStates(bloc, CurrentLocationRequested());
@@ -277,7 +289,9 @@ void main() {
       expect(states.last.photos.first.extension, 'png');
     });
 
-    test('LocationPitched sets coordinates and advances to Step 2', () async {
+    test('LocationPitched from a point the citizen chose sets the address and advances to Step 2', () async {
+      await emittedStates(bloc, const MapPointSelected(Coordinates(latitude: 3.4516, longitude: -76.5320)));
+
       final states = await emittedStates(
         bloc,
         const LocationPitched(
@@ -292,6 +306,251 @@ void main() {
       expect(states.first.currentStep, 2);
       expect(states.first.formattedAddress, 'Calle 5 # 38-00');
       expect(states.first.hasDraftData, true);
+      expect(fakeGeocodingRepo.addressQueries, isEmpty);
+    });
+
+    group('typed address (HU-28)', () {
+      const caliCenter = Coordinates(latitude: 3.4516, longitude: -76.5320);
+      const found = AddressMatch(coordinates: Coordinates(latitude: 3.4400, longitude: -76.5300), isStreetOnly: false);
+      const query = 'Calle 5 # 38-48, Santa Isabel, Cali, Colombia';
+      const pitch = LocationPitched(
+        coordinates: caliCenter,
+        formattedAddress: 'Calle 5 # 38 - 48',
+        neighborhood: 'Santa Isabel',
+        city: 'Cali',
+      );
+
+      test('from the city center the first confirm searches the address and stays on Step 1', () async {
+        fakeGeocodingRepo.addressResults[query] = found;
+
+        final states = await emittedStates(bloc, pitch);
+
+        expect(states.first.isGeocodingAddress, true);
+        expect(states.first.addressOutcome, isNull);
+        expect(states.last.isGeocodingAddress, false);
+        expect(states.last.currentStep, 1);
+        expect(states.last.coordinates, found.coordinates);
+        expect(states.last.coordinatesSource, LocationSource.address);
+        expect(states.last.addressOutcome, AddressOutcome.building);
+        expect(fakeGeocodingRepo.addressQueries, [query]);
+      });
+
+      test('confirming the same address again moves on without searching again', () async {
+        fakeGeocodingRepo.addressResults[query] = found;
+        await emittedStates(bloc, pitch);
+
+        final states = await emittedStates(bloc, pitch);
+
+        expect(states.single.currentStep, 2);
+        expect(fakeGeocodingRepo.addressQueries, [query]);
+      });
+
+      test('a different address searches again', () async {
+        fakeGeocodingRepo.addressResults[query] = found;
+        await emittedStates(bloc, pitch);
+
+        await emittedStates(
+          bloc,
+          const LocationPitched(
+            coordinates: caliCenter,
+            formattedAddress: 'Calle 5 # 40 - 10',
+            neighborhood: 'Santa Isabel',
+            city: 'Cali',
+          ),
+        );
+
+        expect(fakeGeocodingRepo.addressQueries, [query, 'Calle 5 # 40-10, Santa Isabel, Cali, Colombia', 'Calle 5, Santa Isabel, Cali, Colombia']);
+      });
+
+      test('nothing found leaves the city center and says so; the next confirm moves on', () async {
+        final states = await emittedStates(bloc, pitch);
+
+        expect(states.last.addressOutcome, AddressOutcome.notFound);
+        expect(states.last.coordinatesSource, LocationSource.cityCenter);
+        expect(states.last.coordinates?.latitude, 3.4516);
+        expect(states.last.currentStep, 1);
+
+        final next = await emittedStates(bloc, pitch);
+
+        expect(next.single.currentStep, 2);
+      });
+
+      test('a service failure says so, and the next confirm searches again', () async {
+        fakeGeocodingRepo.addressError = Exception('Sin conexión para buscar la dirección.');
+        final failed = await emittedStates(bloc, pitch);
+
+        expect(failed.last.addressOutcome, AddressOutcome.serviceFailed);
+        expect(failed.last.currentStep, 1);
+
+        fakeGeocodingRepo.addressError = null;
+        fakeGeocodingRepo.addressResults[query] = found;
+        final retried = await emittedStates(bloc, pitch);
+
+        expect(retried.last.addressOutcome, AddressOutcome.building);
+        expect(retried.last.currentStep, 1);
+      });
+
+      test('an address that is not valid fails with a message and does not search', () async {
+        final states = await emittedStates(
+          bloc,
+          const LocationPitched(coordinates: caliCenter, formattedAddress: 'abc', neighborhood: 'Santa Isabel', city: 'Cali'),
+        );
+
+        expect(states.single.errorMessage, isNotNull);
+        expect(states.single.isGeocodingAddress, false);
+        expect(fakeGeocodingRepo.addressQueries, isEmpty);
+      });
+
+      test('the point from the GPS is never replaced by the typed address', () async {
+        await emittedStates(bloc, CurrentLocationRequested());
+
+        final states = await emittedStates(bloc, pitch);
+
+        expect(states.single.currentStep, 2);
+        expect(fakeGeocodingRepo.addressQueries, isEmpty);
+      });
+
+      test('a point confirmed on the map is never replaced by the typed address', () async {
+        await emittedStates(bloc, const MapPointSelected(Coordinates(latitude: 3.4520, longitude: -76.5330)));
+
+        final states = await emittedStates(bloc, pitch);
+
+        expect(states.single.currentStep, 2);
+        expect(fakeGeocodingRepo.addressQueries, isEmpty);
+      });
+
+      test('the GPS and the map clear what the address search said', () async {
+        await emittedStates(bloc, pitch);
+
+        final states = await emittedStates(bloc, const MapPointSelected(Coordinates(latitude: 3.4520, longitude: -76.5330)));
+
+        expect(states.first.coordinatesSource, LocationSource.mapPoint);
+        expect(states.first.addressOutcome, isNull);
+      });
+
+      test('a second confirm while the search runs is ignored', () async {
+        final gated = _GatedGeocodingRepository()..addressResults[query] = found;
+        bloc = ReportWizardBloc(
+          GetCategoriesUseCase(fakeCategoryRepo),
+          GetNearbyIncidentsUseCase(fakeIncidentRepo),
+          CreateIncidentUseCase(fakeIncidentRepo),
+          EndorseIncidentUseCase(fakeIncidentRepo),
+          GetCurrentProfileUseCase(fakeAuthRepo, fakeProfileRepo),
+          GetCurrentLocationUseCase(fakeLocationRepo),
+          PickPhotoUseCase(fakePhotoPickerRepo),
+          DetectNearestCityUseCase(fakeLocationRepo, fakeCityRepo),
+          OpenLocationSettingsUseCase(fakeLocationRepo),
+          SuggestAddressUseCase(gated),
+          GeocodeAddressUseCase(gated, GetCityCenterUseCase(fakeCityRepo)),
+          GetCityCenterUseCase(fakeCityRepo),
+        );
+
+        bloc.add(pitch);
+        await pumpEventQueue();
+        bloc.add(pitch);
+        await pumpEventQueue();
+        gated.gate.complete();
+        await pumpEventQueue();
+
+        expect(gated.addressQueries, [query]);
+        expect(bloc.state.isGeocodingAddress, false);
+        expect(bloc.state.currentStep, 1);
+      });
+
+      test('a GPS reading that arrives while the address is searched wins; the late answer is dropped', () async {
+        final gated = _GatedGeocodingRepository()..addressResults[query] = found;
+        bloc = ReportWizardBloc(
+          GetCategoriesUseCase(fakeCategoryRepo),
+          GetNearbyIncidentsUseCase(fakeIncidentRepo),
+          CreateIncidentUseCase(fakeIncidentRepo),
+          EndorseIncidentUseCase(fakeIncidentRepo),
+          GetCurrentProfileUseCase(fakeAuthRepo, fakeProfileRepo),
+          GetCurrentLocationUseCase(fakeLocationRepo),
+          PickPhotoUseCase(fakePhotoPickerRepo),
+          DetectNearestCityUseCase(fakeLocationRepo, fakeCityRepo),
+          OpenLocationSettingsUseCase(fakeLocationRepo),
+          SuggestAddressUseCase(gated),
+          GeocodeAddressUseCase(gated, GetCityCenterUseCase(fakeCityRepo)),
+          GetCityCenterUseCase(fakeCityRepo),
+        );
+
+        bloc.add(pitch);
+        await pumpEventQueue();
+        bloc.add(CurrentLocationRequested());
+        await pumpEventQueue();
+        gated.gate.complete();
+        await pumpEventQueue();
+
+        expect(bloc.state.coordinatesSource, LocationSource.gps);
+        expect(bloc.state.coordinates?.latitude, 2.4448);
+        expect(bloc.state.addressOutcome, isNull);
+        expect(bloc.state.isGeocodingAddress, false);
+      });
+    });
+
+    group('starting point of Step 1 (HU-28)', () {
+      test('without GPS it starts on the center of the profile city, from the catalog', () async {
+        fakeLocationRepo = FakeLocationRepository(error: Exception('Sin permiso de ubicación.'));
+        bloc = ReportWizardBloc(
+          GetCategoriesUseCase(fakeCategoryRepo),
+          GetNearbyIncidentsUseCase(fakeIncidentRepo),
+          CreateIncidentUseCase(fakeIncidentRepo),
+          EndorseIncidentUseCase(fakeIncidentRepo),
+          GetCurrentProfileUseCase(fakeAuthRepo, fakeProfileRepo),
+          GetCurrentLocationUseCase(fakeLocationRepo),
+          PickPhotoUseCase(fakePhotoPickerRepo),
+          DetectNearestCityUseCase(fakeLocationRepo, fakeCityRepo),
+          OpenLocationSettingsUseCase(fakeLocationRepo),
+          SuggestAddressUseCase(fakeGeocodingRepo),
+          GeocodeAddressUseCase(fakeGeocodingRepo, GetCityCenterUseCase(fakeCityRepo)),
+          GetCityCenterUseCase(fakeCityRepo),
+        );
+
+        final states = await emittedStates(bloc, WizardStarted());
+
+        expect(states.last.coordinates?.latitude, 2.4448);
+        expect(states.last.coordinates?.longitude, -76.6147);
+        expect(states.last.city, 'Popayán');
+        expect(states.last.coordinatesSource, LocationSource.cityCenter);
+      });
+
+      test('a city outside the six that were hard coded gets its own center, not the one of Cali', () async {
+        fakeCityRepo.cities.add(
+          const City(id: 40, name: 'Pereira', department: 'Risaralda', latitude: 4.8133, longitude: -75.6961, isCapital: true),
+        );
+        fakeProfileRepo.stored['user-123'] = const Profile(
+          id: 'user-123',
+          email: 'user@example.com',
+          fullName: 'Juan Quintero',
+          cityName: 'Pereira',
+        );
+        fakeLocationRepo = FakeLocationRepository(error: Exception('Sin permiso de ubicación.'));
+        bloc = ReportWizardBloc(
+          GetCategoriesUseCase(fakeCategoryRepo),
+          GetNearbyIncidentsUseCase(fakeIncidentRepo),
+          CreateIncidentUseCase(fakeIncidentRepo),
+          EndorseIncidentUseCase(fakeIncidentRepo),
+          GetCurrentProfileUseCase(fakeAuthRepo, fakeProfileRepo),
+          GetCurrentLocationUseCase(fakeLocationRepo),
+          PickPhotoUseCase(fakePhotoPickerRepo),
+          DetectNearestCityUseCase(fakeLocationRepo, fakeCityRepo),
+          OpenLocationSettingsUseCase(fakeLocationRepo),
+          SuggestAddressUseCase(fakeGeocodingRepo),
+          GeocodeAddressUseCase(fakeGeocodingRepo, GetCityCenterUseCase(fakeCityRepo)),
+          GetCityCenterUseCase(fakeCityRepo),
+        );
+
+        final states = await emittedStates(bloc, WizardStarted());
+
+        expect(states.last.coordinates?.latitude, 4.8133);
+        expect(states.last.coordinates?.longitude, -75.6961);
+      });
+
+      test('with GPS it starts on the position, as a point the citizen did not have to choose', () async {
+        final states = await emittedStates(bloc, WizardStarted());
+
+        expect(states.last.coordinatesSource, LocationSource.gps);
+      });
     });
 
     test('CategoryAndSeveritySelected advances to Step 3 when no nearby reports', () async {
@@ -413,4 +672,16 @@ void main() {
       expect(submitStates.last.publishedIncident?.trackingCode, startsWith('#VIG-'));
     });
   });
+}
+
+/// Holds the answer of a typed-address search until the test releases it.
+class _GatedGeocodingRepository extends FakeGeocodingRepository {
+  final Completer<void> gate = Completer<void>();
+
+  @override
+  Future<AddressMatch?> geocodeAddress(String query) async {
+    addressQueries.add(query);
+    await gate.future;
+    return addressResults[query];
+  }
 }

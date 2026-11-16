@@ -1,7 +1,7 @@
 # Document 5: Sprint Backlog 2 — Reporting, Exploration, and Civic Cartography
 
 **Branch:** `develop` (documented in `docs/sprint-2-3-backlogs`)  
-**Status:** In progress (16 of 17 stories completed; HU-28 pending)  
+**Status:** Implemented (17 of 17 stories; pending validation on a device)  
 **Sprint Goal:** Enable citizens to explore road infrastructure incidents in their city via an interactive map and a synchronized feed, switch active cities smoothly, and publish new damage reports with photographic evidence and precise georeferencing through a guided 5-step wizard with preventive duplicate detection.
 
 ---
@@ -41,7 +41,7 @@
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Sprint 2 Progress & Tracking (~94 % — 16 of 17 stories completed)
+### Sprint 2 Progress & Tracking (17 of 17 stories completed)
 
 | User Story | Name | Scope / Responsibility | Status | Implementation Details |
 |---|---|---|---|---|
@@ -60,7 +60,7 @@
 | **HU-22** | Guest Browsing Mode | Auth / Explore | **COMPLETED** | "Explorar sin cuenta" on the login opens the shell without credentials; the map and report details read through the `anon` policies already in `schema.sql`; without a session the map opens on the covered city nearest to the GPS, or on Cali when there is no position (the HU-21 city prompt is still pending); "Reportar daño" stays visible and opens the "Necesitas iniciar sesión" modal (Ahora no · Crear cuenta · Iniciar sesión) without opening the wizard; "Mi perfil" shows the sign-in invitation and hides "Cerrar sesión"; signing in from there lands on the map like any citizen. Upvote and comment buttons do not exist yet (HU-15/HU-17): they must reuse the same modal |
 | **HU-26** | Reverse Geocoding (Nominatim) | Reports / Location | **COMPLETED** | Opening the wizard with the location permission granted, every GPS reading ("Centrar en mi ubicación" on the Step 1 map) and every point confirmed on the map (HU-27) asks Nominatim (3 s timeout, identifying User-Agent) and overwrites road type, main road, cross street and number (when the plate comes as "5-37") and the neighborhood; the plate may use a hyphen or a typographic dash; without a plate, the cross street comes from a nearby corner: Nominatim returns the street's line, and up to four probes beside it (30 m to each side, 30 m ahead of and behind the citizen) answer a crossing street when a corner is within about 60 m, which must run the other way (on a Calle, a Carrera); a tap sends at most 6 requests; the address fills in first and the cross street afterwards, with the dotted ring and "Buscando…" in the main road and cross street fields meanwhile; requests are spaced 1.1 s apart (Nominatim's 1 per second rule); a failure or a missing cross street shows a notice asking to type it by hand; every field stays editable, with a "review it" notice (the OpenStreetMap credit stays on the map) |
 | **HU-27** | Interactive Map Pin Picker | Reports / Location | **COMPLETED** | In Step 1 the "Seleccionar ubicación" button (it replaced "Mi GPS") swaps the address form for an OpenStreetMap map inside the same step, so the "Paso 1 de 5" header stays; the citizen pans the map under a fixed center pin, the coordinates update live, and "Confirmar punto" takes the point, resolves its city and suggests its address (HU-26) back in the form, which keeps what was typed; "Volver" returns without changes; the GPS lives on the map as the "Centrar en mi ubicación" button (blocked permission → HU-29 modal) |
-| **HU-28** | Direct Address Geocoding | Reports / Location | **PENDING** | Text address to coordinates calculation |
+| **HU-28** | Direct Address Geocoding | Reports / Location | **COMPLETED** | "Confirmar ubicación" turns the typed address into a point when the point is not the citizen's own. The point comes from a source: a GPS reading or a point confirmed on the map (HU-27) is the citizen's decision and the address never replaces it; the city center (the starting point without GPS, taken from the 51-city catalog, no longer from six hard coded cities) and the point of another address are estimates and are searched. The address is first rewritten the way OpenStreetMap names things (`AddressNormalizer`): `Cra`, `Cl`, `Av`, `Kr`, `Dg`, `Tv`, `AK`, `AC` become `Carrera`, `Calle`, `Avenida`…; `6N` becomes `6 Norte`; `No.`, `Nº`, `N°` mean `#`; `Cra 9 5-45` (without `#`) is read too. Without that, Nominatim answers only the city (`Cra 9 # 5-45`) or nothing (`Avenida 6N`). It tries the building (`Calle 5 # 38-48, Santa Isabel, Cali, Colombia`) and then the road in the neighborhood; a point outside Colombia (RN-12) or more than 25 km from the city is discarded (the same street name exists in every city). Tested sample (7 addresses in Popayán, Cali and Pasto, mostly central): exact (0 m) when OpenStreetMap has the number, 200–340 m along the right street otherwise. Step 1 stays open after the search so the citizen sees where it landed (two taps: search, then continue); confirming the same address again moves on, a service failure searches again. Five outcomes, each with its own message and next step: found ("Encontramos esa dirección…"), only the street ("Ubicamos la calle, pero no la puerta" + "Ajustar en el mapa"), not found and not understood (center of the city + "Marcar en el mapa"), service failed ("Reintentar" + the map). The coordinates card says where the point comes from, with an icon and text: GPS, map point, "Aproximada: según la dirección", "Aproximada: centro de la ciudad". A GPS reading or map point that arrives while it searches wins. Nominatim requests now go one after the other (1 per second) even when the address suggestion of HU-26 is still running |
 | **HU-29** | Recover a Blocked Location Permission | Auth + Reports / Location | **COMPLETED** | Fixes KI-01: "Abrir ajustes" button when the permission is blocked |
 
 ---
@@ -286,6 +286,11 @@
 1. **Given that** I enter a structured Colombian address (e.g. `Carrera 9 # 45, Popayán`), **when** I tap *"Confirmar ubicación"*, **then** the system queries forward geocoding to resolve approximate latitude and longitude.
 2. **Given that** forward geocoding succeeds, **when** resolved, **then** the coordinates card updates to show the resolved location.
 3. **Given that** geocoding yields no results, **when** it fails, **then** the system defaults to the city center and allows the user to proceed with manual description.
+4. **Given that** the point comes from the GPS or from a point confirmed on the map, **when** I confirm the address, **then** the point is kept: the address never replaces what the citizen chose.
+5. **Given that** the search ended, **when** the point is only an estimate, **then** the form says in words what happened (found, only the street, not found, not understood, service failed) and offers the next step (adjust or mark the point on the map, or try again), so that nobody is left guessing.
+6. **Given that** the address is written with abbreviations or numbers in another style (`Cra 9 # 5-45`, `Av 6N`, `No.`), **when** it is searched, **then** it is first rewritten the way the map names things.
+
+*(Added in Sprint 2 from a test against the real service: criteria 4 to 6. Known limits: the precision depends on how well OpenStreetMap maps each neighborhood; `Carrera 9 con Calle 5` is not understood and says so; the 25 km radius is an assumption.)*
 
 ---
 

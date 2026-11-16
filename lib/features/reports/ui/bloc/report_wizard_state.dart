@@ -1,7 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
+import '../../domain/entities/address_outcome.dart';
 import '../../domain/entities/incident.dart';
 import '../../domain/entities/incident_category.dart';
+import '../../domain/entities/location_source.dart';
 import '../../domain/entities/nearby_incident.dart';
 import '../../domain/entities/picked_photo.dart';
 import '../../domain/entities/suggested_address.dart';
@@ -46,6 +48,25 @@ class ReportWizardState extends Equatable {
   /// Why the suggestion is missing or incomplete, for the citizen to finish
   /// the address by hand. Null while it arrives and when it came complete.
   final String? addressSuggestionMessage;
+
+  /// Where [coordinates] come from (HU-28). A GPS reading or a point confirmed
+  /// on the map is the citizen's own decision and the typed address never moves
+  /// it; the city center and a geocoded address are estimates.
+  final LocationSource coordinatesSource;
+
+  /// The typed address is being searched (HU-28): "Confirmar ubicación" shows
+  /// the loading state and ignores taps.
+  final bool isGeocodingAddress;
+
+  /// How the last search of the typed address ended, to explain it in Step 1.
+  /// Null until the first search and after the citizen picks the point (GPS or
+  /// map).
+  final AddressOutcome? addressOutcome;
+
+  /// The address (with its neighborhood and city) the last settled search was
+  /// for: confirming the same address again moves on to Step 2 instead of
+  /// searching again. Null after a service failure, so retrying searches again.
+  final String? geocodedAddressKey;
   final List<PickedPhoto> photos;
   final String title;
   final String description;
@@ -72,6 +93,10 @@ class ReportWizardState extends Equatable {
     this.suggestedAddress,
     this.isSuggestingAddress = false,
     this.addressSuggestionMessage,
+    this.coordinatesSource = LocationSource.cityCenter,
+    this.isGeocodingAddress = false,
+    this.addressOutcome,
+    this.geocodedAddressKey,
     this.photos = const [],
     this.title = '',
     this.description = '',
@@ -119,6 +144,12 @@ class ReportWizardState extends Equatable {
     bool? isSuggestingAddress,
     String? addressSuggestionMessage,
     bool clearAddressSuggestionMessage = false,
+    LocationSource? coordinatesSource,
+    bool? isGeocodingAddress,
+    AddressOutcome? addressOutcome,
+    bool clearAddressOutcome = false,
+    String? geocodedAddressKey,
+    bool clearGeocodedAddressKey = false,
     List<PickedPhoto>? photos,
     String? title,
     String? description,
@@ -148,6 +179,10 @@ class ReportWizardState extends Equatable {
       isSuggestingAddress: isSuggestingAddress ?? this.isSuggestingAddress,
       addressSuggestionMessage:
           clearAddressSuggestionMessage ? null : (addressSuggestionMessage ?? this.addressSuggestionMessage),
+      coordinatesSource: coordinatesSource ?? this.coordinatesSource,
+      isGeocodingAddress: isGeocodingAddress ?? this.isGeocodingAddress,
+      addressOutcome: clearAddressOutcome ? null : (addressOutcome ?? this.addressOutcome),
+      geocodedAddressKey: clearGeocodedAddressKey ? null : (geocodedAddressKey ?? this.geocodedAddressKey),
       photos: photos ?? this.photos,
       title: title ?? this.title,
       description: description ?? this.description,
@@ -177,6 +212,10 @@ class ReportWizardState extends Equatable {
         suggestedAddress,
         isSuggestingAddress,
         addressSuggestionMessage,
+        coordinatesSource,
+        isGeocodingAddress,
+        addressOutcome,
+        geocodedAddressKey,
         photos,
         title,
         description,

@@ -179,6 +179,9 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
           suggestedAddress: state.suggestedAddress,
           isSuggestingAddress: state.isSuggestingAddress,
           suggestionMessage: state.addressSuggestionMessage,
+          coordinatesSource: state.coordinatesSource,
+          isGeocodingAddress: state.isGeocodingAddress,
+          addressOutcome: state.addressOutcome,
           availableHeight: availableHeight,
           onDetectLocation: () {
             context.read<ReportWizardBloc>().add(CurrentLocationRequested());

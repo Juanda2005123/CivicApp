@@ -6,6 +6,8 @@ import 'package:vigia_app/core/widgets/app_text_field.dart';
 import 'package:vigia_app/core/widgets/dotted_spinner.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
+import 'package:vigia_app/features/reports/domain/entities/address_outcome.dart';
+import 'package:vigia_app/features/reports/domain/entities/location_source.dart';
 import 'package:vigia_app/features/reports/domain/entities/suggested_address.dart';
 import 'package:vigia_app/features/reports/domain/validators/report_validators.dart';
 import 'map_point_selector.dart';
@@ -38,6 +40,17 @@ class LocationPinPicker extends StatefulWidget {
 
   /// Height the step has on screen, so the map can fill it.
   final double? availableHeight;
+
+  /// Where the point comes from (HU-28): the label under the coordinates tells
+  /// an exact point (GPS, map) from an estimate (address, city center).
+  final LocationSource coordinatesSource;
+
+  /// The typed address is being searched: the confirm button shows it.
+  final bool isGeocodingAddress;
+
+  /// How the search of the typed address ended; explained in a notice with the
+  /// next step to take. Null before any search.
+  final AddressOutcome? addressOutcome;
   final void Function({
     required Coordinates coordinates,
     required String formattedAddress,
@@ -59,6 +72,9 @@ class LocationPinPicker extends StatefulWidget {
     this.onDetectLocation,
     this.onMapPointSelected,
     this.availableHeight,
+    this.coordinatesSource = LocationSource.cityCenter,
+    this.isGeocodingAddress = false,
+    this.addressOutcome,
     required this.onLocationConfirmed,
   });
 
@@ -85,6 +101,11 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
 
   /// Shows the "review the suggestion" notice once a suggestion was applied.
   bool _suggestionApplied = false;
+
+  /// What the form said when the last address search ended. The notice about
+  /// the result only shows while the form still says the same: after an edit it
+  /// would be about an address that is no longer there.
+  String? _outcomeSignature;
 
   /// Step 1 shows the map instead of the address form (HU-27). The form stays
   /// in this State, so its fields keep what was typed.
@@ -129,11 +150,17 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
       final suggestion = widget.suggestedAddress;
       if (suggestion != null) _fillFromSuggestion(suggestion, null);
     }
+
+    // Back from Step 2 the picker is built again with the result already known.
+    if (widget.addressOutcome != null) _outcomeSignature = _formSignature();
   }
 
   void _onStructuredFieldChanged() {
     setState(() {});
   }
+
+  /// The address and neighborhood as typed, to tell if they changed.
+  String _formSignature() => '${_buildFormattedAddress()}|${_neighborhoodController.text.trim()}';
 
   void _tryParseInitialAddress(String address) {
     // 1. Detection with plaque: "Tipo Vía # Cruce - Placa"
@@ -195,6 +222,9 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
     final suggestion = widget.suggestedAddress;
     if (suggestion != null && suggestion != oldWidget.suggestedAddress) {
       setState(() => _fillFromSuggestion(suggestion, oldWidget.suggestedAddress));
+    }
+    if (widget.addressOutcome != oldWidget.addressOutcome) {
+      _outcomeSignature = widget.addressOutcome == null ? null : _formSignature();
     }
   }
 
@@ -277,6 +307,59 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
     widget.onMapPointSelected?.call(point);
   }
 
+  /// What happened to the typed address and what to do next (HU-28), or null
+  /// when there is nothing to say (no search yet, or the form changed since).
+  Widget? _outcomeNotice() {
+    final outcome = widget.addressOutcome;
+    if (outcome == null || _outcomeSignature != _formSignature()) return null;
+
+    final city = _city;
+    final (kind, message) = switch (outcome) {
+      AddressOutcome.building => (
+          NoticeKind.success,
+          'Encontramos esa dirección. Revisa que el punto esté sobre el daño y toca "Confirmar ubicación".',
+        ),
+      AddressOutcome.street => (
+          NoticeKind.info,
+          'Ubicamos la calle, pero no la puerta. Mueve el punto en el mapa hasta el daño.',
+        ),
+      AddressOutcome.notFound => (
+          NoticeKind.error,
+          'No encontramos esa dirección, así que dejamos el punto en el centro de $city. '
+              'Revisa cómo la escribiste (ej. Carrera 9 # 5-45) o marca el punto en el mapa.',
+        ),
+      AddressOutcome.notUnderstood => (
+          NoticeKind.error,
+          'Parece una dirección, pero no entendemos cómo está escrita. '
+              'Prueba con Carrera 9 # 5-45 o marca el punto en el mapa. Dejamos el punto en el centro de $city.',
+        ),
+      AddressOutcome.serviceFailed => (
+          NoticeKind.error,
+          'No pudimos buscar la dirección por la conexión. Dejamos el punto en el centro de $city. '
+              'Inténtalo de nuevo o márcalo en el mapa.',
+        ),
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppNotice(kind: kind, message: message),
+        if (outcome != AddressOutcome.building)
+          Wrap(
+            spacing: AppSpacing.sm,
+            children: [
+              if (outcome == AddressOutcome.serviceFailed)
+                TextButton(onPressed: widget.isGeocodingAddress ? null : _submit, child: const Text('Reintentar')),
+              TextButton(
+                onPressed: () => setState(() => _pickingOnMap = true),
+                child: Text(outcome == AddressOutcome.street ? 'Ajustar en el mapa' : 'Marcar en el mapa'),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_pickingOnMap) {
@@ -352,6 +435,8 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
                     ),
                   ],
                 ),
+                const SizedBox(height: AppSpacing.xs),
+                _SourceLabel(source: widget.coordinatesSource),
                 const SizedBox(height: AppSpacing.sm),
                 OutlinedButton.icon(
                   onPressed: () => setState(() => _pickingOnMap = true),
@@ -399,11 +484,19 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
               ),
             ],
           ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            _useStructuredAddress
+                ? 'Ejemplo: Carrera 9 # 5-45 (vía, cruce y número de la puerta).'
+                : 'Para ubicarlo en el mapa, mejor escribe una dirección como Carrera 9 # 5-45. '
+                    'Si es un lugar (frente al parque), marca el punto en el mapa.',
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
           const SizedBox(height: AppSpacing.md),
 
           if (_suggestionApplied) ...[
             const AppNotice(
-              message: 'Sugerimos la dirección de este punto. Revísala antes de continuar.',
+              message: 'Actualizamos la dirección según el punto. Revísala antes de continuar.',
             ),
             const SizedBox(height: AppSpacing.md),
           ],
@@ -595,12 +688,50 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
             },
           ),
           const SizedBox(height: AppSpacing.lg),
+          if (_outcomeNotice() case final notice?) ...[
+            notice,
+            const SizedBox(height: AppSpacing.md),
+          ],
           PrimaryButton(
             label: 'Confirmar ubicación',
+            loadingLabel: 'Buscando la dirección…',
+            isLoading: widget.isGeocodingAddress,
             onPressed: _submit,
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Says, in words and with an icon, where the point comes from (HU-28): never
+/// color alone. A GPS reading and a map point are exact; the rest is an estimate.
+class _SourceLabel extends StatelessWidget {
+  final LocationSource source;
+
+  const _SourceLabel({required this.source});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final (icon, text) = switch (source) {
+      LocationSource.gps => (Icons.gps_fixed, 'Tu ubicación (GPS)'),
+      LocationSource.mapPoint => (Icons.push_pin_outlined, 'Punto marcado en el mapa'),
+      LocationSource.address => (Icons.edit_location_alt_outlined, 'Aproximada: según la dirección'),
+      LocationSource.cityCenter => (Icons.location_city_outlined, 'Aproximada: centro de la ciudad'),
+    };
+
+    return Row(
+      children: [
+        Icon(icon, size: AppSizes.icon - 4, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: AppSpacing.xs + 2),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+        ),
+      ],
     );
   }
 }
