@@ -2,10 +2,12 @@ import 'dart:math';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
+import 'package:vigia_app/features/reports/domain/entities/feed_incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_marker.dart';
 import 'package:vigia_app/features/reports/domain/entities/nearby_incident.dart';
 
+import '../models/feed_incident_model.dart';
 import '../models/incident_model.dart';
 
 /// Interacts directly with `road_incident`, `incident_photo`, and `incident_upvote` tables.
@@ -185,6 +187,30 @@ class IncidentRemoteDataSource {
   }
 
   static const _mapLimit = 200;
+
+  /// One page of the community feed of [city], newest first (HU-19). The id is
+  /// a second sort key: reports created at the same instant keep a stable order
+  /// between pages, so none is skipped or repeated.
+  Future<List<FeedIncident>> getCityFeed(String city, {required int offset, required int limit}) async {
+    try {
+      final rows = await _client
+          .from('road_incident')
+          .select(FeedIncidentModel.select)
+          .eq('city', city)
+          .order('created_at', ascending: false)
+          .order('id_incident', ascending: false)
+          .range(offset, offset + limit - 1);
+
+      return (rows as List<dynamic>)
+          .map((row) => FeedIncidentModel.fromJson(row as Map<String, dynamic>))
+          .toList();
+    } on PostgrestException catch (e) {
+      throw Exception('No pudimos cargar los reportes de la comunidad: ${e.message}');
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception('No pudimos cargar los reportes de la comunidad.');
+    }
+  }
 
   /// Fetches full incident detail by ID or tracking code.
   Future<IncidentModel> getIncidentById(String idOrTrackingCode) async {

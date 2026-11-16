@@ -17,6 +17,10 @@ import 'package:vigia_app/features/dashboard/ui/bloc/profile_event.dart';
 import 'package:vigia_app/features/explore/domain/usecases/get_city_options_usecase.dart';
 import 'package:vigia_app/features/explore/domain/usecases/search_cities_usecase.dart';
 import 'package:vigia_app/features/explore/ui/bloc/city_switcher_bloc.dart';
+import 'package:vigia_app/features/explore/ui/bloc/feed_bloc.dart';
+import 'package:vigia_app/features/explore/ui/widgets/feed_incident_card.dart';
+import 'package:vigia_app/features/reports/domain/entities/feed_incident.dart';
+import 'package:vigia_app/features/reports/domain/usecases/get_city_feed_usecase.dart';
 import 'package:vigia_app/features/explore/ui/bloc/map_bloc.dart';
 import 'package:vigia_app/features/explore/ui/bloc/map_event.dart';
 import 'package:vigia_app/features/explore/ui/screens/home_screen.dart';
@@ -47,6 +51,19 @@ const _marker = IncidentMarker(
   coordinates: Coordinates(latitude: 3.45, longitude: -76.53),
 );
 
+FeedIncident _feedReport(String title, {String id = 'inc-1'}) => FeedIncident(
+      id: id,
+      trackingCode: '#VIG-1001',
+      title: title,
+      neighborhood: 'Centro',
+      categoryName: 'Hueco o bache en calzada',
+      categoryIcon: 'warning',
+      severity: IncidentSeverity.high,
+      status: IncidentStatus.reported,
+      coordinates: const Coordinates(latitude: 3.45, longitude: -76.53),
+      createdAt: DateTime.utc(2026, 11, 14, 12),
+    );
+
 void main() {
   late FakeAuthRepository auth;
   late FakeProfileRepository profiles;
@@ -59,7 +76,9 @@ void main() {
     auth = FakeAuthRepository(user: const AuthUser(id: 'uid-1', email: 'ana@example.com'));
     profiles = FakeProfileRepository()
       ..stored['uid-1'] = const Profile(id: 'uid-1', email: 'ana@example.com', fullName: 'Ana Gomez', cityName: 'Cali');
-    incidents = FakeIncidentRepository()..cityMarkers = [_marker];
+    incidents = FakeIncidentRepository()
+      ..cityMarkers = [_marker]
+      ..feed = [_feedReport('Hueco grande en la Cra 15')];
     cities = const [_cali];
     recents = FakeRecentCitiesRepository();
     location = FakeLocationRepository(coordinates: const Coordinates(latitude: 3.40, longitude: -76.55));
@@ -80,9 +99,11 @@ void main() {
       GetCityOptionsUseCase(FakeCityRepository(cities), recents),
       SearchCitiesUseCase(),
     );
+    final feedBloc = FeedBloc(GetCityFeedUseCase(incidents));
     addTearDown(profileBloc.close);
     addTearDown(mapBloc.close);
     addTearDown(switcherBloc.close);
+    addTearDown(feedBloc.close);
 
     return MultiBlocProvider(
       providers: [
@@ -90,6 +111,7 @@ void main() {
         BlocProvider<ProfileBloc>.value(value: profileBloc),
         BlocProvider<MapBloc>.value(value: mapBloc),
         BlocProvider<CitySwitcherBloc>.value(value: switcherBloc),
+        BlocProvider<FeedBloc>.value(value: feedBloc),
       ],
       child: MaterialApp(
         theme: AppTheme.light,
@@ -329,6 +351,120 @@ void main() {
 
       expect(find.text('Pasto, Nariño'), findsOneWidget);
       expect(profiles.calls.where((c) => c == 'profile.updateLastCity'), isEmpty);
+    });
+  });
+
+  group('Comunidad tab (HU-19)', () {
+    const pasto = City(
+      id: 2,
+      name: 'Pasto',
+      department: 'Nariño',
+      latitude: 1.2136,
+      longitude: -77.2811,
+      isCapital: true,
+    );
+
+    Future<void> openFeed(WidgetTester tester) async {
+      await tester.tap(find.byIcon(Icons.groups_outlined));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('is the second tab, between Mapa and Mi perfil', (tester) async {
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Comunidad'), findsOneWidget); // only the tab label for now
+
+      await openFeed(tester);
+
+      expect(find.text('Comunidad'), findsNWidgets(2)); // app bar title + tab label
+      expect(find.text('Cali, Valle del Cauca'), findsWidgets);
+      expect(find.text('Hueco grande en la Cra 15'), findsOneWidget);
+      expect(find.byType(FeedIncidentCard), findsOneWidget);
+    });
+
+    testWidgets('lists the reports of the city the map resolved, without opening the tab first', (tester) async {
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+
+      expect(incidents.calls, contains('incident.getCityFeed'));
+      expect(incidents.lastCity, 'Cali');
+    });
+
+    testWidgets('changing the city on the map changes the feed', (tester) async {
+      cities = const [_cali, pasto];
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+      incidents.feed = [_feedReport('Bache en Pasto', id: 'inc-9')];
+
+      await tester.tap(find.text('Cali, Valle del Cauca'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'pasto');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pasto, Nariño'));
+      await tester.pumpAndSettle();
+
+      expect(incidents.lastCity, 'Pasto');
+
+      await openFeed(tester);
+
+      expect(find.text('Bache en Pasto'), findsOneWidget);
+      expect(find.text('Hueco grande en la Cra 15'), findsNothing);
+    });
+
+    testWidgets('a published report refreshes the feed', (tester) async {
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+      incidents.feed = [_feedReport('Reporte recién publicado', id: 'inc-2')];
+
+      await tester.tap(find.text('Reportar daño'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Publicar'));
+      await tester.pumpAndSettle();
+      await openFeed(tester);
+
+      expect(find.text('Reporte recién publicado'), findsOneWidget);
+    });
+
+    testWidgets('a cancelled wizard does not reload the feed', (tester) async {
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+      final callsBefore = incidents.calls.where((c) => c == 'incident.getCityFeed').length;
+
+      await tester.tap(find.text('Reportar daño'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+
+      expect(incidents.calls.where((c) => c == 'incident.getCityFeed').length, callsBefore);
+    });
+
+    testWidgets('a guest reads the feed too, and the empty state opens the sign-in modal', (tester) async {
+      auth = FakeAuthRepository();
+      location = FakeLocationRepository(error: Exception('Sin permiso de ubicación.'));
+      incidents.feed = [];
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+
+      await openFeed(tester);
+
+      expect(find.text('Aún no hay reportes en Cali'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Reportar daño'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Necesitas iniciar sesión'), findsOneWidget);
+      expect(find.text('Publicar'), findsNothing);
+    });
+
+    testWidgets('a guest sees the reports of their nearest city in the feed', (tester) async {
+      auth = FakeAuthRepository();
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+
+      await openFeed(tester);
+
+      expect(find.text('Hueco grande en la Cra 15'), findsOneWidget);
     });
   });
 }

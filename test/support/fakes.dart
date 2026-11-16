@@ -10,6 +10,7 @@ import 'package:vigia_app/features/auth/domain/repositories/location_repository.
 import 'package:vigia_app/features/auth/domain/repositories/profile_repository.dart';
 import 'package:vigia_app/features/explore/domain/repositories/recent_cities_repository.dart';
 import 'package:vigia_app/features/reports/domain/entities/geocoded_place.dart';
+import 'package:vigia_app/features/reports/domain/entities/feed_incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_category.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_marker.dart';
@@ -214,6 +215,11 @@ class FakeIncidentRepository implements IncidentRepository {
   List<NearbyIncident> nearbyToReturn = [];
   List<IncidentMarker> cityMarkers = [];
   String? lastCity;
+
+  /// Every report of the feed, newest first; [getCityFeed] slices it like the
+  /// database does.
+  List<FeedIncident> feed = [];
+  Exception? feedError;
   Exception? createError;
   Exception? getError;
 
@@ -280,6 +286,14 @@ class FakeIncidentRepository implements IncidentRepository {
     calls.add('incident.getCityIncidents');
     lastCity = city;
     return cityMarkers;
+  }
+
+  @override
+  Future<List<FeedIncident>> getCityFeed(String city, {required int offset, int limit = 20}) async {
+    calls.add('incident.getCityFeed');
+    lastCity = city;
+    if (feedError != null) throw feedError!;
+    return feed.skip(offset).take(limit).toList();
   }
 
   @override
