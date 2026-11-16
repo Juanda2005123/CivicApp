@@ -22,8 +22,8 @@ void main() {
 
     final point = await repository.geocodeAddress('Carrera 5, Cali, Colombia');
 
-    expect(point.latitude, 3.4516);
-    expect(point.longitude, -76.5320);
+    expect(point!.coordinates.latitude, 3.4516);
+    expect(point.coordinates.longitude, -76.5320);
     expect(requested.queryParameters['q'], 'Carrera 5, Cali, Colombia');
   });
 }

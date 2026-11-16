@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
+import 'package:vigia_app/features/reports/domain/entities/address_match.dart';
 import 'package:vigia_app/features/reports/domain/entities/geocoded_place.dart';
 
 /// The only class that talks to OpenStreetMap's Nominatim: reverse geocoding
@@ -53,9 +54,10 @@ class NominatimDataSource {
   /// as the point of a report.
   static const _areaCategories = {'boundary', 'place'};
 
-  /// The point of the first street, building or place that matches [query]
-  /// (HU-28). Throws when there is none, or the service fails.
-  Future<Coordinates> search(String query) async {
+  /// The first street, building or place that matches [query] (HU-28), or null
+  /// when there is none. Throws when the service fails, so "not found" and
+  /// "could not search" are different answers.
+  Future<AddressMatch?> search(String query) async {
     final uri = Uri.https('nominatim.openstreetmap.org', '/search', {
       'q': query,
       'format': 'jsonv2',
@@ -77,12 +79,17 @@ class NominatimDataSource {
       if (body is! List) throw const FormatException('Unexpected search answer');
       for (final result in body.whereType<Map<String, dynamic>>()) {
         if (_areaCategories.contains(result['category'])) continue;
-        return Coordinates(
-          latitude: double.parse('${result['lat']}'),
-          longitude: double.parse('${result['lon']}'),
+        return AddressMatch(
+          coordinates: Coordinates(
+            latitude: double.parse('${result['lat']}'),
+            longitude: double.parse('${result['lon']}'),
+          ),
+          // A road is only the street; anything else (a house, a shop, a
+          // clinic) is a place with its own point.
+          isStreetOnly: result['category'] == 'highway',
         );
       }
-      throw Exception('No encontramos esa dirección.');
+      return null;
     } on TimeoutException {
       throw Exception('La búsqueda de la dirección tardó demasiado.');
     } on http.ClientException {

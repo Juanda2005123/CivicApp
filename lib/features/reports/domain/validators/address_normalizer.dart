@@ -81,10 +81,10 @@ class AddressNormalizer {
         .replaceAllMapped(_numberMark, (_) => '# ');
     final parts = text.split('#');
     if (parts.length > 2) return null;
+    if (parts.length == 1) return _parseWithoutMark(text);
 
     final road = _normalizeRoad(parts.first);
     if (road == null) return null;
-    if (parts.length == 1) return (road: road, cross: null, plate: null);
 
     // "5 - 45", "5-45" and "5": the plate follows the last hyphen.
     final rest = parts[1].trim();
@@ -100,6 +100,37 @@ class AddressNormalizer {
       plate: plate,
     );
   }
+
+  /// An address written without `#`: `Cra 9` alone, or `Cra 9 45-20` (cross
+  /// street and plate after the road, common in everyday writing).
+  static ({String road, String? cross, String? plate})? _parseWithoutMark(String text) {
+    final road = _normalizeRoad(text);
+    if (road != null) return (road: road, cross: null, plate: null);
+
+    final match = _crossAndPlateAtTheEnd.firstMatch(text);
+    if (match == null) return null;
+    final roadOnly = _normalizeRoad(match.group(1)!);
+    if (roadOnly == null) return null;
+    return (
+      road: roadOnly,
+      cross: _normalizeNumber(match.group(2)!) ?? match.group(2)!.toUpperCase(),
+      plate: match.group(3)!.toUpperCase(),
+    );
+  }
+
+  /// "Cra 9 45-20": the road, then the cross street and the plate with a hyphen.
+  static final RegExp _crossAndPlateAtTheEnd = RegExp(r'^(.+?)\s+(\d+[A-Za-z]?)\s*-\s*(\d+[A-Za-z]?)$');
+
+  /// Words that start a road: `Carrera`, `Cra`, `Av`, `Kr`...
+  static final RegExp _roadWord = RegExp(
+    r'(^|[\s,])(' + _roadTypes.keys.join('|') + r')\.?(?=[\s,]|$)',
+    caseSensitive: false,
+  );
+
+  /// True when the text looks like a road address (a road word and a number)
+  /// whether or not [parse] understands it: the wizard tells the citizen how to
+  /// write it instead of saying only "not found".
+  static bool looksLikeAddress(String text) => _roadWord.hasMatch(text) && RegExp(r'\d').hasMatch(text);
 
   /// The searches to try, from the most to the least precise (HU-28), for an
   /// address in [city]: the plate when there is one (the building, if mapped),

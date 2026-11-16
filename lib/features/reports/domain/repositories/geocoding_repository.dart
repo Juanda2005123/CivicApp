@@ -1,5 +1,6 @@
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 
+import '../entities/address_match.dart';
 import '../entities/geocoded_place.dart';
 
 /// Contract for turning coordinates into an address (HU-26) and an address into
@@ -15,7 +16,8 @@ abstract class GeocodingRepository {
 
   /// The point of a typed address (HU-28), for a [query] already written the way
   /// the service reads it. Only a street, a building or a place counts: a whole
-  /// city or area is not an address. Throws an [Exception] when nothing matches
-  /// or the service is slow or unavailable.
-  Future<Coordinates> geocodeAddress(String query);
+  /// city or area is not an address. Answers null when nothing matches, and
+  /// throws an [Exception] when the service is slow or unavailable, so the two
+  /// can be told apart.
+  Future<AddressMatch?> geocodeAddress(String query);
 }

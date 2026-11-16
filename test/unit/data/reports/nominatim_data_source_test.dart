@@ -111,10 +111,11 @@ void main() {
         ]);
       });
 
-      final point = await _source(client).search('Carrera 9, El Modelo, Popayán, Colombia');
+      final match = (await _source(client).search('Carrera 9, El Modelo, Popayán, Colombia'))!;
 
-      expect(point.latitude, 2.4422653);
-      expect(point.longitude, -76.6091109);
+      expect(match.coordinates.latitude, 2.4422653);
+      expect(match.coordinates.longitude, -76.6091109);
+      expect(match.isStreetOnly, isTrue);
       expect(sent.url.host, 'nominatim.openstreetmap.org');
       expect(sent.url.path, '/search');
       expect(sent.url.queryParameters['q'], 'Carrera 9, El Modelo, Popayán, Colombia');
@@ -130,9 +131,10 @@ void main() {
             {'category': 'amenity', 'type': 'cafe', 'lat': '2.4422', 'lon': '-76.6091'},
           ]));
 
-      final point = await _source(client).search('Calle 5 # 9-45, Popayán, Colombia');
+      final match = (await _source(client).search('Calle 5 # 9-45, Popayán, Colombia'))!;
 
-      expect(point.latitude, 2.4422);
+      expect(match.coordinates.latitude, 2.4422);
+      expect(match.isStreetOnly, isFalse); // a cafe has its own point
     });
 
     test('a query that only finds the city (abbreviations!) is "not found", not a point', () async {
@@ -140,16 +142,13 @@ void main() {
             {'category': 'boundary', 'type': 'administrative', 'lat': '2.4', 'lon': '-76.6'},
           ]));
 
-      await expectLater(
-        _source(client).search('Cra 9 # 5-45, Popayán'),
-        throwsA(isA<Exception>().having((e) => e.toString(), 'message', contains('No encontramos esa dirección'))),
-      );
+      expect(await _source(client).search('Cra 9 # 5-45, Popayán'), isNull);
     });
 
-    test('no results is "not found"', () async {
+    test('no results is "not found" (null), which is not the same as a failure', () async {
       final client = MockClient((_) async => list([]));
 
-      await expectLater(_source(client).search('Avenida 6N # 25-30, Cali'), throwsA(isA<Exception>()));
+      expect(await _source(client).search('Avenida 6N # 25-30, Cali'), isNull);
     });
 
     test('a server error, no connection and a broken answer become clear exceptions', () async {
@@ -220,7 +219,7 @@ void main() {
       final second = source.search('Calle 5, Cali');
 
       expect(await first, isA<Exception>());
-      expect((await second).latitude, 2.44);
+      expect((await second)!.coordinates.latitude, 2.44);
     });
   });
 }

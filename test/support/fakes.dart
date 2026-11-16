@@ -9,6 +9,7 @@ import 'package:vigia_app/features/auth/domain/repositories/city_repository.dart
 import 'package:vigia_app/features/auth/domain/repositories/location_repository.dart';
 import 'package:vigia_app/features/auth/domain/repositories/profile_repository.dart';
 import 'package:vigia_app/features/explore/domain/repositories/recent_cities_repository.dart';
+import 'package:vigia_app/features/reports/domain/entities/address_match.dart';
 import 'package:vigia_app/features/reports/domain/entities/geocoded_place.dart';
 import 'package:vigia_app/features/reports/domain/entities/feed_incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
@@ -171,9 +172,9 @@ class FakeGeocodingRepository implements GeocodingRepository {
   Exception? streetError;
   final List<Coordinates> streetQueries = [];
 
-  /// The point each typed-address query answers (HU-28). A query that is not
-  /// here finds nothing, like the real service.
-  final Map<String, Coordinates> addressResults = {};
+  /// What each typed-address query finds (HU-28). A query that is not here
+  /// finds nothing (null), like the real service; [addressError] makes it fail.
+  final Map<String, AddressMatch> addressResults = {};
   final List<String> addressQueries = [];
   Exception? addressError;
 
@@ -195,10 +196,10 @@ class FakeGeocodingRepository implements GeocodingRepository {
   }
 
   @override
-  Future<Coordinates> geocodeAddress(String query) async {
+  Future<AddressMatch?> geocodeAddress(String query) async {
     addressQueries.add(query);
     if (addressError != null) throw addressError!;
-    return addressResults[query] ?? (throw Exception('No encontramos esa dirección.'));
+    return addressResults[query];
   }
 }
 

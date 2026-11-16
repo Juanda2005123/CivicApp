@@ -5,10 +5,14 @@ import 'package:vigia_app/features/auth/domain/usecases/detect_nearest_city_usec
 import 'package:vigia_app/features/auth/domain/usecases/get_current_profile_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/open_location_settings_usecase.dart';
 
+import '../../domain/entities/address_outcome.dart';
+import '../../domain/entities/location_source.dart';
 import '../../domain/entities/picked_photo.dart';
 import '../../domain/usecases/create_incident_usecase.dart';
 import '../../domain/usecases/endorse_incident_usecase.dart';
+import '../../domain/usecases/geocode_address_usecase.dart';
 import '../../domain/usecases/get_categories_usecase.dart';
+import '../../domain/usecases/get_city_center_usecase.dart';
 import '../../domain/usecases/get_current_location_usecase.dart';
 import '../../domain/usecases/get_nearby_incidents_usecase.dart';
 import '../../domain/usecases/pick_photo_usecase.dart';
@@ -29,6 +33,8 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
   final DetectNearestCityUseCase _detectNearestCity;
   final OpenLocationSettingsUseCase _openLocationSettings;
   final SuggestAddressUseCase _suggestAddress;
+  final GeocodeAddressUseCase _geocodeAddress;
+  final GetCityCenterUseCase _getCityCenter;
 
   ReportWizardBloc(
     this._getCategories,
@@ -41,6 +47,8 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
     this._detectNearestCity,
     this._openLocationSettings,
     this._suggestAddress,
+    this._geocodeAddress,
+    this._getCityCenter,
   ) : super(const ReportWizardState()) {
     on<WizardStarted>(_onWizardStarted);
     on<CurrentLocationRequested>(_onCurrentLocationRequested);
@@ -69,19 +77,21 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
 
       Coordinates? initialCoords = state.coordinates;
       String? initialCity = state.city ?? profile?.cityName;
+      var source = state.coordinatesSource;
 
       // Proactively detect real device GPS or fall back to user's registered city
       Coordinates? deviceCoords;
       try {
         deviceCoords = await _getCurrentLocation();
         initialCoords = deviceCoords;
+        source = LocationSource.gps;
         try {
           final detectedCity = await _detectNearestCity();
           initialCity = detectedCity.name;
         } catch (_) {}
       } catch (_) {
         if (initialCoords == null && initialCity != null) {
-          initialCoords = _resolveFallbackCoordinatesForCity(initialCity);
+          initialCoords = await _cityCenterOrNull(initialCity);
         }
       }
 
@@ -93,6 +103,7 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
         categories: categories,
         coordinates: initialCoords,
         city: initialCity,
+        coordinatesSource: source,
         clearErrorMessage: true,
       ));
 
@@ -130,6 +141,9 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
       emit(state.copyWith(
         isLocating: false,
         coordinates: coords,
+        coordinatesSource: LocationSource.gps,
+        clearAddressOutcome: true,
+        clearGeocodedAddressKey: true,
         city: cityName,
         locationStatusMessage:
             'GPS detectado: (${coords.latitude.toStringAsFixed(4)}, ${coords.longitude.toStringAsFixed(4)}) en $cityName',
@@ -155,6 +169,9 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
   ) async {
     emit(state.copyWith(
       coordinates: event.coordinates,
+      coordinatesSource: LocationSource.mapPoint,
+      clearAddressOutcome: true,
+      clearGeocodedAddressKey: true,
       clearLocationStatusMessage: true,
       clearErrorMessage: true,
       clearSuggestedAddress: true,
@@ -210,27 +227,86 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
     }
   }
 
-  void _onLocationPitched(
+  /// "Confirmar ubicación". The point decides what happens (HU-28):
+  ///
+  /// - A GPS reading or a map point is the citizen's own: it is never replaced
+  ///   by the address, so Step 2 opens right away.
+  /// - The city center, or the point of another address, is an estimate: the
+  ///   typed address is searched first and Step 1 stays open, so the citizen
+  ///   sees where it landed and can move the point. Confirming the same
+  ///   address again then moves on (a service failure is the exception: it
+  ///   searches again).
+  Future<void> _onLocationPitched(
     LocationPitched event,
     Emitter<ReportWizardState> emit,
-  ) {
+  ) async {
+    if (state.isGeocodingAddress) return;
+
     try {
       ReportValidators.validateCoordinates(event.coordinates);
       ReportValidators.validateAddress(event.formattedAddress);
       ReportValidators.validateNeighborhood(event.neighborhood);
+    } on Exception catch (e) {
+      emit(state.copyWith(errorMessage: _cleanExceptionMessage(e)));
+      return;
+    }
 
-      emit(state.copyWith(
-        coordinates: event.coordinates,
-        formattedAddress: event.formattedAddress,
+    final key = '${event.formattedAddress.trim()}|${event.neighborhood.trim()}|${event.city}';
+    if (!state.coordinatesSource.isChosenByCitizen && key != state.geocodedAddressKey) {
+      await _locateTypedAddress(event, key, emit);
+      return;
+    }
+
+    emit(state.copyWith(
+      coordinates: event.coordinates,
+      formattedAddress: event.formattedAddress,
+      neighborhood: event.neighborhood,
+      city: event.city,
+      currentStep: 2,
+      clearErrorMessage: true,
+    ));
+  }
+
+  /// HU-28: turns the typed address into a point. A GPS reading or a map point
+  /// that arrives while it searches wins: the answer is then dropped.
+  Future<void> _locateTypedAddress(
+    LocationPitched event,
+    String key,
+    Emitter<ReportWizardState> emit,
+  ) async {
+    final startCoordinates = state.coordinates;
+    final startSource = state.coordinatesSource;
+    emit(state.copyWith(
+      isGeocodingAddress: true,
+      formattedAddress: event.formattedAddress,
+      neighborhood: event.neighborhood,
+      city: event.city,
+      clearAddressOutcome: true,
+      clearErrorMessage: true,
+    ));
+
+    try {
+      final location = await _geocodeAddress(
+        address: event.formattedAddress,
         neighborhood: event.neighborhood,
         city: event.city,
-        currentStep: 2,
-        clearErrorMessage: true,
+      );
+      if (!identical(state.coordinates, startCoordinates) || state.coordinatesSource != startSource) {
+        emit(state.copyWith(isGeocodingAddress: false));
+        return;
+      }
+
+      final failed = location.outcome == AddressOutcome.serviceFailed;
+      emit(state.copyWith(
+        isGeocodingAddress: false,
+        coordinates: location.coordinates,
+        coordinatesSource: location.source,
+        addressOutcome: location.outcome,
+        geocodedAddressKey: failed ? null : key,
+        clearGeocodedAddressKey: failed,
       ));
     } on Exception catch (e) {
-      emit(state.copyWith(
-        errorMessage: _cleanExceptionMessage(e),
-      ));
+      emit(state.copyWith(isGeocodingAddress: false, errorMessage: _cleanExceptionMessage(e)));
     }
   }
 
@@ -459,27 +535,13 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
     }
   }
 
-  Coordinates _resolveFallbackCoordinatesForCity(String cityName) {
-    final lower = cityName.toLowerCase().trim();
-    if (lower.contains('popay')) {
-      return const Coordinates(latitude: 2.4448, longitude: -76.6147);
+  /// The center of [cityName] from the official catalog, or null if it is not there.
+  Future<Coordinates?> _cityCenterOrNull(String cityName) async {
+    try {
+      return await _getCityCenter(cityName);
+    } on Exception {
+      return null;
     }
-    if (lower.contains('bogot')) {
-      return const Coordinates(latitude: 4.7110, longitude: -74.0721);
-    }
-    if (lower.contains('medell')) {
-      return const Coordinates(latitude: 6.2442, longitude: -75.5812);
-    }
-    if (lower.contains('barranquill')) {
-      return const Coordinates(latitude: 10.9685, longitude: -74.7813);
-    }
-    if (lower.contains('bucaramang')) {
-      return const Coordinates(latitude: 7.1254, longitude: -73.1198);
-    }
-    if (lower.contains('pasto')) {
-      return const Coordinates(latitude: 1.2136, longitude: -77.2811);
-    }
-    return const Coordinates(latitude: 3.4516, longitude: -76.5320); // Cali default
   }
 
   String _cleanExceptionMessage(Exception e) {

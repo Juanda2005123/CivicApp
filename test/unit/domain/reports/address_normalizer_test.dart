@@ -87,6 +87,17 @@ void main() {
       expect(parsed.plate, '45B');
     });
 
+    test('an address without #, with the cross street and the plate after the road', () {
+      for (final typed in ['Cra 9 5-45', 'Carrera 9 5 - 45', 'cra. 9  5-45']) {
+        final parsed = AddressNormalizer.parse(typed)!;
+
+        expect(parsed.road, 'Carrera 9', reason: typed);
+        expect(parsed.cross, '5', reason: typed);
+        expect(parsed.plate, '45', reason: typed);
+      }
+      expect(AddressNormalizer.parse('Av 6N 25-30')!.road, 'Avenida 6 Norte');
+    });
+
     test('a reference point is not a nomenclature', () {
       expect(AddressNormalizer.parse('Frente a la estación de servicio Bellavista'), isNull);
       expect(AddressNormalizer.parse('Parque Caldas'), isNull);
@@ -136,6 +147,24 @@ void main() {
         AddressNormalizer.queries(address: 'Parque Caldas', neighborhood: '', city: 'Cali'),
         ['Parque Caldas, Cali, Colombia'],
       );
+    });
+  });
+
+  group('AddressNormalizer.looksLikeAddress', () {
+    test('a road word and a number look like an address, understood or not', () {
+      expect(AddressNormalizer.looksLikeAddress('Carrera 9 # 5-45'), isTrue);
+      expect(AddressNormalizer.looksLikeAddress('Cra 9 con Calle 5'), isTrue);
+      expect(AddressNormalizer.looksLikeAddress('kr. 7 No 45'), isTrue);
+    });
+
+    test('a place or a text without a number does not', () {
+      expect(AddressNormalizer.looksLikeAddress('Frente al parque Caldas'), isFalse);
+      expect(AddressNormalizer.looksLikeAddress('Carrera principal del barrio'), isFalse);
+      expect(AddressNormalizer.looksLikeAddress('Barrio 20 de Julio'), isFalse);
+    });
+
+    test('a road abbreviation inside another word is not a road word', () {
+      expect(AddressNormalizer.looksLikeAddress('Escuela Crawford 12'), isFalse);
     });
   });
 }
