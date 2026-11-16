@@ -12,7 +12,10 @@ import 'package:vigia_app/features/reports/domain/entities/incident_photo.dart';
 import 'package:vigia_app/features/reports/ui/bloc/incident_detail_bloc.dart';
 import 'package:vigia_app/features/reports/ui/screens/incident_detail_screen.dart';
 
+import 'package:vigia_app/features/reports/ui/bloc/comments_bloc.dart';
+
 import '../../support/detail_bloc_factory.dart';
+import '../../support/fake_comment_repository.dart';
 import '../../support/fakes.dart';
 
 void main() {
@@ -60,10 +63,15 @@ void main() {
     }
 
     Widget createWidgetUnderTest(IncidentDetailBloc bloc, {String? incidentIdOrCode}) {
+      final commentsBloc = buildCommentsBloc(FakeCommentRepository());
+      addTearDown(commentsBloc.close);
       return MaterialApp(
         theme: AppTheme.light,
-        home: BlocProvider<IncidentDetailBloc>.value(
-          value: bloc,
+        home: MultiBlocProvider(
+          providers: [
+            BlocProvider<IncidentDetailBloc>.value(value: bloc),
+            BlocProvider<CommentsBloc>.value(value: commentsBloc),
+          ],
           child: IncidentDetailScreen(incidentIdOrCode: incidentIdOrCode),
         ),
       );
