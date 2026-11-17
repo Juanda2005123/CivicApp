@@ -20,6 +20,7 @@ void main() {
       expect(model.id, 'uid-1');
       expect(model.fullName, 'Ana Gomez');
       expect(model.cityName, 'Cali');
+      expect(model.lastCityName, 'Cali');
       expect(model.rankId, 2);
       expect(model.rankName, 'Active Citizen');
       expect(model.experiencePoints, 120);

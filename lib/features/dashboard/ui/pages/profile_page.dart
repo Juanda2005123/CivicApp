@@ -7,17 +7,18 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_status_chip.dart';
 import '../../../../core/widgets/dotted_spinner.dart';
+import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/widgets/rank_seal.dart';
-import '../../../../core/widgets/theme_toggle_button.dart';
 import '../../../auth/domain/entities/profile.dart';
 import '../bloc/profile_bloc.dart';
 import '../bloc/profile_event.dart';
 import '../bloc/profile_state.dart';
 
-/// Citizen profile summary (Sprint 1 landing screen) with secure logout.
-/// It only draws the [ProfileState]; nothing arrives through route arguments.
-class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+/// "Mi perfil" tab of the shell: the citizen's profile summary (Sprint 1) with
+/// secure logout. A Page, so it has no Scaffold; it only draws the
+/// [ProfileState]. A guest (HU-22) sees an invitation to sign in instead.
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,28 +29,14 @@ class DashboardScreen extends StatelessWidget {
           Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (route) => false);
         }
       },
-      builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Mi perfil'),
-            automaticallyImplyLeading: false,
-            actions: [
-              const ThemeToggleButton(),
-              IconButton(
-                tooltip: 'Cerrar sesión',
-                icon: const Icon(Icons.logout),
-                onPressed: () => context.read<ProfileBloc>().add(SignOutRequested()),
-              ),
-            ],
-          ),
-          body: SafeArea(child: _buildBody(context, state)),
-        );
-      },
+      builder: (context, state) => _buildBody(context, state),
     );
   }
 
   Widget _buildBody(BuildContext context, ProfileState state) {
     final profile = state.profile;
+
+    if (state.status == ProfileStatus.guest) return const _GuestInvitation();
 
     if (state.status == ProfileStatus.failure && profile == null) {
       return _LoadError(
@@ -80,6 +67,58 @@ class DashboardScreen extends StatelessWidget {
                 label: const Text('Cerrar sesión'),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Replaces the civic dashboard for a guest (HU-22, criterion 4).
+class _GuestInvitation extends StatelessWidget {
+  const _GuestInvitation();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.screen),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: AppSpacing.maxContentWidth),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Icon(Icons.person_outline, size: AppSpacing.xxxl, color: context.semantic.accent),
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    'Inicia sesión para ver tu perfil',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Con una cuenta puedes reportar daños, apoyar reportes y ganar puntos de reputación.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  PrimaryButton(
+                    label: 'Iniciar sesión',
+                    onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  OutlinedButton(
+                    onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
+                    child: const Text('Crear cuenta'),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

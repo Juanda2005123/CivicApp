@@ -21,8 +21,9 @@
 6. [Prerequisites & Environment Setup](#prerequisites--environment-setup)
 7. [How to Run the Application](#how-to-run-the-application)
 8. [Sprint 1 Walkthrough](#sprint-1-walkthrough-registration-login-and-profile-summary)
-9. [Running the Test Suite](#running-the-test-suite)
-10. [Commit & Contribution Standards](#commit--contribution-standards)
+9. [Sprint 2 Walkthrough](#sprint-2-walkthrough-map-community-feed-and-report-wizard)
+10. [Running the Test Suite](#running-the-test-suite)
+11. [Commit & Contribution Standards](#commit--contribution-standards)
 
 ---
 
@@ -33,6 +34,7 @@
 3. `flutter pub get` y `flutter run -d chrome` (o un dispositivo Android).
 4. Flujo: **Regístrate** → llena el formulario → **Crear cuenta** → llegas a *Mi perfil* → **Cerrar sesión** → **Ingresar** con los mismos datos.
 5. VIGÍA tiene un solo tipo de usuario (el ciudadano). Para ver que el flujo sirve para cualquier usuario, repite el registro y el login con una segunda cuenta (otro correo y otra ciudad). El detalle paso a paso está en "Sprint 1 Walkthrough".
+6. **Sprint 2:** con la sesión iniciada recorre **Mapa**, **Comunidad** y **Reportar daño** (asistente de 5 pasos). También puedes entrar sin cuenta con **Explorar sin cuenta**. El paso a paso está en "Sprint 2 Walkthrough". No hay cuentas ni contraseñas precargadas: el registro es abierto, crea la tuya (por ejemplo, la contraseña `Vigia2026` cumple las reglas).
 
 ---
 
@@ -243,7 +245,7 @@ You can run VIGÍA across multiple platforms:
 
 VIGÍA has a single kind of user (the citizen), so there is one flow to demonstrate; repeat it with a second account (different email and city) to show it works for any user. Start the app with `flutter run -d chrome` (or any device) with the Supabase setup above done.
 
-1. **Splash:** the app checks for a persisted session. With none, it opens the **Login** screen. With one, it jumps straight to the profile summary (step 5).
+1. **Splash:** the app checks for a persisted session. With none, it opens the **Login** screen. With one, it jumps straight to the home screen on the **Mapa** tab (the profile summary is the **Mi perfil** tab, step 5).
 2. **Create an account:** on the Login screen tap **Regístrate**.
 3. **Registration form:** fill in
    - *Nombre completo* with at least two words (e.g. `Ana Gomez`),
@@ -251,11 +253,44 @@ VIGÍA has a single kind of user (the citizen), so there is one flow to demonstr
    - *Ciudad de residencia*: pick it from the list **or** tap **Detectar mi ciudad por GPS**,
    - *Password* (6+ characters with an uppercase letter, a lowercase letter and a number; the chips turn green as each rule is met) and *Confirmar contraseña*.
    
-   Tap **Crear cuenta**. The app creates the Auth account and then the `user_profile` row, and lands on the summary.
+   Tap **Crear cuenta**. The app creates the Auth account and then the `user_profile` row, and lands on the **Mapa** tab.
 4. **Errors you can show:** a repeated email, a one-word name, a weak password, mismatched passwords or no city selected all stop the registration with a clear message.
-5. **Profile summary (Mi perfil):** shows the rank seal, the name, an "active session" chip, reputation points, email, residence city and civic rank (`Nivel 1 · Observador Urbano`).
+5. **Profile summary:** tap **Mi perfil** in the bottom bar. It shows the rank seal, the name, an "active session" chip, reputation points, email, residence city and civic rank (`Nivel 1 · Observador Urbano`).
 6. **Log out:** tap **Cerrar sesión**. The app returns to Login and the back button no longer reaches the summary.
-7. **Log in:** enter the same email and password and tap **Ingresar**. You land on the summary again. Wrong credentials show an inline notice ("Correo o contraseña incorrectos…") and stay on the form.
+7. **Log in:** enter the same email and password and tap **Ingresar**. You land on the **Mapa** tab again. Wrong credentials show an inline notice ("Correo o contraseña incorrectos…") and stay on the form.
+
+---
+
+## Sprint 2 Walkthrough: Map, Community Feed and Report Wizard
+
+No accounts or passwords ship with the app: registration is open (see the Sprint 1 walkthrough). Use any email and a password with 6+ characters, an uppercase letter, a lowercase letter and a number (for example `Vigia2026`). Run with `flutter run -d chrome` (or a device) after the Supabase setup above, **with Confirm email turned off**.
+
+1. **Guest mode (HU-22):** on the Login screen tap **Explorar sin cuenta**. You see **Mapa** and **Comunidad** without credentials. **Reportar daño** and **Mi perfil** invite you to sign in or register instead of running the action.
+2. **Map (HU-03, HU-13, HU-14):** after signing in the map asks for the location permission. If it is granted and you are inside a coverage city, the map opens on **that city** and centers on you, even if you registered in another one. Without the permission, or outside coverage, it opens on your last city. Tap a marker (its icon shows the report type, its shape the severity) to open the report detail: code, status, photos, address, coordinates and author. **Centrar en mi ubicación** (top right) takes the map back to your position.
+3. **City switcher (HU-21):** tap the city name (top left). The sheet lists your recent cities and shortcuts; type `bogota` (accents and case do not matter) and pick a result. The map and the feed show that city and your saved last city is updated.
+4. **Community feed (HU-19):** the **Comunidad** tab lists the reports of the active city, newest first, 20 at a time as you scroll. Each card shows photo (or the type icon), title, neighborhood, author with rank, severity chip, votes and comments. Pull down to refresh.
+5. **Report wizard (HU-06 to HU-12):** tap **Reportar daño** (Mapa or Comunidad). The title always shows the step ("Paso 2 de 5"); leaving with data asks for confirmation.
+   - **Step 1, location (HU-07, HU-26, HU-27, HU-28):** with GPS the point is yours and the address is proposed. **Seleccionar ubicación** opens a map to move the pin. In *Nomenclatura vial* complete road type, main road (a number for Calle/Carrera/Diagonal/Transversal/Circular; a name is allowed for Avenida/Autopista, e.g. `Autopista Sur`), cross street and neighborhood, or use *Punto de referencia*. **Confirmar ubicación** finds the typed address on the map when you did not pick the point yourself. Points outside Colombia are refused.
+   - **Step 2, type and severity (HU-08, HU-09):** pick a category and a severity (Baja, Media, Alta, Crítica: each with its own shape, color and text). **Continuar** without choosing says what is missing. If there are reports of the same type within 150 m the app says "Hay N daño(s) cercano(s)"; **Ver daños** lists them with photo, severity and distance, **Es este** supports that report and ends the flow, **Es otro daño** goes on.
+   - **Step 3, photos (HU-10):** up to 3 photos in JPG, PNG or WebP of at most 5 MB (camera or gallery); other formats are refused with a message, the first photo is the main one, and the step can be skipped.
+   - **Step 4, description (HU-11):** title (max. 180 characters) and description are required; dimensions are optional.
+   - **Step 5, publish (HU-12):** review the summary and tap **Publicar reporte (+100 XP)**. The report gets a unique code (`#VIG-XXXX`), appears on the map and in **Comunidad**, and your **Mi perfil** shows the +100 points.
+6. **Report detail (HU-14):** tap a marker or a feed card to see the photo carousel, the community validation bar (`X de 10 apoyos`), the location and the author.
+
+To see the nearby-reports warning (step 2), publish one report first and start a second one at the same place with the same type.
+
+Not part of this delivery (planned for Sprint 3, see `docs/06-sprint-3-backlog.md`): supporting and commenting on reports, privacy and personal data settings, avatar, search and filters, the impact dashboard and push notifications.
+
+### Demo video recorder (optional)
+
+`tool/demo/` has a Playwright script that drives the web build and records the video of the Sprint 2 flows. It needs Node 20+, the web build served on port 8099 and a test account in `tool/demo/.env.local` (`DEMO_EMAIL`, `DEMO_PASSWORD`, git-ignored). See the header of `tool/demo/demo.mjs` for the variables (`DEMO_LAT`, `DEMO_LON`, `HEADED`, `SKIP_WIZARD`).
+
+```bash
+flutter build web
+(cd build/web && python3 -m http.server 8099) &
+cd tool/demo && npm install && npx playwright install chromium
+DEMO_LAT=3.4516 DEMO_LON=-76.5320 HEADED=1 node --env-file=.env.local demo.mjs   # run twice: the first publishes the report the second one detects as nearby
+```
 
 ---
 

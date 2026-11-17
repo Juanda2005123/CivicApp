@@ -11,7 +11,16 @@ import '../../features/auth/ui/screens/register_screen.dart';
 import '../../features/auth/ui/screens/splash_screen.dart';
 import '../../features/dashboard/ui/bloc/profile_bloc.dart';
 import '../../features/dashboard/ui/bloc/profile_event.dart';
-import '../../features/dashboard/ui/screens/dashboard_screen.dart';
+import '../../features/explore/ui/bloc/city_switcher_bloc.dart';
+import '../../features/explore/ui/bloc/feed_bloc.dart';
+import '../../features/explore/ui/bloc/map_bloc.dart';
+import '../../features/explore/ui/bloc/map_event.dart';
+import '../../features/explore/ui/screens/home_screen.dart';
+import '../../features/reports/ui/bloc/incident_detail_bloc.dart';
+import '../../features/reports/ui/bloc/report_wizard_bloc.dart';
+import '../../features/reports/ui/bloc/report_wizard_event.dart';
+import '../../features/reports/ui/screens/incident_detail_screen.dart';
+import '../../features/reports/ui/screens/report_wizard_screen.dart';
 import '../di/injection_container.dart';
 
 /// Named routes of VIGÍA. Each route wraps its screen in the `BlocProvider`
@@ -20,7 +29,9 @@ class AppRoutes {
   static const String splash = '/';
   static const String login = '/login';
   static const String register = '/register';
-  static const String dashboard = '/dashboard';
+  static const String home = '/home';
+  static const String reportWizard = '/report-wizard';
+  static const String reportDetail = '/report-detail';
 
   static Map<String, WidgetBuilder> get routes => {
         splash: (context) => BlocProvider(
@@ -35,9 +46,22 @@ class AppRoutes {
               create: (_) => sl<RegisterBloc>()..add(RegisterStarted()),
               child: const RegisterScreen(),
             ),
-        dashboard: (context) => BlocProvider(
-              create: (_) => sl<ProfileBloc>()..add(ProfileStarted()),
-              child: const DashboardScreen(),
+        home: (context) => MultiBlocProvider(
+              providers: [
+                BlocProvider(create: (_) => sl<ProfileBloc>()..add(ProfileStarted())),
+                BlocProvider(create: (_) => sl<MapBloc>()..add(MapStarted())),
+                BlocProvider(create: (_) => sl<CitySwitcherBloc>()),
+                BlocProvider(create: (_) => sl<FeedBloc>()),
+              ],
+              child: const HomeScreen(),
+            ),
+        reportWizard: (context) => BlocProvider(
+              create: (_) => sl<ReportWizardBloc>()..add(WizardStarted()),
+              child: const ReportWizardScreen(),
+            ),
+        reportDetail: (context) => BlocProvider(
+              create: (_) => sl<IncidentDetailBloc>(),
+              child: const IncidentDetailScreen(),
             ),
       };
 }

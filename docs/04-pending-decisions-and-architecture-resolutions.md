@@ -48,8 +48,7 @@ The Stitch / Figma visual prototype is an **exploratory conceptual artifact**. T
 * **Mitigation Plans for Location Denial and Out-of-Coverage Areas:**
   - *Core Principle:* **Under no circumstance is the application blocked if a user denies location sharing.**
   1. *Permission Denied:*
-     - Displays a non-intrusive top banner: *"Location disabled: exploring default city"*.
-     - Includes an **"Enable Location"** button, re-prompting permission or opening OS settings via `openAppSettings()`.
+     - ~~Displays a non-intrusive top banner with an "Enable Location" button.~~ **Superseded in Sprint 2 (HU-03):** no banner; the always-visible **"Centrar en mi ubicación"** button re-prompts the permission or, when it is blocked, opens the "Ubicación bloqueada" modal with "Abrir ajustes" (RN-14, point 2).
      - Centers the map at the user's last known active city (`last_city`, initialized to `reference_city`).
   2. *Assisted City Switcher (Header Component):*
      - Header interactive bar that avoids mobile screen clutter.
@@ -60,7 +59,8 @@ The Stitch / Figma visual prototype is an **exploratory conceptual artifact**. T
        - **User without GPS:** Selecting a city (e.g., Bogotá while physically in Cali) navigates the map to Bogotá's urban center and updates `user_profile.last_city = 'Bogotá'`. Subsequent launches without GPS start directly in Bogotá.
        - **User with active GPS:** Viewing another city is exploratory; a floating *"Center on my location"* button returns to their physical position at any time.
   3. *App Launch with GPS in Rural / Out-of-Coverage Area:*
-     - If coordinates fall outside cataloged cities, the app **does not guess or jump to unknown towns**: it preserves view on the **last active urban city** (`last_city`) with a subtle notification: *"You are currently outside VIGÍA urban coverage. Displaying your last active city"*.
+     - ~~If coordinates fall outside cataloged cities, the app preserves view on the last active urban city (`last_city`) with a subtle notification.~~
+     - **Superseded in Sprint 2 (HU-13):** with location enabled and the permission granted, the map opens on the citizen's current position, inside or outside coverage (RN-14, point 4).
   4. *Report Creation without GPS:* In Step 1 of the Wizard, the user can manually reposition the pin or search an approximate address.
 
 ---

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/core/theme/app_colors.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
+import 'package:vigia_app/core/theme/severity_colors.dart';
 
 /// WCAG 2.1 contrast ratio between two opaque colors.
 double contrast(Color a, Color b) {
@@ -46,6 +47,21 @@ void main() {
       test('field border is at least 3:1 against the field', () {
         expect(contrast(scheme.outline, scheme.surfaceContainerLow), greaterThanOrEqualTo(3));
       });
+
+      // Section 3.3: the icon or label drawn on each severity color.
+      final severity = theme.extension<AppSeverityColors>()!;
+      final severityPairs = <String, (Color, Color)>{
+        'low': (severity.onLow, severity.low),
+        'medium': (severity.onMedium, severity.medium),
+        'high': (severity.onHigh, severity.high),
+        'critical': (severity.onCritical, severity.critical),
+      };
+      for (final pair in severityPairs.entries) {
+        test('${pair.key} severity label is at least 4.5:1', () {
+          final (fg, bg) = pair.value;
+          expect(contrast(fg, bg), greaterThanOrEqualTo(4.5));
+        });
+      }
     });
   }
 

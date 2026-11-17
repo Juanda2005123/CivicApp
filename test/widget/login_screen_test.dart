@@ -21,7 +21,7 @@ Widget createLoginTestWidget(LoginBloc bloc) {
       home: const LoginScreen(),
       routes: {
         AppRoutes.register: (context) => const Scaffold(body: Text('Register Screen Mock')),
-        AppRoutes.dashboard: (context) => const Scaffold(body: Text('Dashboard Screen Mock')),
+        AppRoutes.home: (context) => const Scaffold(body: Text('Dashboard Screen Mock')),
       },
     ),
   );
@@ -106,6 +106,16 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Register Screen Mock'), findsOneWidget);
+    });
+
+    testWidgets('"Explorar sin cuenta" opens the app as a guest (HU-22)', (tester) async {
+      await tester.pumpWidget(createLoginTestWidget(newBloc()));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Explorar sin cuenta'));
+      await tester.tap(find.text('Explorar sin cuenta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Dashboard Screen Mock'), findsOneWidget);
     });
 
     testWidgets('valid credentials sign in and land on the dashboard', (tester) async {

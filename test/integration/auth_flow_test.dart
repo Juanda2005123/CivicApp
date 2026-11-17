@@ -38,6 +38,7 @@ void main() {
       locationRepository: FakeLocationRepository(
         coordinates: const Coordinates(latitude: 3.4516, longitude: -76.5320),
       ),
+      incidentRepository: FakeIncidentRepository(),
     );
     await tester.pumpWidget(const VigiaApp());
     await tester.pumpAndSettle();
@@ -85,9 +86,15 @@ void main() {
       await tester.tap(registerButton);
       await tester.pumpAndSettle();
 
-      // The account first, the profile second, then the dashboard loads the profile
+      // The account first, the profile second, then the Mi perfil tab loads the
+      // profile once: with the GPS granted the map takes its city from the
+      // position and does not read the profile (HU-13)
       expect(auth.calls, ['auth.signUp', 'profile.create', 'profile.get']);
-      expect(find.text('Mi perfil'), findsOneWidget);
+      // The shell opens on the map; the profile is one tap away
+      expect(find.text('Mapa'), findsNWidgets(2));
+      await tester.tap(find.byIcon(Icons.person_outline));
+      await tester.pumpAndSettle();
+      expect(find.text('Mi perfil'), findsNWidgets(2));
       expect(find.text('Juan David Quintero'), findsOneWidget);
       expect(find.text('juand@vigia.co'), findsOneWidget);
       expect(find.text('Cali'), findsOneWidget);
@@ -108,7 +115,9 @@ void main() {
       await tester.tap(find.text('Ingresar'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Mi perfil'), findsOneWidget);
+      expect(find.text('Mapa'), findsNWidgets(2));
+      await tester.tap(find.byIcon(Icons.person_outline));
+      await tester.pumpAndSettle();
       expect(find.text('Juan David Quintero'), findsOneWidget);
     },
   );
@@ -120,8 +129,10 @@ void main() {
 
     await bootApp(tester);
 
-    expect(find.text('Mi perfil'), findsOneWidget);
-    expect(find.text('Ana Gomez'), findsOneWidget);
+    expect(find.text('Mapa'), findsNWidgets(2));
     expect(find.text('Ingresar'), findsNothing);
+    await tester.tap(find.byIcon(Icons.person_outline));
+    await tester.pumpAndSettle();
+    expect(find.text('Ana Gomez'), findsOneWidget);
   });
 }

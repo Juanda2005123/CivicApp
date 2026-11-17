@@ -23,6 +23,7 @@ class AppTextField extends FormField<String> {
     Iterable<String>? autofillHints,
     super.validator,
     ValueChanged<String>? onFieldSubmitted,
+    ValueChanged<String>? onChanged,
   }) : super(
           initialValue: controller.text,
           builder: (state) {
@@ -37,7 +38,10 @@ class AppTextField extends FormField<String> {
                 textInputAction: textInputAction,
                 textCapitalization: textCapitalization,
                 autofillHints: autofillHints,
-                onChanged: state.didChange,
+                onChanged: (value) {
+                  state.didChange(value);
+                  onChanged?.call(value);
+                },
                 onSubmitted: onFieldSubmitted,
                 style: Theme.of(context).textTheme.bodyLarge,
                 decoration: fieldDecoration(

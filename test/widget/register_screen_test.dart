@@ -7,8 +7,10 @@ import 'package:vigia_app/core/theme/theme_cubit.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/features/auth/domain/entities/city.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
+import 'package:vigia_app/features/auth/domain/repositories/location_repository.dart';
 import 'package:vigia_app/features/auth/domain/usecases/detect_nearest_city_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/get_cities_usecase.dart';
+import 'package:vigia_app/features/auth/domain/usecases/open_location_settings_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/sign_up_usecase.dart';
 import 'package:vigia_app/features/auth/ui/bloc/register_bloc.dart';
 import 'package:vigia_app/features/auth/ui/bloc/register_event.dart';
@@ -45,7 +47,7 @@ Widget createRegisterTestWidget(RegisterBloc bloc) {
       theme: AppTheme.light,
       home: const RegisterScreen(),
       routes: {
-        AppRoutes.dashboard: (context) => const Scaffold(body: Text('Dashboard Screen Mock')),
+        AppRoutes.home: (context) => const Scaffold(body: Text('Dashboard Screen Mock')),
       },
     ),
   );
@@ -72,6 +74,7 @@ void main() {
     final created = RegisterBloc(
       GetCitiesUseCase(cities),
       DetectNearestCityUseCase(location, cities),
+      OpenLocationSettingsUseCase(location),
       SignUpUseCase(auth, profiles),
     );
     addTearDown(created.close);
@@ -195,7 +198,29 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Permission denied.'), findsOneWidget);
+      expect(find.text('Abrir ajustes'), findsNothing);
       expect(bloc.state.selectedCity, isNull);
+    });
+
+    testWidgets('a blocked permission opens the modal that leads to the settings', (tester) async {
+      useTallScreen(tester);
+      location = FakeLocationRepository(error: Exception(LocationRepository.blockedMessage));
+
+      await tester.pumpWidget(createRegisterTestWidget(bloc = newBloc()));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Detectar mi ciudad por GPS'));
+      await tester.pumpAndSettle();
+
+      // Shown once, in the modal: the inline notice is hidden for this case.
+      expect(find.text('Ubicación bloqueada'), findsOneWidget);
+      expect(find.text(LocationRepository.blockedMessage), findsOneWidget);
+
+      await tester.tap(find.text('Abrir ajustes'));
+      await tester.pumpAndSettle();
+
+      expect(location.openSettingsCalls, 1);
+      expect(find.text('Ubicación bloqueada'), findsNothing);
     });
 
     testWidgets('typing in the city field filters the list ignoring accents and case', (tester) async {

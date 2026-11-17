@@ -43,6 +43,13 @@ abstract final class AppSizes {
 
   /// Maximum height of the list of a searchable dropdown.
   static const double dropdownMenuHeight = 280;
+
+  /// Height of the Step 1 map that picks the report point (HU-27) when the
+  /// screen is too short for it to fill the step.
+  static const double mapPicker = 360;
+
+  /// Size of the fixed pin at the center of that map.
+  static const double mapPin = 44;
 }
 
 /// Durations and curve of the design system, section 5.

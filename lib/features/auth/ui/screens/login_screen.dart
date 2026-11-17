@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
         if (state.status == LoginStatus.success) {
-          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.dashboard, (route) => false);
+          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (route) => false);
         }
       },
       builder: (context, state) {
@@ -162,6 +162,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: const Text('Regístrate'),
                               ),
                             ],
+                          ),
+                          // HU-22: browse the map and the reports without an account.
+                          TextButton.icon(
+                            onPressed: isLoading ? null : () => Navigator.pushNamed(context, AppRoutes.home),
+                            icon: const Icon(Icons.explore_outlined, size: AppSizes.icon),
+                            label: const Text('Explorar sin cuenta'),
                           ),
                           const SizedBox(height: AppSpacing.lg),
                           Text(

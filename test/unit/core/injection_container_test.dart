@@ -11,6 +11,9 @@ import 'package:vigia_app/features/auth/ui/bloc/login_bloc.dart';
 import 'package:vigia_app/features/auth/ui/bloc/register_bloc.dart';
 import 'package:vigia_app/features/auth/ui/bloc/startup_bloc.dart';
 import 'package:vigia_app/features/dashboard/ui/bloc/profile_bloc.dart';
+import 'package:vigia_app/features/explore/ui/bloc/city_switcher_bloc.dart';
+import 'package:vigia_app/features/explore/ui/bloc/feed_bloc.dart';
+import 'package:vigia_app/features/explore/ui/bloc/map_bloc.dart';
 
 void main() {
   tearDown(() => sl.reset());
@@ -25,6 +28,17 @@ void main() {
       expect(sl<LoginBloc>(), isA<LoginBloc>());
       expect(sl<RegisterBloc>(), isA<RegisterBloc>());
       expect(sl<ProfileBloc>(), isA<ProfileBloc>());
+    });
+
+    test('resolves the blocs of the home shell: map, city switcher and community feed', () async {
+      await initDependencies(
+        client: SupabaseClient('https://example.supabase.co', 'anon-key'),
+      );
+
+      expect(sl<MapBloc>(), isA<MapBloc>());
+      expect(sl<CitySwitcherBloc>(), isA<CitySwitcherBloc>());
+      expect(sl<FeedBloc>(), isA<FeedBloc>());
+      expect(identical(sl<FeedBloc>(), sl<FeedBloc>()), isFalse);
     });
 
     test('registers each implementation under its contract', () async {

@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Supabase calls need network access in release builds too (debug/profile add it on their own). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- geolocator: city detection at registration and the report location step. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <application
         android:label="VIGÍA"
         android:name="${applicationName}"

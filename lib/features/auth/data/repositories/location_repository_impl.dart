@@ -9,4 +9,7 @@ class LocationRepositoryImpl implements LocationRepository {
 
   @override
   Future<Coordinates> currentCoordinates() => _dataSource.currentCoordinates();
+
+  @override
+  Future<bool> openSettings() => _dataSource.openSettings();
 }

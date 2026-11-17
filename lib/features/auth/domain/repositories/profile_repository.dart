@@ -6,4 +6,7 @@ abstract class ProfileRepository {
 
   /// Throws when the account has no profile.
   Future<Profile> getProfile(String id);
+
+  /// Remembers the city the citizen is exploring (`last_city`, HU-21).
+  Future<void> updateLastCity(String id, String cityName);
 }

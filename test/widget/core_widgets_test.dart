@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vigia_app/core/theme/app_spacing.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
 import 'package:vigia_app/core/theme/theme_cubit.dart';
 import 'package:vigia_app/core/widgets/theme_toggle_button.dart';
@@ -10,8 +11,12 @@ import 'package:vigia_app/core/widgets/app_status_chip.dart';
 import 'package:vigia_app/core/widgets/app_text_field.dart';
 import 'package:vigia_app/core/widgets/brand_mark.dart';
 import 'package:vigia_app/core/widgets/dotted_spinner.dart';
+import 'package:vigia_app/core/widgets/location_blocked_dialog.dart';
+import 'package:vigia_app/core/widgets/sign_in_required_dialog.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/core/widgets/rank_seal.dart';
+import 'package:vigia_app/core/theme/severity_colors.dart';
+import 'package:vigia_app/core/widgets/severity_chip.dart';
 
 Widget host(Widget child, {ThemeData? theme, bool reduceMotion = false}) {
   return MaterialApp(
@@ -199,6 +204,172 @@ void main() {
       expect(normalizeSearchText('Bogotá'), 'bogota');
       expect(normalizeSearchText('NARIÑO'), 'narino');
       expect(normalizeSearchText('Cúcuta (Norte de Santander)'), 'cucuta (norte de santander)');
+    });
+  });
+
+  group('showSignInRequiredDialog', () {
+    Widget opener(ThemeData theme, {VoidCallback? onSignIn, VoidCallback? onRegister}) => host(
+          Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showSignInRequiredDialog(
+                context,
+                message: 'Para reportar un daño necesitas una cuenta.',
+                onSignIn: onSignIn ?? () {},
+                onRegister: onRegister ?? () {},
+              ),
+              child: const Text('Abrir'),
+            ),
+          ),
+          theme: theme,
+        );
+
+    for (final theme in {'light': AppTheme.light, 'dark': AppTheme.dark}.entries) {
+      testWidgets('explains why and offers to sign in or register in ${theme.key}', (tester) async {
+        await tester.pumpWidget(opener(theme.value));
+        await tester.tap(find.text('Abrir'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Necesitas iniciar sesión'), findsOneWidget);
+        expect(find.text('Para reportar un daño necesitas una cuenta.'), findsOneWidget);
+        expect(find.text('Ahora no'), findsOneWidget);
+        expect(find.text('Crear cuenta'), findsOneWidget);
+        expect(find.text('Iniciar sesión'), findsOneWidget);
+      });
+    }
+
+    testWidgets('each action closes the modal and calls back only its own callback', (tester) async {
+      var signIns = 0;
+      var registers = 0;
+      await tester.pumpWidget(opener(AppTheme.light, onSignIn: () => signIns++, onRegister: () => registers++));
+
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ahora no'));
+      await tester.pumpAndSettle();
+      expect((signIns, registers), (0, 0));
+
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Crear cuenta'));
+      await tester.pumpAndSettle();
+      expect((signIns, registers), (0, 1));
+
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Iniciar sesión'));
+      await tester.pumpAndSettle();
+      expect((signIns, registers), (1, 1));
+      expect(find.text('Necesitas iniciar sesión'), findsNothing);
+    });
+  });
+
+  group('showLocationBlockedDialog', () {
+    Widget opener(ThemeData theme, VoidCallback onOpenSettings) => host(
+          Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showLocationBlockedDialog(
+                context,
+                message: 'El permiso de ubicación está bloqueado.',
+                onOpenSettings: onOpenSettings,
+              ),
+              child: const Text('Abrir'),
+            ),
+          ),
+          theme: theme,
+        );
+
+    for (final theme in {'light': AppTheme.light, 'dark': AppTheme.dark}.entries) {
+      testWidgets('explains the block and offers the settings in ${theme.key}', (tester) async {
+        await tester.pumpWidget(opener(theme.value, () {}));
+        await tester.tap(find.text('Abrir'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Ubicación bloqueada'), findsOneWidget);
+        expect(find.text('El permiso de ubicación está bloqueado.'), findsOneWidget);
+        expect(find.text('Ahora no'), findsOneWidget);
+        expect(find.text('Abrir ajustes'), findsOneWidget);
+      });
+    }
+
+    testWidgets('"Abrir ajustes" closes the modal and calls back; "Ahora no" only closes', (tester) async {
+      var opened = 0;
+      await tester.pumpWidget(opener(AppTheme.light, () => opened++));
+
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ahora no'));
+      await tester.pumpAndSettle();
+      expect(find.text('Ubicación bloqueada'), findsNothing);
+      expect(opened, 0);
+
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Abrir ajustes'));
+      await tester.pumpAndSettle();
+      expect(find.text('Ubicación bloqueada'), findsNothing);
+      expect(opened, 1);
+    });
+  });
+
+  group('SeverityChip', () {
+    testWidgets('each level shows its own text and its own shape', (tester) async {
+      for (final (level, text, shape) in [
+        (SeverityLevel.low, 'Baja', Icons.circle_outlined),
+        (SeverityLevel.medium, 'Media', Icons.change_history_outlined),
+        (SeverityLevel.high, 'Alta', Icons.diamond_outlined),
+        (SeverityLevel.critical, 'Crítica', Icons.dangerous_outlined),
+      ]) {
+        await tester.pumpWidget(host(SeverityChip(level: level)));
+
+        expect(find.text(text), findsOneWidget, reason: '$level text');
+        expect(find.byIcon(shape), findsOneWidget, reason: '$level shape');
+      }
+    });
+
+    testWidgets('the four shapes are different, so color is never the only signal', (tester) async {
+      final shapes = SeverityLevel.values.map(SeverityChip.shapeOf).toSet();
+      final labels = SeverityLevel.values.map(SeverityChip.labelOf).toSet();
+
+      expect(shapes, hasLength(4));
+      expect(labels, hasLength(4));
+    });
+
+    testWidgets('it paints the theme color of the level, in light and dark', (tester) async {
+      for (final theme in [AppTheme.light, AppTheme.dark]) {
+        await tester.pumpWidget(host(const SeverityChip(level: SeverityLevel.high), theme: theme));
+        // MaterialApp animates a theme change: wait until the new one is in.
+        await tester.pumpAndSettle();
+        final colors = theme.extension<AppSeverityColors>()!;
+
+        final box = tester.widget<Container>(find.descendant(of: find.byType(SeverityChip), matching: find.byType(Container)));
+        final decoration = box.decoration! as BoxDecoration;
+        final text = tester.widget<Text>(find.text('Alta'));
+
+        expect(decoration.color, colors.high);
+        expect(text.style?.color, colors.onHigh);
+      }
+    });
+
+    testWidgets('it is 28 dp tall and keeps a readable text', (tester) async {
+      await tester.pumpWidget(host(const SeverityChip(level: SeverityLevel.low)));
+
+      expect(tester.getSize(find.byType(SeverityChip)).height, AppSizes.chip);
+    });
+
+    testWidgets('it speaks the level and grows with the text size without overflowing', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light,
+          home: MediaQuery(
+            data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+            child: const Scaffold(body: Center(child: SeverityChip(level: SeverityLevel.critical))),
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.bySemanticsLabel('Gravedad Crítica'), findsOneWidget);
+      expect(tester.getSize(find.byType(SeverityChip)).height, greaterThan(AppSizes.chip));
     });
   });
 }
