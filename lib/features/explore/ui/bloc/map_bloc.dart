@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../auth/domain/entities/coordinates.dart';
 import '../../../auth/domain/repositories/location_repository.dart';
 import '../../../auth/domain/usecases/open_location_settings_usecase.dart';
 import '../../domain/usecases/switch_city_usecase.dart';
@@ -27,31 +28,43 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   Future<void> _onStarted(MapStarted event, Emitter<MapState> emit) async {
     if (state.status == MapStatus.loading) return;
     emit(state.copyWith(status: MapStatus.loading, clearErrorMessage: true));
+    // The GPS is read once per load, before the city: the position tells where
+    // the citizen is (HU-13) and then centers the map (HU-03). The permission
+    // dialog opens here if it was not answered yet; the OS stops showing it once
+    // the permission is blocked (Android after two denials, iOS after one). Any
+    // failure stays silent and keeps the city view: the "Centrar en mi
+    // ubicación" button and its modal handle a later attempt.
+    final position = state.myLocation ?? await _tryCurrentLocation();
     try {
       // A reload keeps the city already on screen (the one the citizen picked).
-      final (city, markers) = await _getCityMap(city: state.city);
+      final firstLoad = state.city == null;
+      final (city, markers) = await _getCityMap(
+        city: state.city,
+        position: firstLoad ? position : null,
+        positionRead: true,
+      );
       emit(state.copyWith(status: MapStatus.success, city: city, markers: markers));
     } on Exception catch (e) {
       emit(state.copyWith(status: MapStatus.failure, errorMessage: _message(e)));
       return;
     }
 
-    // First load only (HU-03): center on the citizen. If the permission is not
-    // granted yet this opens the system dialog; the OS stops showing it once
-    // the permission is blocked (Android after two denials, iOS after one).
-    // Any failure stays silent and keeps the city view: the "Centrar en mi
-    // ubicación" button and its modal handle a later attempt.
-    if (state.myLocation != null) return;
-    try {
-      final position = await _getCurrentLocation();
+    // Centering only makes sense inside the city on screen: a citizen outside
+    // coverage keeps the city view (HU-13) and the button can still take them.
+    final city = state.city;
+    if (position != null && city != null && GetCityMapUseCase.covers(city, position) && state.myLocation == null) {
       emit(state.copyWith(myLocationStatus: MyLocationStatus.found, myLocation: position));
-    } on Exception {
-      return;
     }
   }
 
-  /// Saves the city first: if that fails the map keeps the previous city and
-  /// its markers, and the page shows the message.
+  Future<Coordinates?> _tryCurrentLocation() async {
+    try {
+      return await _getCurrentLocation();
+    } on Exception {
+      return null;
+    }
+  }
+
   Future<void> _onCitySelected(CitySelected event, Emitter<MapState> emit) async {
     if (state.status == MapStatus.loading) return;
     emit(state.copyWith(status: MapStatus.loading, clearErrorMessage: true));
