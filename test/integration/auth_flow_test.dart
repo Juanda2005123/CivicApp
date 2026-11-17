@@ -86,9 +86,10 @@ void main() {
       await tester.tap(registerButton);
       await tester.pumpAndSettle();
 
-      // The account first, the profile second, then the shell loads the profile
-      // twice: the Mi perfil tab and the Mapa tab (for the city to open on)
-      expect(auth.calls, ['auth.signUp', 'profile.create', 'profile.get', 'profile.get']);
+      // The account first, the profile second, then the Mi perfil tab loads the
+      // profile once: with the GPS granted the map takes its city from the
+      // position and does not read the profile (HU-13)
+      expect(auth.calls, ['auth.signUp', 'profile.create', 'profile.get']);
       // The shell opens on the map; the profile is one tap away
       expect(find.text('Mapa'), findsNWidgets(2));
       await tester.tap(find.byIcon(Icons.person_outline));

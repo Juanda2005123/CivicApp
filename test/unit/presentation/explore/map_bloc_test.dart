@@ -117,11 +117,34 @@ void main() {
 
   test('MapStarted emits the error message when the map cannot load', () async {
     profiles.stored['uid-1'] = const Profile(id: 'uid-1', email: 'ana@example.com', fullName: 'Ana Gomez', cityName: 'Tumaco');
+    // Without a position the profile decides, and Tumaco is not in the catalog.
+    location = FakeLocationRepository(error: Exception('Sin permiso de ubicación.'));
 
     final states = await emittedStates(buildBloc(), MapStarted());
 
     expect(states.last.status, MapStatus.failure);
     expect(states.last.errorMessage, 'No encontramos tu ciudad en el mapa.');
+  });
+
+  test('a citizen in another covered city opens on it, and the map centers on them (HU-13)', () async {
+    profiles.stored['uid-1'] = const Profile(id: 'uid-1', email: 'ana@example.com', fullName: 'Ana Gomez', cityName: 'Pasto');
+    location = FakeLocationRepository(coordinates: const Coordinates(latitude: 3.45, longitude: -76.53));
+
+    final states = await emittedStates(buildBloc(), MapStarted());
+
+    expect(states.last.city, _cali);
+    expect(states.last.myLocationStatus, MyLocationStatus.found);
+    expect(location.calls, 1); // one read: the permission is asked once
+  });
+
+  test('outside coverage the map keeps the profile city and does not jump to the citizen (HU-13)', () async {
+    location = FakeLocationRepository(coordinates: const Coordinates(latitude: 4.71, longitude: -74.07));
+
+    final states = await emittedStates(buildBloc(), MapStarted());
+
+    expect(states.last.city, _cali); // the profile city
+    expect(states.last.myLocationStatus, MyLocationStatus.idle);
+    expect(states.last.myLocation, isNull);
   });
 
   group('MyLocationRequested', () {

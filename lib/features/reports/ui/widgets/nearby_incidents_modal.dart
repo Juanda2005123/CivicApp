@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:vigia_app/core/theme/app_spacing.dart';
 import 'package:vigia_app/core/theme/app_text_styles.dart';
+import 'package:vigia_app/core/theme/severity_colors.dart';
+import 'package:vigia_app/core/widgets/severity_chip.dart';
+import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/nearby_incident.dart';
 
 /// Bottom modal displaying nearby reports matching category and location (HU-09).
@@ -130,6 +133,11 @@ class _NearbyIncidentItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Reports without a photo (or whose photo fails to load) show the hazard icon.
+    final placeholder = ColoredBox(
+      color: theme.colorScheme.primary.withValues(alpha: 0.1),
+      child: Icon(Icons.report_problem, color: theme.colorScheme.primary),
+    );
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
@@ -141,14 +149,19 @@ class _NearbyIncidentItem extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppRadii.sm),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadii.sm),
+            child: SizedBox(
+              width: 48,
+              height: 48,
+              child: item.primaryPhotoUrl == null
+                  ? placeholder
+                  : Image.network(
+                      item.primaryPhotoUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => placeholder,
+                    ),
             ),
-            child: Icon(Icons.report_problem, color: theme.colorScheme.primary),
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -167,11 +180,20 @@ class _NearbyIncidentItem extends StatelessWidget {
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                Text(
-                  'Gravedad: ${item.severity} · ${item.upvotesCount} apoyos',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                const SizedBox(height: AppSpacing.xs),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.xs,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    SeverityChip(level: _levelOf(item.severity)),
+                    Text(
+                      item.upvotesCount == 1 ? '1 apoyo' : '${item.upvotesCount} apoyos',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -186,3 +208,12 @@ class _NearbyIncidentItem extends StatelessWidget {
     );
   }
 }
+
+/// `NearbyIncident.severity` keeps the database value (`HIGH`): it is read here
+/// into the theme's level so the chip speaks Spanish with its shape and color.
+SeverityLevel _levelOf(String dbValue) => switch (IncidentSeverity.fromDbValue(dbValue)) {
+      IncidentSeverity.low => SeverityLevel.low,
+      IncidentSeverity.medium => SeverityLevel.medium,
+      IncidentSeverity.high => SeverityLevel.high,
+      IncidentSeverity.critical => SeverityLevel.critical,
+    };
