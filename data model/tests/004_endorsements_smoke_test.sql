@@ -112,10 +112,10 @@ BEGIN
   v_report := v_report || pg_temp.chk('999 XP is rank 1', '1',
     (SELECT id_rank::text FROM user_profile WHERE id_user = v_author));
 
-  -- Deleting the report (HU-18) cascades the votes without deducting vote XP.
+  -- Deleting the report (HU-18) takes back the XP its endorsements produced (migration 007).
   SELECT experience_points INTO i FROM user_profile WHERE id_user = '00000000-0000-0000-0000-000000000001';
   DELETE FROM road_incident WHERE id_incident = v_incident;
-  v_report := v_report || pg_temp.chk('cascade delete keeps the voter XP', i::text,
+  v_report := v_report || pg_temp.chk('deleting the report takes back the voter XP', GREATEST(0, i - 10)::text,
     (SELECT experience_points::text FROM user_profile WHERE id_user = '00000000-0000-0000-0000-000000000001'));
 
   v_msg := E'\n' || v_report || E'\nEverything above was rolled back on purpose.';
