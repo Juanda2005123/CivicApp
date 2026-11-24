@@ -26,6 +26,12 @@ import '../../features/auth/domain/usecases/sign_up_usecase.dart';
 import '../../features/auth/ui/bloc/login_bloc.dart';
 import '../../features/auth/ui/bloc/register_bloc.dart';
 import '../../features/auth/ui/bloc/startup_bloc.dart';
+import '../../features/dashboard/data/datasources/impact_remote_data_source.dart';
+import '../../features/dashboard/data/repositories/impact_repository_impl.dart';
+import '../../features/dashboard/domain/repositories/impact_repository.dart';
+import '../../features/dashboard/domain/usecases/get_civic_impact_usecase.dart';
+import '../../features/dashboard/domain/usecases/get_my_reports_usecase.dart';
+import '../../features/dashboard/domain/usecases/get_rank_progress_usecase.dart';
 import '../../features/dashboard/ui/bloc/profile_bloc.dart';
 import '../../features/explore/data/datasources/recent_cities_local_data_source.dart';
 import '../../features/explore/data/repositories/recent_cities_repository_impl.dart';
@@ -93,6 +99,7 @@ Future<void> initDependencies({
   PhotoPickerRepository? photoPickerRepository,
   GeocodingRepository? geocodingRepository,
   CommentRepository? commentRepository,
+  ImpactRepository? impactRepository,
 }) async {
   await sl.reset();
 
@@ -103,6 +110,7 @@ Future<void> initDependencies({
   // Data sources
   sl.registerLazySingleton(() => AuthRemoteDataSource(sl()));
   sl.registerLazySingleton(() => ProfileRemoteDataSource(sl()));
+  sl.registerLazySingleton(() => ImpactRemoteDataSource(sl()));
   sl.registerLazySingleton(() => CityRemoteDataSource(sl()));
   sl.registerLazySingleton(() => CityLocalDataSource());
   sl.registerLazySingleton(() => LocationDataSource());
@@ -120,6 +128,9 @@ Future<void> initDependencies({
   );
   sl.registerLazySingleton<ProfileRepository>(
     () => profileRepository ?? ProfileRepositoryImpl(sl()),
+  );
+  sl.registerLazySingleton<ImpactRepository>(
+    () => impactRepository ?? ImpactRepositoryImpl(sl()),
   );
   sl.registerLazySingleton<CityRepository>(
     () => cityRepository ?? CityRepositoryImpl(sl(), sl()),
@@ -149,6 +160,9 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => SignInUseCase(sl(), sl()));
   sl.registerLazySingleton(() => SignOutUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentProfileUseCase(sl(), sl()));
+  sl.registerLazySingleton(() => GetCivicImpactUseCase(sl()));
+  sl.registerLazySingleton(() => GetRankProgressUseCase(sl()));
+  sl.registerLazySingleton(() => GetMyReportsUseCase(sl()));
   sl.registerLazySingleton(() => GetCitiesUseCase(sl()));
   sl.registerLazySingleton(() => DetectNearestCityUseCase(sl(), sl()));
   sl.registerLazySingleton(() => OpenLocationSettingsUseCase(sl()));
@@ -178,7 +192,7 @@ Future<void> initDependencies({
   sl.registerFactory(() => StartupBloc(sl()));
   sl.registerFactory(() => LoginBloc(sl()));
   sl.registerFactory(() => RegisterBloc(sl(), sl(), sl(), sl()));
-  sl.registerFactory(() => ProfileBloc(sl(), sl()));
+  sl.registerFactory(() => ProfileBloc(sl(), sl(), sl(), sl(), sl()));
   sl.registerFactory(() => MapBloc(sl(), sl(), sl(), sl()));
   sl.registerFactory(() => CitySwitcherBloc(sl(), sl()));
   sl.registerFactory(() => FeedBloc(sl()));

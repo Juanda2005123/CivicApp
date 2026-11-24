@@ -8,6 +8,7 @@ import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/main.dart';
 
 import '../support/fakes.dart';
+import '../support/fake_impact_repository.dart';
 
 const _cali = City(
   id: 1,
@@ -39,6 +40,7 @@ void main() {
         coordinates: const Coordinates(latitude: 3.4516, longitude: -76.5320),
       ),
       incidentRepository: FakeIncidentRepository(),
+      impactRepository: FakeImpactRepository(),
     );
     await tester.pumpWidget(const VigiaApp());
     await tester.pumpAndSettle();
