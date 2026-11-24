@@ -79,10 +79,49 @@ void main() {
     expect(city.name, GetCityMapUseCase.guestFallbackCity);
   });
 
-  test('a signed-in citizen never reads the GPS for the map city', () async {
-    await useCase()();
+  // Registered in Pasto, standing in Cali.
+  const inCali = Coordinates(latitude: 3.45, longitude: -76.53);
+
+  test('a signed-in citizen standing in another covered city sees that city (HU-13)', () async {
+    final (city, markers) = await useCase()(position: inCali, positionRead: true);
+
+    expect(city, _cali);
+    expect(markers, [_pothole]);
+    expect(incidents.lastCity, 'Cali');
+  });
+
+  test('being in another city does not touch the saved last city (HU-21)', () async {
+    await useCase()(position: inCali, positionRead: true);
+
+    expect(profiles.stored['uid-1']!.lastCityName, 'Pasto');
+  });
+
+  test('without a position the signed-in citizen keeps the last city of the profile', () async {
+    final (city, _) = await useCase()(positionRead: true);
+
+    expect(city, _pasto);
+  });
+
+  test('outside coverage the signed-in citizen keeps the last city of the profile', () async {
+    // Bogotá is not in the catalog used here and is far from Cali and Pasto.
+    const bogota = Coordinates(latitude: 4.71, longitude: -74.07);
+
+    final (city, _) = await useCase()(position: bogota, positionRead: true);
+
+    expect(city, _pasto);
+  });
+
+  test('the use case never reads the GPS itself once the caller did', () async {
+    await useCase()(positionRead: true);
+    auth = FakeAuthRepository();
+    await useCase()(positionRead: true);
 
     expect(location.calls, 0);
+  });
+
+  test('covers() tells whether a position is inside the coverage of a city', () {
+    expect(GetCityMapUseCase.covers(_cali, inCali), isTrue);
+    expect(GetCityMapUseCase.covers(_cali, const Coordinates(latitude: 4.71, longitude: -74.07)), isFalse);
   });
 
   test('a profile city missing from the catalog gives a clear message', () async {
@@ -102,7 +141,7 @@ void main() {
       lastCityName: 'Cali',
     );
 
-    final (city, _) = await useCase()();
+    final (city, _) = await useCase()(positionRead: true);
 
     expect(city, _cali);
   });

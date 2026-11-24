@@ -24,6 +24,7 @@ import 'package:vigia_app/features/reports/domain/usecases/get_nearby_incidents_
 import 'package:vigia_app/features/reports/domain/usecases/pick_photo_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/suggest_address_usecase.dart';
 import 'package:vigia_app/features/reports/domain/entities/geocoded_place.dart';
+import 'package:vigia_app/features/reports/domain/entities/nearby_incident.dart';
 import 'package:vigia_app/features/reports/ui/bloc/report_wizard_bloc.dart';
 import 'package:vigia_app/features/reports/ui/bloc/report_wizard_event.dart';
 import 'package:vigia_app/features/reports/ui/screens/report_wizard_screen.dart';
@@ -351,6 +352,72 @@ void main() {
       expect(find.text('Media'), findsOneWidget);
       expect(find.text('Alta'), findsOneWidget);
       expect(find.text('Crítica'), findsOneWidget);
+    });
+
+    testWidgets('"Es este" on a report the citizen wrote explains why and leaves without voting (HU-09, RN-05)', (tester) async {
+      fakeIncidentRepo.nearbyToReturn = [
+        const NearbyIncident(
+          id: 'inc-99',
+          trackingCode: '#VIG-9999',
+          title: 'Hueco peligroso',
+          categoryId: 1,
+          categoryName: 'Hueco',
+          severity: 'HIGH',
+          distanceInMeters: 40,
+          reporterId: 'u-1',
+        ),
+      ];
+      final bloc = newBloc();
+      await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.light,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                  builder: (_) => BlocProvider<ReportWizardBloc>.value(
+                    value: bloc,
+                    child: const ReportWizardScreen(),
+                  ),
+                )),
+                child: const Text('Abrir asistente'),
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('Abrir asistente'));
+      await tester.pumpAndSettle();
+
+      // Step 1, then Step 2 with a category and a severity.
+      await tester.enterText(find.byType(TextField).at(0), '5');
+      await tester.enterText(find.byType(TextField).at(1), '38');
+      await tester.enterText(find.byType(TextField).at(2), '00');
+      await tester.enterText(find.byType(TextField).at(3), 'San Fernando');
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Confirmar ubicación'));
+      await tester.tap(find.text('Confirmar ubicación'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hueco o bache en calzada'));
+      await tester.tap(find.text('Alta'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Continuar'));
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+
+      // The nearby report is the citizen's own: the warning still shows.
+      expect(find.text('Hay 1 daño cercano de este tipo.'), findsOneWidget);
+      await tester.ensureVisible(find.text('Ver daños'));
+      await tester.tap(find.text('Ver daños'));
+      await tester.pumpAndSettle();
+      fakeIncidentRepo.calls.clear();
+
+      await tester.tap(find.text('Es este'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Ese reporte ya es tuyo'), findsOneWidget);
+      expect(find.text('Abrir asistente'), findsOneWidget, reason: 'the wizard closed');
+      expect(fakeIncidentRepo.calls, isNot(contains('incident.endorse')));
     });
 
     testWidgets('attempting to close wizard with draft data prompts discard confirmation', (tester) async {

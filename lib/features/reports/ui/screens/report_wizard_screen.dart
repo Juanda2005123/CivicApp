@@ -114,6 +114,13 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
               const SnackBar(content: Text('¡Apoyaste el reporte existente con éxito!')),
             );
             Navigator.of(context).pop();
+          } else if (state.isOwnNearbyReport) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Ese reporte ya es tuyo, así que no suma un apoyo. No hace falta reportarlo otra vez.'),
+              ),
+            );
+            Navigator.of(context).pop();
           } else if (state.publishedIncident != null) {
             _showPublishedDialog(context, state.publishedIncident!);
           }
@@ -375,7 +382,9 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
                 const SizedBox(width: AppSpacing.xs),
                 Expanded(
                   child: Text(
-                    'Hay ${state.nearbyIncidents.length} daños cercanos de este tipo.',
+                    state.nearbyIncidents.length == 1
+                        ? 'Hay 1 daño cercano de este tipo.'
+                        : 'Hay ${state.nearbyIncidents.length} daños cercanos de este tipo.',
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.onErrorContainer,

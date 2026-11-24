@@ -55,6 +55,13 @@ class _MapPageState extends State<MapPage> {
     }
   }
 
+  /// A city chosen on the switcher (HU-21) takes the camera to its centre: the
+  /// button and the markers change, so the view must follow them.
+  void _showCity(City city) {
+    if (!_mapReady) return;
+    _mapController.move(LatLng(city.latitude, city.longitude), MapPage.initialZoom);
+  }
+
   void _onMapReady() {
     _mapReady = true;
     final pending = _pendingCenter;
@@ -75,114 +82,120 @@ class _MapPageState extends State<MapPage> {
 
     // Moving the camera and opening the modal are side effects, so they run
     // once per state in the listener, never in the builder.
-    return BlocConsumer<MapBloc, MapState>(
-      listenWhen: (previous, current) => previous.myLocationStatus != current.myLocationStatus,
-      listener: (context, state) {
-        switch (state.myLocationStatus) {
-          case MyLocationStatus.found:
-            final position = state.myLocation;
-            if (position == null) return;
-            _centerOn(LatLng(position.latitude, position.longitude));
-          case MyLocationStatus.blocked:
-            final message = state.myLocationMessage;
-            if (message == null) return;
-            final bloc = context.read<MapBloc>();
-            showLocationBlockedDialog(
-              context,
-              message: message,
-              onOpenSettings: () => bloc.add(LocationSettingsRequested()),
+    return BlocListener<MapBloc, MapState>(
+      // Only a change of city after the first load: the first one opens on the
+      // citizen's position or on the city through `initialCenter`.
+      listenWhen: (previous, current) => previous.city != null && current.city != null && previous.city != current.city,
+      listener: (context, state) => _showCity(state.city!),
+      child: BlocConsumer<MapBloc, MapState>(
+        listenWhen: (previous, current) => previous.myLocationStatus != current.myLocationStatus,
+        listener: (context, state) {
+          switch (state.myLocationStatus) {
+            case MyLocationStatus.found:
+              final position = state.myLocation;
+              if (position == null) return;
+              _centerOn(LatLng(position.latitude, position.longitude));
+            case MyLocationStatus.blocked:
+              final message = state.myLocationMessage;
+              if (message == null) return;
+              final bloc = context.read<MapBloc>();
+              showLocationBlockedDialog(
+                context,
+                message: message,
+                onOpenSettings: () => bloc.add(LocationSettingsRequested()),
+              );
+            default:
+              break;
+          }
+        },
+        builder: (context, state) {
+          final city = state.city;
+
+          if (state.status == MapStatus.failure && city == null) {
+            return _LoadError(
+              message: state.errorMessage ?? 'No pudimos cargar el mapa.',
+              onRetry: () => context.read<MapBloc>().add(MapStarted()),
             );
-          default:
-            break;
-        }
-      },
-      builder: (context, state) {
-        final city = state.city;
+          }
 
-        if (state.status == MapStatus.failure && city == null) {
-          return _LoadError(
-            message: state.errorMessage ?? 'No pudimos cargar el mapa.',
-            onRetry: () => context.read<MapBloc>().add(MapStarted()),
-          );
-        }
+          if (city == null) {
+            return const Center(child: DottedSpinner(size: 40, semanticLabel: 'Cargando el mapa'));
+          }
 
-        if (city == null) {
-          return const Center(child: DottedSpinner(size: 40, semanticLabel: 'Cargando el mapa'));
-        }
+          final myLocation = state.myLocation;
 
-        final myLocation = state.myLocation;
-
-        return Stack(
-          children: [
-            FlutterMap(
-              mapController: _mapController,
-              // A position known before the first frame becomes the starting
-              // view; one that arrives later moves the camera in the listener.
-              options: MapOptions(
-                initialCenter: myLocation != null
-                    ? LatLng(myLocation.latitude, myLocation.longitude)
-                    : LatLng(city.latitude, city.longitude),
-                initialZoom: myLocation != null ? MapPage.myLocationZoom : MapPage.initialZoom,
-                onMapReady: _onMapReady,
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate: _tiles,
-                  userAgentPackageName: 'com.vigia.vigia_app',
-                  tileBuilder: isDark ? darkModeTileBuilder : null,
+          return Stack(
+            children: [
+              FlutterMap(
+                mapController: _mapController,
+                // A position known before the first frame becomes the starting
+                // view; one that arrives later moves the camera in the listener.
+                options: MapOptions(
+                  initialCenter: myLocation != null
+                      ? LatLng(myLocation.latitude, myLocation.longitude)
+                      : LatLng(city.latitude, city.longitude),
+                  initialZoom: myLocation != null ? MapPage.myLocationZoom : MapPage.initialZoom,
+                  onMapReady: _onMapReady,
                 ),
-                MarkerLayer(
-                  markers: [
-                    for (final marker in state.markers) _toMapMarker(context, marker),
-                    if (myLocation != null)
-                      Marker(
-                        point: LatLng(myLocation.latitude, myLocation.longitude),
-                        width: _MyLocationDot.size,
-                        height: _MyLocationDot.size,
-                        child: const _MyLocationDot(),
-                      ),
-                  ],
-                ),
-                const SimpleAttributionWidget(source: Text('© OpenStreetMap')),
-              ],
-            ),
-            // Notices on the left, the button on the right, so they never overlap.
-            Positioned(
-              top: AppSpacing.lg,
-              left: AppSpacing.lg,
-              right: AppSpacing.lg + AppSizes.touchTarget + AppSpacing.sm,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _CityButton(
-                    city: city,
-                    isLoading: state.status == MapStatus.loading,
-                    onPressed: () => _switchCity(context, city),
+                  TileLayer(
+                    urlTemplate: _tiles,
+                    userAgentPackageName: 'com.vigia.vigia_app',
+                    tileBuilder: isDark ? darkModeTileBuilder : null,
                   ),
-                  // The city could not be saved or loaded: the map keeps the previous one.
-                  if (state.status == MapStatus.failure && state.errorMessage != null) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    AppNotice(kind: NoticeKind.error, message: state.errorMessage!),
-                  ],
-                  // A blocked permission is explained in the modal instead.
-                  if (state.myLocationMessage != null && state.myLocationStatus != MyLocationStatus.blocked) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    AppNotice(kind: NoticeKind.error, message: state.myLocationMessage!),
-                  ],
+                  MarkerLayer(
+                    markers: [
+                      for (final marker in state.markers) _toMapMarker(context, marker),
+                      if (myLocation != null)
+                        Marker(
+                          point: LatLng(myLocation.latitude, myLocation.longitude),
+                          width: _MyLocationDot.size,
+                          height: _MyLocationDot.size,
+                          child: const _MyLocationDot(),
+                        ),
+                    ],
+                  ),
+                  const SimpleAttributionWidget(source: Text('© OpenStreetMap')),
                 ],
               ),
-            ),
-            Positioned(
-              top: AppSpacing.lg,
-              right: AppSpacing.lg,
-              child: _MyLocationButton(
-                isLocating: state.myLocationStatus == MyLocationStatus.locating,
-                onPressed: () => context.read<MapBloc>().add(MyLocationRequested()),
+              // Notices on the left, the button on the right, so they never overlap.
+              Positioned(
+                top: AppSpacing.lg,
+                left: AppSpacing.lg,
+                right: AppSpacing.lg + AppSizes.touchTarget + AppSpacing.sm,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _CityButton(
+                      city: city,
+                      isLoading: state.status == MapStatus.loading,
+                      onPressed: () => _switchCity(context, city),
+                    ),
+                    // The city could not be saved or loaded: the map keeps the previous one.
+                    if (state.status == MapStatus.failure && state.errorMessage != null) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      AppNotice(kind: NoticeKind.error, message: state.errorMessage!),
+                    ],
+                    // A blocked permission is explained in the modal instead.
+                    if (state.myLocationMessage != null && state.myLocationStatus != MyLocationStatus.blocked) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      AppNotice(kind: NoticeKind.error, message: state.myLocationMessage!),
+                    ],
+                  ],
+                ),
               ),
-            ),
-          ],
-        );
-      },
+              Positioned(
+                top: AppSpacing.lg,
+                right: AppSpacing.lg,
+                child: _MyLocationButton(
+                  isLocating: state.myLocationStatus == MyLocationStatus.locating,
+                  onPressed: () => context.read<MapBloc>().add(MyLocationRequested()),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 

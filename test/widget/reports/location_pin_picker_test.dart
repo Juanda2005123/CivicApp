@@ -64,6 +64,50 @@ void main() {
     expect(find.text('Buscando…'), findsNothing);
   });
 
+  group('main road without a number', () {
+    testWidgets('a named road like Autopista Sur confirms with its name', (tester) async {
+      String? confirmed;
+      await tester.pumpWidget(pickerUnderTest(
+        suggestedAddress: const SuggestedAddress(
+          roadType: 'Autopista',
+          mainRoad: 'Sur',
+          crossRoad: '56',
+          neighborhood: 'Pampa Linda',
+        ),
+        onConfirmed: (address) => confirmed = address,
+      ));
+      await tester.pump();
+
+      await tester.ensureVisible(find.text('Confirmar ubicación'));
+      await tester.tap(find.text('Confirmar ubicación'));
+      await tester.pump();
+
+      expect(find.text('Debe incluir número'), findsNothing);
+      expect(confirmed, 'Autopista Sur # 56');
+    });
+
+    testWidgets('a numbered road type still needs a number in its main road', (tester) async {
+      String? confirmed;
+      await tester.pumpWidget(pickerUnderTest(
+        suggestedAddress: const SuggestedAddress(
+          roadType: 'Calle',
+          mainRoad: 'Sur',
+          crossRoad: '56',
+          neighborhood: 'Pampa Linda',
+        ),
+        onConfirmed: (address) => confirmed = address,
+      ));
+      await tester.pump();
+
+      await tester.ensureVisible(find.text('Confirmar ubicación'));
+      await tester.tap(find.text('Confirmar ubicación'));
+      await tester.pump();
+
+      expect(find.text('Debe incluir número'), findsOneWidget);
+      expect(confirmed, isNull);
+    });
+  });
+
   testWidgets('shows why the suggestion is incomplete', (tester) async {
     await tester.pumpWidget(pickerUnderTest(suggestionMessage: 'No encontramos el cruce. Escríbelo a mano.'));
 
