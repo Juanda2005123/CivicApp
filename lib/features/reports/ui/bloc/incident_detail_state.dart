@@ -26,6 +26,16 @@ class IncidentDetailState extends Equatable {
   /// goes back to how it was before the tap.
   final String? endorsementError;
 
+  /// A delete request is in flight: the buttons ignore further taps (HU-18).
+  final bool isDeleting;
+
+  /// The report was deleted: the screen closes and tells the caller to reload.
+  final bool wasDeleted;
+
+  /// Why the last delete failed (for example the 30 minutes passed with the
+  /// screen open); the screen shows it once (HU-18, criterion 5).
+  final String? deleteError;
+
   const IncidentDetailState({
     this.status = IncidentDetailStatus.initial,
     this.incident,
@@ -33,6 +43,9 @@ class IncidentDetailState extends Equatable {
     this.viewerId,
     this.isEndorsing = false,
     this.endorsementError,
+    this.isDeleting = false,
+    this.wasDeleted = false,
+    this.deleteError,
   });
 
   bool get isGuest => viewerId == null;
@@ -52,6 +65,10 @@ class IncidentDetailState extends Equatable {
     bool? isEndorsing,
     String? endorsementError,
     bool clearEndorsementError = false,
+    bool? isDeleting,
+    bool? wasDeleted,
+    String? deleteError,
+    bool clearDeleteError = false,
   }) {
     return IncidentDetailState(
       status: status ?? this.status,
@@ -60,9 +77,22 @@ class IncidentDetailState extends Equatable {
       viewerId: viewerId ?? this.viewerId,
       isEndorsing: isEndorsing ?? this.isEndorsing,
       endorsementError: clearEndorsementError ? null : (endorsementError ?? this.endorsementError),
+      isDeleting: isDeleting ?? this.isDeleting,
+      wasDeleted: wasDeleted ?? this.wasDeleted,
+      deleteError: clearDeleteError ? null : (deleteError ?? this.deleteError),
     );
   }
 
   @override
-  List<Object?> get props => [status, incident, errorMessage, viewerId, isEndorsing, endorsementError];
+  List<Object?> get props => [
+        status,
+        incident,
+        errorMessage,
+        viewerId,
+        isEndorsing,
+        endorsementError,
+        isDeleting,
+        wasDeleted,
+        deleteError,
+      ];
 }

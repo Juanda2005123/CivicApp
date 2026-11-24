@@ -72,6 +72,16 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted || published == null) return;
     context.read<MapBloc>().add(MapStarted());
     context.read<FeedBloc>().add(FeedRefreshed());
+    // A new report changes the counters and the XP of "Mi perfil" (HU-23).
+    context.read<ProfileBloc>().add(ProfileRefreshed());
+  }
+
+  /// A report was edited or deleted in its detail (HU-18): the map, the feed and
+  /// the profile (its XP changes when a report is deleted) read again.
+  void _reloadReports() {
+    context.read<MapBloc>().add(MapStarted());
+    context.read<FeedBloc>().add(FeedRefreshed());
+    context.read<ProfileBloc>().add(ProfileRefreshed());
   }
 
   /// "Más cercanos" without a known position (HU-20, criterion 4): the map tries
@@ -135,6 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 builder: (context, filter) => MapPage(
                   filter: filter,
                   onClearFilters: () => context.read<FeedBloc>().add(FeedFiltersCleared()),
+                  onReportChanged: _reloadReports,
                 ),
               ),
               // Only the position matters to the feed: the distance of each card.
@@ -144,9 +155,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   myLocation: myLocation,
                   onReportPressed: () => _onReportPressed(isGuest),
                   onLocationNeeded: _locateForNearestOrder,
+                  onReportChanged: _reloadReports,
                 ),
               ),
-              const ProfilePage(),
+              ProfilePage(onReportPressed: () => _onReportPressed(isGuest)),
             ].indexed)
               TickerMode(enabled: index == _tab, child: page),
           ],
@@ -163,7 +175,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: BottomNavigationBar(
           currentIndex: _tab,
-          onTap: (index) => setState(() => _tab = index),
+          onTap: (index) {
+            setState(() => _tab = index);
+            // Coming to "Mi perfil" reads the numbers again: the citizen may have
+            // endorsed, commented or earned points on the other tabs (HU-23).
+            if (index == HomeScreen.profileTab && !isGuest) context.read<ProfileBloc>().add(ProfileRefreshed());
+          },
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.map_outlined),

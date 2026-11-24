@@ -17,9 +17,11 @@ import '../../features/explore/ui/bloc/map_bloc.dart';
 import '../../features/explore/ui/bloc/map_event.dart';
 import '../../features/explore/ui/screens/home_screen.dart';
 import '../../features/reports/ui/bloc/comments_bloc.dart';
+import '../../features/reports/ui/bloc/edit_report_bloc.dart';
 import '../../features/reports/ui/bloc/incident_detail_bloc.dart';
 import '../../features/reports/ui/bloc/report_wizard_bloc.dart';
 import '../../features/reports/ui/bloc/report_wizard_event.dart';
+import '../../features/reports/ui/screens/edit_report_screen.dart';
 import '../../features/reports/ui/screens/incident_detail_screen.dart';
 import '../../features/reports/ui/screens/report_wizard_screen.dart';
 import '../di/injection_container.dart';
@@ -33,6 +35,7 @@ class AppRoutes {
   static const String home = '/home';
   static const String reportWizard = '/report-wizard';
   static const String reportDetail = '/report-detail';
+  static const String reportEdit = '/report-edit';
 
   static Map<String, WidgetBuilder> get routes => {
         splash: (context) => BlocProvider(
@@ -59,6 +62,10 @@ class AppRoutes {
         reportWizard: (context) => BlocProvider(
               create: (_) => sl<ReportWizardBloc>()..add(WizardStarted()),
               child: const ReportWizardScreen(),
+            ),
+        reportEdit: (context) => BlocProvider(
+              create: (_) => sl<EditReportBloc>(),
+              child: const EditReportScreen(),
             ),
         reportDetail: (context) => MultiBlocProvider(
               providers: [

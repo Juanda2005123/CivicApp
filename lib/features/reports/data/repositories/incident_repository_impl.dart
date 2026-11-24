@@ -1,6 +1,7 @@
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import '../../domain/entities/feed_incident.dart';
 import '../../domain/entities/incident.dart';
+import '../../domain/entities/incident_photo.dart';
 import '../../domain/entities/incident_marker.dart';
 import '../../domain/entities/nearby_incident.dart';
 import '../../domain/entities/picked_photo.dart';
@@ -98,6 +99,56 @@ class IncidentRepositoryImpl implements IncidentRepository {
   Future<Incident> getIncidentById(String idOrTrackingCode) {
     return _remoteDataSource.getIncidentById(idOrTrackingCode);
   }
+
+  @override
+  Future<Incident> updateIncident({
+    required String incidentId,
+    required String reporterId,
+    required int categoryId,
+    required String title,
+    required String description,
+    required IncidentSeverity severity,
+    String? estimatedDimensions,
+    required List<IncidentPhoto> removedPhotos,
+    required List<PickedPhoto> addedPhotos,
+  }) async {
+    // The text first: it is the step the server may refuse (window over or 5
+    // endorsements), and then nothing was uploaded for nothing.
+    await _remoteDataSource.updateIncidentRow(
+      incidentId: incidentId,
+      categoryId: categoryId,
+      title: title,
+      description: description,
+      severity: severity,
+      estimatedDimensions: estimatedDimensions,
+    );
+
+    if (removedPhotos.isNotEmpty || addedPhotos.isNotEmpty) {
+      try {
+        final uploadedUrls = <String>[];
+        for (final photo in addedPhotos) {
+          uploadedUrls.add(await _storageDataSource.uploadPhoto(
+            bytes: photo.bytes,
+            extension: photo.extension,
+            reporterId: reporterId,
+          ));
+        }
+        await _remoteDataSource.replacePhotos(
+          incidentId: incidentId,
+          removedPhotoIds: removedPhotos.map((photo) => photo.id).toList(),
+          newPhotoUrls: uploadedUrls,
+        );
+      } on Exception catch (e) {
+        final reason = e.toString().replaceFirst('Exception: ', '');
+        throw Exception('Guardamos los cambios del texto, pero no pudimos actualizar las fotos. $reason');
+      }
+    }
+
+    return _remoteDataSource.getIncidentById(incidentId);
+  }
+
+  @override
+  Future<void> deleteIncident(Incident incident) => _remoteDataSource.deleteIncident(incident.id);
 
   @override
   Future<void> endorseIncident({

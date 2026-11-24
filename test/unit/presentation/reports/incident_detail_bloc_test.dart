@@ -13,6 +13,7 @@ import 'package:vigia_app/features/reports/ui/bloc/incident_detail_state.dart';
 import '../../../support/bloc_helpers.dart';
 import '../../../support/fakes.dart';
 import '../../../support/incident_samples.dart';
+import 'package:vigia_app/features/reports/domain/usecases/delete_incident_usecase.dart';
 
 void main() {
   group('IncidentDetailBloc Tests', () {
@@ -31,6 +32,7 @@ void main() {
         GetIncidentByIdUseCase(repository),
         GetCurrentProfileUseCase(auth, profiles),
         ToggleEndorsementUseCase(repository),
+        DeleteIncidentUseCase(repository),
       );
     });
 
@@ -213,6 +215,94 @@ void main() {
         expect(states.first.incident?.isCommunityValidated, isFalse, reason: 'only the server validates');
         expect(states.last.incident?.isCommunityValidated, isTrue);
         expect(states.last.incident?.validatedAt, isNotNull);
+      });
+    });
+
+    group('IncidentDeleteRequested (HU-18)', () {
+      void stageOwnReport({int upvotes = 0}) {
+        final own = sampleIncident(reporterId: 'me', upvotesCount: upvotes);
+        repository.stored['inc-1'] = own;
+        repository.stored['#VIG-1001'] = own;
+      }
+
+      test('deleting the own report ends with wasDeleted and asks the repository once', () async {
+        stageOwnReport();
+        await openReport();
+
+        final states = await emittedStates(bloc, const IncidentDeleteRequested());
+
+        expect(states.first.isDeleting, isTrue);
+        expect(states.last.isDeleting, isFalse);
+        expect(states.last.wasDeleted, isTrue);
+        expect(repository.deletedIds, ['inc-1']);
+      });
+
+      test('when the server refuses (window over) it keeps the report, shows why and reads it again', () async {
+        stageOwnReport();
+        await openReport();
+        repository.deleteError = Exception(
+          'Este reporte ya no se puede modificar ni eliminar: pasaron más de 30 minutos o tiene 5 apoyos o más.',
+        );
+        repository.calls.clear();
+
+        final states = await emittedStates(bloc, const IncidentDeleteRequested());
+
+        expect(states.last.wasDeleted, isFalse);
+        expect(states.last.isDeleting, isFalse);
+        expect(states.last.deleteError, contains('pasaron más de 30 minutos'));
+        expect(states.last.incident, isNotNull);
+        expect(repository.calls, contains('incident.getById'), reason: 'it reads the report again');
+      });
+
+      test('a report of someone else is never deleted', () async {
+        repository.stored['inc-1'] = sampleIncident(reporterId: 'author-1');
+        repository.stored['#VIG-1001'] = repository.stored['inc-1']!;
+        await openReport();
+
+        final states = await emittedStates(bloc, const IncidentDeleteRequested());
+
+        expect(states.last.wasDeleted, isFalse);
+        expect(states.last.deleteError, contains('Solo quien publicó el reporte'));
+        expect(repository.deletedIds, isEmpty);
+      });
+
+      test('a second tap while the first request is running is ignored', () async {
+        stageOwnReport();
+        await openReport();
+
+        bloc.add(const IncidentDeleteRequested());
+        bloc.add(const IncidentDeleteRequested());
+        await pumpEventQueue();
+
+        expect(repository.deletedIds, ['inc-1']);
+      });
+
+      test('a guest has nothing to delete', () async {
+        auth.user = null;
+        stageOwnReport();
+        await openReport();
+
+        final states = await emittedStates(bloc, const IncidentDeleteRequested());
+
+        expect(states, isEmpty);
+        expect(repository.deletedIds, isEmpty);
+      });
+    });
+
+    group('IncidentReloaded (HU-18)', () {
+      test('after an edit the report on screen is the one the server has now', () async {
+        final own = sampleIncident(reporterId: 'me');
+        repository.stored['inc-1'] = own;
+        repository.stored['#VIG-1001'] = own;
+        await openReport();
+
+        final edited = own.copyWith(title: 'Título corregido');
+        repository.stored['inc-1'] = edited;
+        repository.stored['#VIG-1001'] = edited;
+
+        final states = await emittedStates(bloc, const IncidentReloaded());
+
+        expect(states.last.incident?.title, 'Título corregido');
       });
     });
   });

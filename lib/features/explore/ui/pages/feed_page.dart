@@ -39,7 +39,16 @@ class FeedPage extends StatefulWidget {
   /// the previous order stays (HU-20, criterion 4).
   final Future<bool> Function()? onLocationNeeded;
 
-  const FeedPage({super.key, this.myLocation, required this.onReportPressed, this.onLocationNeeded});
+  /// A report changed in its detail (edited or deleted, HU-18): the shell reloads.
+  final VoidCallback? onReportChanged;
+
+  const FeedPage({
+    super.key,
+    this.myLocation,
+    required this.onReportPressed,
+    this.onLocationNeeded,
+    this.onReportChanged,
+  });
 
   @override
   State<FeedPage> createState() => _FeedPageState();
@@ -172,6 +181,13 @@ class _FeedPageState extends State<FeedPage> {
     );
   }
 
+  /// Opens the report detail. It answers `true` when the author edited or deleted
+  /// the report there (HU-18), and then the shell reloads the map and the feed.
+  Future<void> _openReport(String incidentId) async {
+    final changed = await Navigator.pushNamed(context, AppRoutes.reportDetail, arguments: incidentId);
+    if (changed == true && mounted) widget.onReportChanged?.call();
+  }
+
   /// The sheets list what the city has, which may still be loading when they
   /// open: they ask for the rest of the pages and redraw as they arrive.
   void _openCategorySheet() {
@@ -274,7 +290,7 @@ class _FeedPageState extends State<FeedPage> {
         return FeedIncidentCard(
           incident: incident,
           distanceMeters: location == null ? null : incident.coordinates.distanceInMetersTo(location),
-          onTap: () => Navigator.pushNamed(context, AppRoutes.reportDetail, arguments: incident.id),
+          onTap: () => _openReport(incident.id),
         );
       },
     );

@@ -10,9 +10,7 @@ import 'package:vigia_app/features/auth/domain/entities/city.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import 'package:vigia_app/features/auth/domain/entities/profile.dart';
 import 'package:vigia_app/features/auth/domain/repositories/location_repository.dart';
-import 'package:vigia_app/features/auth/domain/usecases/get_current_profile_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/open_location_settings_usecase.dart';
-import 'package:vigia_app/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:vigia_app/features/dashboard/ui/bloc/profile_bloc.dart';
 import 'package:vigia_app/features/dashboard/ui/bloc/profile_event.dart';
 import 'package:vigia_app/features/explore/domain/usecases/get_city_options_usecase.dart';
@@ -33,6 +31,7 @@ import 'package:vigia_app/features/reports/domain/usecases/get_city_map_usecase.
 import 'package:vigia_app/features/reports/domain/usecases/get_current_location_usecase.dart';
 
 import '../../support/fakes.dart';
+import '../../support/profile_bloc_factory.dart';
 import '../../support/report_filter_samples.dart';
 
 const _cali = City(
@@ -89,7 +88,7 @@ void main() {
   // Blocs are created inside each test so their event loop runs in the
   // tester's fake async zone.
   Widget createShell() {
-    final profileBloc = ProfileBloc(GetCurrentProfileUseCase(auth, profiles), SignOutUseCase(auth))
+    final profileBloc = buildProfileBloc(auth, profiles)
       ..add(ProfileStarted());
     final mapBloc = MapBloc(
       GetCityMapUseCase(auth, profiles, FakeCityRepository(cities), incidents, location),
