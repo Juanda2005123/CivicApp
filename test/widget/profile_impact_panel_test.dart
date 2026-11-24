@@ -149,6 +149,15 @@ void main() {
       expect(reportPressed, 1);
     });
 
+    testWidgets('leaves room under "Cerrar sesión" so the report button of the shell does not cover it',
+        (tester) async {
+      await openProfile(tester);
+
+      final scroll = tester.widget<SingleChildScrollView>(find.byType(SingleChildScrollView));
+
+      expect(scroll.padding?.resolve(TextDirection.ltr).bottom, greaterThanOrEqualTo(ProfilePage.bottomClearance));
+    });
+
     testWidgets('when the counters cannot load, it says why, keeps the profile and offers a retry', (tester) async {
       impact.impactError = Exception('No pudimos cargar tu impacto: sin conexión');
       await openProfile(tester);

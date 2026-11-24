@@ -29,6 +29,10 @@ class ProfilePage extends StatelessWidget {
 
   const ProfilePage({super.key, required this.onReportPressed});
 
+  /// Room under the last item so the "Reportar daño" button of the shell does not
+  /// cover "Cerrar sesión" when the dashboard is scrolled to the end.
+  static const double bottomClearance = AppSpacing.xxxl + AppSizes.button + AppSpacing.lg;
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ProfileBloc, ProfileState>(
@@ -60,7 +64,12 @@ class ProfilePage extends StatelessWidget {
 
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.screen),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.screen,
+          AppSpacing.screen,
+          AppSpacing.screen,
+          AppSpacing.screen + bottomClearance,
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: AppSpacing.maxContentWidth),
           child: Column(
