@@ -17,24 +17,25 @@ class ImpactRemoteDataSource {
   /// always match the real activity, even when a report was deleted.
   Future<CivicImpact> getImpact(String userId) async {
     try {
-      final (reports, received, given, comments) = await (
-        _client.from('road_incident').count(CountOption.exact).eq('id_reporter_user', userId),
-        // Endorsements on the citizen's reports: an inner join keeps only the votes
-        // whose report was written by the citizen.
-        _client
-            .from('incident_upvote')
-            .select('id_user, road_incident!inner(id_reporter_user)')
-            .eq('road_incident.id_reporter_user', userId)
-            .count(CountOption.exact),
-        _client.from('incident_upvote').count(CountOption.exact).eq('id_user', userId),
-        _client.from('incident_comment').count(CountOption.exact).eq('id_user', userId),
-      ).wait;
+      final reports = _client.from('road_incident').count(CountOption.exact).eq('id_reporter_user', userId);
+      // Endorsements on the citizen's reports: an inner join keeps only the votes
+      // whose report was written by the citizen.
+      final received = _client
+          .from('incident_upvote')
+          .select('id_user, road_incident!inner(id_reporter_user)')
+          .eq('road_incident.id_reporter_user', userId)
+          .count(CountOption.exact);
+      final given = _client.from('incident_upvote').count(CountOption.exact).eq('id_user', userId);
+      final comments = _client.from('incident_comment').count(CountOption.exact).eq('id_user', userId);
+
+      // Future.wait rethrows the first real exception (a record's wait would wrap it).
+      await Future.wait<void>([reports, received, given, comments]);
 
       return CivicImpact(
-        reportsCreated: reports,
-        endorsementsReceived: received.count,
-        endorsementsGiven: given,
-        commentsPublished: comments,
+        reportsCreated: await reports,
+        endorsementsReceived: (await received).count,
+        endorsementsGiven: await given,
+        commentsPublished: await comments,
       );
     } on PostgrestException catch (e) {
       throw Exception('No pudimos cargar tu impacto: ${e.message}');

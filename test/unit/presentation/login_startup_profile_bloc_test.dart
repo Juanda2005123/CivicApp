@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
 import 'package:vigia_app/features/auth/domain/usecases/get_current_profile_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/sign_in_usecase.dart';
-import 'package:vigia_app/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:vigia_app/features/auth/ui/bloc/login_bloc.dart';
 import 'package:vigia_app/features/auth/ui/bloc/login_event.dart';
 import 'package:vigia_app/features/auth/ui/bloc/login_state.dart';
@@ -15,6 +14,7 @@ import 'package:vigia_app/features/dashboard/ui/bloc/profile_state.dart';
 
 import '../../support/bloc_helpers.dart';
 import '../../support/fakes.dart';
+import '../../support/profile_bloc_factory.dart';
 
 void main() {
   late FakeAuthRepository auth;
@@ -82,17 +82,15 @@ void main() {
   });
 
   group('ProfileBloc', () {
-    ProfileBloc buildBloc() => ProfileBloc(
-          GetCurrentProfileUseCase(auth, profiles),
-          SignOutUseCase(auth),
-        );
+    ProfileBloc buildBloc() => buildProfileBloc(auth, profiles);
 
     test('ProfileStarted loads the profile of the active session', () async {
       auth.user = const AuthUser(id: 'uid-1', email: 'ana@example.com');
 
       final states = await emittedStates(buildBloc(), ProfileStarted());
 
-      expect(states.map((s) => s.status), [ProfileStatus.loading, ProfileStatus.success]);
+      expect(states.first.status, ProfileStatus.loading);
+      expect(states.last.status, ProfileStatus.success);
       expect(states.last.profile, caliProfile);
     });
 

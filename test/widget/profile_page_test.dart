@@ -9,13 +9,13 @@ import 'package:vigia_app/core/theme/theme_cubit.dart';
 import 'package:vigia_app/core/widgets/dotted_spinner.dart';
 import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
 import 'package:vigia_app/features/auth/domain/entities/profile.dart';
-import 'package:vigia_app/features/auth/domain/usecases/get_current_profile_usecase.dart';
-import 'package:vigia_app/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:vigia_app/features/dashboard/ui/bloc/profile_bloc.dart';
 import 'package:vigia_app/features/dashboard/ui/bloc/profile_event.dart';
 import 'package:vigia_app/features/dashboard/ui/pages/profile_page.dart';
 
 import '../support/fakes.dart';
+import '../support/profile_bloc_factory.dart';
+import '../support/fake_impact_repository.dart';
 
 Widget createProfileTestWidget(ProfileBloc bloc) {
   return MultiBlocProvider(
@@ -37,11 +37,12 @@ Widget createProfileTestWidget(ProfileBloc bloc) {
 void main() {
   late FakeAuthRepository auth;
   late FakeProfileRepository profiles;
+  late FakeImpactRepository impactRepository;
 
   // Created inside each test: a bloc built in setUp would run its event loop in
   // the real zone, outside the widget tester's fake async.
   ProfileBloc newBloc() {
-    final created = ProfileBloc(GetCurrentProfileUseCase(auth, profiles), SignOutUseCase(auth));
+    final created = buildProfileBloc(auth, profiles, impact: impactRepository);
     addTearDown(created.close);
     return created;
   }
@@ -57,6 +58,7 @@ void main() {
   setUp(() {
     auth = FakeAuthRepository(user: const AuthUser(id: 'uid-1', email: 'juand@vigia.co'));
     profiles = FakeProfileRepository()..stored['uid-1'] = citizen;
+    impactRepository = FakeImpactRepository();
   });
 
 
