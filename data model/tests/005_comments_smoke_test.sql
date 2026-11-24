@@ -33,6 +33,9 @@ BEGIN
   VALUES (v_incident, '#VIG-SMOKE', v_author, 1, 'Smoke test report', 'Rolled back.',
           'LOW', 3.4516, -76.5320, 'Calle 1 # 1-1', 'Centro', 'Cali');
 
+  -- Since migration 006 publishing pays +100 XP; this test measures only its own XP.
+  UPDATE user_profile SET experience_points = 0 WHERE id_user = v_author;
+
   INSERT INTO incident_follow (id_user, id_incident) VALUES (v_follower, v_incident);
 
   -- A comment: +15 XP and a notification for the author and the follower, not for the commenter.
