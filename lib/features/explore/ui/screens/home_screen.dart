@@ -70,6 +70,8 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted || published == null) return;
     context.read<MapBloc>().add(MapStarted());
     context.read<FeedBloc>().add(FeedRefreshed());
+    // A new report changes the counters and the XP of "Mi perfil" (HU-23).
+    context.read<ProfileBloc>().add(ProfileRefreshed());
   }
 
   /// A report was edited or deleted in its detail (HU-18): the map, the feed and
@@ -77,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _reloadReports() {
     context.read<MapBloc>().add(MapStarted());
     context.read<FeedBloc>().add(FeedRefreshed());
-    context.read<ProfileBloc>().add(ProfileStarted());
+    context.read<ProfileBloc>().add(ProfileRefreshed());
   }
 
   @override
@@ -129,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onReportChanged: _reloadReports,
                 ),
               ),
-              const ProfilePage(),
+              ProfilePage(onReportPressed: () => _onReportPressed(isGuest)),
             ].indexed)
               TickerMode(enabled: index == _tab, child: page),
           ],
@@ -146,7 +148,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: BottomNavigationBar(
           currentIndex: _tab,
-          onTap: (index) => setState(() => _tab = index),
+          onTap: (index) {
+            setState(() => _tab = index);
+            // Coming to "Mi perfil" reads the numbers again: the citizen may have
+            // endorsed, commented or earned points on the other tabs (HU-23).
+            if (index == HomeScreen.profileTab && !isGuest) context.read<ProfileBloc>().add(ProfileRefreshed());
+          },
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.map_outlined),
