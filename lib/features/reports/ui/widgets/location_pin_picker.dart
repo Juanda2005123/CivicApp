@@ -121,6 +121,10 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
     'Autopista',
   ];
 
+  /// Roads that are known by a name, not only by a number ("Autopista Sur",
+  /// "Avenida Roosevelt"): the main road of these types needs no digit.
+  static const Set<String> _namedRoadTypes = {'Avenida', 'Autopista'};
+
   @override
   void initState() {
     super.initState();
@@ -575,14 +579,16 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
                   child: AppTextField(
                     label: 'Vía principal',
                     controller: _mainRoadNumberController,
-                    hint: searchingMainRoad ? 'Buscando…' : 'Ej. 9 o 15 Norte',
+                    hint: searchingMainRoad
+                        ? 'Buscando…'
+                        : (_namedRoadTypes.contains(_selectedRoadType) ? 'Ej. 30 o Sur' : 'Ej. 9 o 15 Norte'),
                     suffix: searchingMainRoad ? _searchingRing('Buscando la vía') : null,
                     validator: (v) {
                       if (!_useStructuredAddress) return null;
                       if (v == null || v.trim().isEmpty) {
                         return 'Requerido';
                       }
-                      if (!RegExp(r'\d').hasMatch(v)) {
+                      if (!_namedRoadTypes.contains(_selectedRoadType) && !RegExp(r'\d').hasMatch(v)) {
                         return 'Debe incluir número';
                       }
                       return null;

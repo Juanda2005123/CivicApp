@@ -58,3 +58,14 @@ app.*.map.json
 /scratch/
 /planning/
 *.tmp
+
+# Course handouts (not part of the repo)
+/sprint-2-historias-de-usuario.docx.pdf
+*:Zone.Identifier
+
+# Demo recorder (Playwright)
+tool/demo/node_modules/
+tool/demo/out/
+tool/demo/assets/
+/Puente_Autopista_Sur_Hueco.jfif
+tool/demo/.env.local

@@ -375,7 +375,9 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
                 const SizedBox(width: AppSpacing.xs),
                 Expanded(
                   child: Text(
-                    'Hay ${state.nearbyIncidents.length} daños cercanos de este tipo.',
+                    state.nearbyIncidents.length == 1
+                        ? 'Hay 1 daño cercano de este tipo.'
+                        : 'Hay ${state.nearbyIncidents.length} daños cercanos de este tipo.',
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.onErrorContainer,

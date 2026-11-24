@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/core/constants/app_routes.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
@@ -322,6 +323,27 @@ void main() {
       expect(find.text('Pasto, Nariño'), findsOneWidget);
       expect(profiles.stored['uid-1']!.lastCityName, 'Pasto');
       expect(recents.names, ['Pasto']);
+    });
+
+    testWidgets('choosing a city moves the camera there, even when the map opened on the citizen', (tester) async {
+      cities = const [_cali, pasto];
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+
+      final map = find.byType(FlutterMap);
+      final before = tester.widget<FlutterMap>(map).mapController!.camera.center;
+      expect(before.latitude, closeTo(3.40, 0.01)); // the citizen's position (permission granted)
+
+      await tester.tap(find.text('Cali, Valle del Cauca'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'narino');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pasto, Nariño'));
+      await tester.pumpAndSettle();
+
+      final after = tester.widget<FlutterMap>(map).mapController!.camera.center;
+      expect(after.latitude, closeTo(pasto.latitude, 0.001));
+      expect(after.longitude, closeTo(pasto.longitude, 0.001));
     });
 
     testWidgets('a search without matches says so', (tester) async {
