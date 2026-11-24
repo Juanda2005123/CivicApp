@@ -12,6 +12,7 @@ import 'package:vigia_app/core/widgets/sign_in_required_dialog.dart';
 import 'package:vigia_app/core/widgets/validation_seal.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_photo.dart';
+import '../widgets/author_actions_card.dart';
 import '../widgets/incident_comments_section.dart';
 import '../bloc/incident_detail_bloc.dart';
 import '../bloc/incident_detail_event.dart';
@@ -33,6 +34,9 @@ class IncidentDetailScreen extends StatefulWidget {
 class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
   int _currentPhotoIndex = 0;
   String? _resolvedId;
+
+  /// The author edited the report here: going back tells the caller to reload (HU-18).
+  bool _changed = false;
 
   @override
   void didChangeDependencies() {
@@ -56,19 +60,38 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
+    return PopScope<Object?>(
+      // After an edit, going back answers `true` so the map, the feed and the profile reload.
+      canPop: !_changed,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) Navigator.of(context).pop(true);
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: Text('Detalle del reporte', style: AppTextStyles.appBarTitle),
         centerTitle: false,
       ),
-      body: BlocListener<IncidentDetailBloc, IncidentDetailState>(
-        listenWhen: (previous, current) =>
-            current.endorsementError != null && previous.endorsementError != current.endorsementError,
-        listener: (context, state) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(content: Text(state.endorsementError!)));
-        },
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<IncidentDetailBloc, IncidentDetailState>(
+            listenWhen: (previous, current) =>
+                current.endorsementError != null && previous.endorsementError != current.endorsementError,
+            listener: (context, state) => _showMessage(context, state.endorsementError!),
+          ),
+          // The server may refuse a delete with the window over (HU-18, criterion 5).
+          BlocListener<IncidentDetailBloc, IncidentDetailState>(
+            listenWhen: (previous, current) =>
+                current.deleteError != null && previous.deleteError != current.deleteError,
+            listener: (context, state) => _showMessage(context, state.deleteError!),
+          ),
+          BlocListener<IncidentDetailBloc, IncidentDetailState>(
+            listenWhen: (previous, current) => !previous.wasDeleted && current.wasDeleted,
+            listener: (context, state) {
+              _showMessage(context, 'Reporte eliminado.');
+              Navigator.of(context).pop(true);
+            },
+          ),
+        ],
         child: BlocBuilder<IncidentDetailBloc, IncidentDetailState>(
         builder: (context, state) {
           switch (state.status) {
@@ -124,7 +147,43 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
         },
         ),
       ),
+      ),
     );
+  }
+
+  void _showMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  /// Opens the edit form; coming back saved, the report is read again (HU-18).
+  Future<void> _edit(Incident incident) async {
+    final bloc = context.read<IncidentDetailBloc>();
+    final saved = await Navigator.pushNamed(context, AppRoutes.reportEdit, arguments: incident);
+    if (saved == true) {
+      if (mounted) setState(() => _changed = true);
+      bloc.add(const IncidentReloaded());
+    }
+  }
+
+  Future<void> _confirmDelete() async {
+    final bloc = context.read<IncidentDetailBloc>();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('¿Eliminar este reporte?'),
+        content: const Text(
+          'Se quitarán el reporte y sus fotos del mapa y de la comunidad, y perderás los 100 XP que ganaste al publicarlo. '
+          'No se puede deshacer.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Eliminar')),
+        ],
+      ),
+    );
+    if (confirmed == true) bloc.add(const IncidentDeleteRequested());
   }
 
   void _toggleEndorsement(BuildContext context, IncidentDetailState state) {
@@ -165,6 +224,17 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
           if (!state.viewerIsAuthor) ...[
             const SizedBox(height: AppSpacing.md),
             _buildEndorseButton(context, state),
+          ],
+          // The author can edit or delete inside the window; afterwards the card says it is frozen (HU-18).
+          if (state.viewerIsAuthor) ...[
+            const SizedBox(height: AppSpacing.md),
+            AuthorActionsCard(
+              incident: incident,
+              viewerId: state.viewerId!,
+              isDeleting: state.isDeleting,
+              onEdit: () => _edit(incident),
+              onDelete: _confirmDelete,
+            ),
           ],
           const SizedBox(height: AppSpacing.md),
 

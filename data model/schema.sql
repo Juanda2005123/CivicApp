@@ -398,6 +398,12 @@ DROP POLICY IF EXISTS "Reporters can update own road_incident" ON public.road_in
 CREATE POLICY "Reporters can update own road_incident"
   ON public.road_incident FOR UPDATE TO authenticated USING (auth.uid() = id_reporter_user);
 
+-- Delete and edit are limited to 30 minutes and fewer than 5 endorsements by
+-- triggers (migration 006, RN-03).
+DROP POLICY IF EXISTS "Reporters can delete own road_incident" ON public.road_incident;
+CREATE POLICY "Reporters can delete own road_incident"
+  ON public.road_incident FOR DELETE TO authenticated USING (auth.uid() = id_reporter_user);
+
 -- Incident Photos Policies
 ALTER TABLE public.incident_photo ENABLE ROW LEVEL SECURITY;
 
@@ -405,9 +411,29 @@ DROP POLICY IF EXISTS "Public read access on incident_photo" ON public.incident_
 CREATE POLICY "Public read access on incident_photo"
   ON public.incident_photo FOR SELECT TO authenticated, anon USING (true);
 
-DROP POLICY IF EXISTS "Authenticated users can insert incident_photo" ON public.incident_photo;
-CREATE POLICY "Authenticated users can insert incident_photo"
-  ON public.incident_photo FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "Reporters can insert photo of own incident" ON public.incident_photo;
+CREATE POLICY "Reporters can insert photo of own incident"
+  ON public.incident_photo FOR INSERT TO authenticated
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.road_incident i
+     WHERE i.id_incident = incident_photo.id_incident AND i.id_reporter_user = auth.uid()
+  ));
+
+DROP POLICY IF EXISTS "Reporters can update photo of own incident" ON public.incident_photo;
+CREATE POLICY "Reporters can update photo of own incident"
+  ON public.incident_photo FOR UPDATE TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.road_incident i
+     WHERE i.id_incident = incident_photo.id_incident AND i.id_reporter_user = auth.uid()
+  ));
+
+DROP POLICY IF EXISTS "Reporters can delete photo of own incident" ON public.incident_photo;
+CREATE POLICY "Reporters can delete photo of own incident"
+  ON public.incident_photo FOR DELETE TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.road_incident i
+     WHERE i.id_incident = incident_photo.id_incident AND i.id_reporter_user = auth.uid()
+  ));
 
 -- Comments Policies
 ALTER TABLE public.incident_comment ENABLE ROW LEVEL SECURITY;

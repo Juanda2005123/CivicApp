@@ -23,7 +23,8 @@ class IncidentRemoteDataSource {
     return '#VIG-$number';
   }
 
-  /// Inserts the incident, stores its photo records, and increments citizen XP by +100.
+  /// Inserts the incident and stores its photo records. The +100 XP for publishing is
+  /// paid by a database trigger (migration 006), never by the app (RN-08).
   Future<IncidentModel> insertIncident({
     required IncidentModel incident,
     required List<String> photoUrls,
@@ -57,25 +58,6 @@ class IncidentRemoteDataSource {
         insertedPhotos.addAll((photosResponse as List<dynamic>).cast<Map<String, dynamic>>());
       }
 
-      // Increment reporter XP (+100) per RN-08
-      try {
-        final profileRow = await _client
-            .from('user_profile')
-            .select('experience_points')
-            .eq('id_user', incident.reporterId)
-            .maybeSingle();
-
-        if (profileRow != null) {
-          final currentXp = (profileRow['experience_points'] as int?) ?? 0;
-          await _client
-              .from('user_profile')
-              .update({'experience_points': currentXp + 100})
-              .eq('id_user', incident.reporterId);
-        }
-      } catch (_) {
-        // Non-blocking for incident publication; XP failure should not discard the published report.
-      }
-
       final completeJson = Map<String, dynamic>.from(createdRow);
       completeJson['incident_photo'] = insertedPhotos;
 
@@ -86,6 +68,100 @@ class IncidentRemoteDataSource {
       if (e is Exception) rethrow;
       throw Exception('Error inesperado al guardar el reporte.');
     }
+  }
+
+  /// Saves the editable columns of a report (HU-18). The database refuses the
+  /// change outside the 30-minute window or with 5 endorsements (RN-03) and its
+  /// Spanish message reaches the citizen as it is.
+  Future<void> updateIncidentRow({
+    required String incidentId,
+    required int categoryId,
+    required String title,
+    required String description,
+    required IncidentSeverity severity,
+    String? estimatedDimensions,
+  }) async {
+    try {
+      final rows = await _client
+          .from('road_incident')
+          .update({
+            'id_category': categoryId,
+            'title': title,
+            'description': description,
+            'severity': severity.toDbValue(),
+            'estimated_dimensions': estimatedDimensions,
+          })
+          .eq('id_incident', incidentId)
+          .select('id_incident');
+      if ((rows as List<dynamic>).isEmpty) {
+        throw Exception('No pudimos guardar los cambios: el reporte ya no es tuyo o fue retirado.');
+      }
+    } on PostgrestException catch (e) {
+      throw Exception(_serverMessage(e, 'No pudimos guardar los cambios del reporte'));
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception('No pudimos guardar los cambios del reporte.');
+    }
+  }
+
+  /// Removes the photo rows [removedPhotoIds] and adds [newPhotoUrls] to a report
+  /// (HU-18). When the cover photo goes away, the first one left becomes the cover.
+  Future<void> replacePhotos({
+    required String incidentId,
+    required List<String> removedPhotoIds,
+    required List<String> newPhotoUrls,
+  }) async {
+    try {
+      if (removedPhotoIds.isNotEmpty) {
+        await _client.from('incident_photo').delete().inFilter('id_photo', removedPhotoIds);
+      }
+      if (newPhotoUrls.isNotEmpty) {
+        await _client.from('incident_photo').insert([
+          for (final url in newPhotoUrls) {'id_incident': incidentId, 'file_url': url},
+        ]);
+      }
+
+      final rows = await _client
+          .from('incident_photo')
+          .select('id_photo, is_primary')
+          .eq('id_incident', incidentId)
+          .order('uploaded_at')
+          .order('id_photo');
+      final photos = (rows as List<dynamic>).cast<Map<String, dynamic>>();
+      if (photos.isNotEmpty && !photos.any((photo) => photo['is_primary'] == true)) {
+        await _client
+            .from('incident_photo')
+            .update({'is_primary': true})
+            .eq('id_photo', photos.first['id_photo'] as String);
+      }
+    } on PostgrestException catch (e) {
+      throw Exception(_serverMessage(e, 'No pudimos actualizar las fotos'));
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception('No pudimos actualizar las fotos.');
+    }
+  }
+
+  /// Deletes a report; its photos, endorsements and comments go with it. The
+  /// database refuses it outside the edit window (RN-03) and takes back the 100 XP.
+  Future<void> deleteIncident(String incidentId) async {
+    try {
+      final rows = await _client.from('road_incident').delete().eq('id_incident', incidentId).select('id_incident');
+      if ((rows as List<dynamic>).isEmpty) {
+        throw Exception('No pudimos eliminar el reporte: ya no es tuyo o fue retirado.');
+      }
+    } on PostgrestException catch (e) {
+      throw Exception(_serverMessage(e, 'No pudimos eliminar el reporte'));
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception('No pudimos eliminar el reporte.');
+    }
+  }
+
+  /// A rule the database enforces (`RAISE EXCEPTION`, code P0001) already carries
+  /// the message for the citizen; any other failure gets [fallback] in front.
+  String _serverMessage(PostgrestException e, String fallback) {
+    return e.code == 'P0001' ? e.message : '$fallback: ${e.message}';
   }
 
   /// Queries active reports within [radiusInMeters] matching [categoryId] for duplicate detection.

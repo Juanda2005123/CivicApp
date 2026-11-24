@@ -54,7 +54,9 @@ import '../../features/reports/domain/repositories/incident_repository.dart';
 import '../../features/reports/domain/repositories/photo_picker_repository.dart';
 import '../../features/reports/domain/usecases/create_incident_usecase.dart';
 import '../../features/reports/domain/usecases/endorse_incident_usecase.dart';
+import '../../features/reports/domain/usecases/delete_incident_usecase.dart';
 import '../../features/reports/domain/usecases/toggle_endorsement_usecase.dart';
+import '../../features/reports/domain/usecases/update_incident_usecase.dart';
 import '../../features/reports/domain/usecases/add_comment_usecase.dart';
 import '../../features/reports/domain/usecases/delete_comment_usecase.dart';
 import '../../features/reports/domain/usecases/get_comments_usecase.dart';
@@ -76,6 +78,7 @@ import '../../features/reports/data/datasources/nominatim_data_source.dart';
 import '../../features/reports/data/repositories/geocoding_repository_impl.dart';
 import '../../features/reports/domain/repositories/geocoding_repository.dart';
 import '../../features/reports/domain/usecases/suggest_address_usecase.dart';
+import '../../features/reports/ui/bloc/edit_report_bloc.dart';
 import '../../features/reports/ui/bloc/incident_detail_bloc.dart';
 import '../../features/reports/ui/bloc/report_wizard_bloc.dart';
 
@@ -176,6 +179,8 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => GeocodeAddressUseCase(sl(), sl()));
   sl.registerLazySingleton(() => EndorseIncidentUseCase(sl()));
   sl.registerLazySingleton(() => ToggleEndorsementUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateIncidentUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteIncidentUseCase(sl()));
   sl.registerLazySingleton(() => GetCommentsUseCase(sl()));
   sl.registerLazySingleton(() => AddCommentUseCase(sl()));
   sl.registerLazySingleton(() => DeleteCommentUseCase(sl()));
@@ -212,6 +217,7 @@ Future<void> initDependencies({
       sl(),
     ),
   );
-  sl.registerFactory(() => IncidentDetailBloc(sl(), sl(), sl()));
+  sl.registerFactory(() => IncidentDetailBloc(sl(), sl(), sl(), sl()));
+  sl.registerFactory(() => EditReportBloc(sl(), sl(), sl(), sl()));
   sl.registerFactory(() => CommentsBloc(sl(), sl(), sl(), sl(), sl()));
 }

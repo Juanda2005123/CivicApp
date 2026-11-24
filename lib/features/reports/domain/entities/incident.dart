@@ -165,6 +165,29 @@ class Incident extends Equatable {
   /// Endorsements a report needs to be validated by the community (RN-08).
   static const int validationTarget = 10;
 
+  /// How long after publishing the author may edit or delete the report (RN-03).
+  static const Duration editWindow = Duration(minutes: 30);
+
+  /// With this many endorsements the report is frozen for the author (RN-03).
+  static const int editEndorsementLimit = 5;
+
+  /// Moment the author's edit window closes.
+  DateTime get editWindowEndsAt => createdAt.add(editWindow);
+
+  /// Time left to edit or delete, never negative. Only a hint for the screen:
+  /// the server decides with its own clock (HU-18, criterion 5).
+  Duration editTimeLeft({DateTime? now}) {
+    final left = editWindowEndsAt.difference(now ?? DateTime.now());
+    return left.isNegative ? Duration.zero : left;
+  }
+
+  /// The author may edit or delete only inside the window and with fewer than
+  /// [editEndorsementLimit] endorsements; afterwards the report is frozen (RN-03, HU-18).
+  bool canBeModifiedBy(String? userId, {DateTime? now}) {
+    if (userId == null || userId != reporterId) return false;
+    return editTimeLeft(now: now) > Duration.zero && upvotesCount < editEndorsementLimit;
+  }
+
   /// True once the community validated the report: it stays true when later
   /// revocations bring the count under the target (HU-16, criterion 5).
   bool get isCommunityValidated => validatedAt != null || status == IncidentStatus.communityValidated;
@@ -196,6 +219,14 @@ class Incident extends Equatable {
     int? upvotesCount,
     List<String>? upvoterIds,
     DateTime? validatedAt,
+    int? categoryId,
+    String? categoryName,
+    String? title,
+    String? description,
+    IncidentSeverity? severity,
+    String? estimatedDimensions,
+    bool clearEstimatedDimensions = false,
+    List<IncidentPhoto>? photos,
   }) {
     return Incident(
       id: id,
@@ -203,19 +234,19 @@ class Incident extends Equatable {
       reporterId: reporterId,
       reporterName: reporterName,
       reporterRankName: reporterRankName,
-      categoryId: categoryId,
-      categoryName: categoryName,
+      categoryId: categoryId ?? this.categoryId,
+      categoryName: categoryName ?? this.categoryName,
       categoryIcon: categoryIcon,
-      title: title,
-      description: description,
-      severity: severity,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      severity: severity ?? this.severity,
       status: status ?? this.status,
-      estimatedDimensions: estimatedDimensions,
+      estimatedDimensions: clearEstimatedDimensions ? null : (estimatedDimensions ?? this.estimatedDimensions),
       coordinates: coordinates,
       formattedAddress: formattedAddress,
       neighborhood: neighborhood,
       city: city,
-      photos: photos,
+      photos: photos ?? this.photos,
       upvotesCount: upvotesCount ?? this.upvotesCount,
       upvoterIds: upvoterIds ?? this.upvoterIds,
       commentsCount: commentsCount,

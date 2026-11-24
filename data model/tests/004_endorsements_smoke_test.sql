@@ -33,6 +33,9 @@ BEGIN
   VALUES (v_incident, '#VIG-SMOKE', v_author, 1, 'Smoke test report', 'Rolled back.',
           'LOW', 3.4516, -76.5320, 'Calle 1 # 1-1', 'Centro', 'Cali');
 
+  -- Since migration 006 publishing pays +100 XP; this test measures only its own XP.
+  UPDATE user_profile SET experience_points = 0 WHERE id_user = v_author;
+
   -- RN-05: the author cannot endorse their own report.
   BEGIN
     INSERT INTO incident_upvote (id_user, id_incident) VALUES (v_author, v_incident);

@@ -21,7 +21,10 @@ import '../widgets/incident_map_marker.dart';
 /// markers, and a button to center the map on the citizen's position. A Page,
 /// so it has no Scaffold of its own. Stateful only to own the [MapController].
 class MapPage extends StatefulWidget {
-  const MapPage({super.key});
+  /// A report changed in its detail (edited or deleted, HU-18): the shell reloads.
+  final VoidCallback? onReportChanged;
+
+  const MapPage({super.key, this.onReportChanged});
 
   /// Street level that still shows several neighborhoods.
   static const double initialZoom = 13;
@@ -206,6 +209,13 @@ class _MapPageState extends State<MapPage> {
     bloc.add(CitySelected(picked));
   }
 
+  /// Opens the report detail. It answers `true` when the author edited or deleted
+  /// the report there (HU-18), and then the shell reloads the map and the feed.
+  Future<void> _openReport(String incidentId) async {
+    final changed = await Navigator.pushNamed(context, AppRoutes.reportDetail, arguments: incidentId);
+    if (changed == true && mounted) widget.onReportChanged?.call();
+  }
+
   Marker _toMapMarker(BuildContext context, IncidentMarker marker) {
     return Marker(
       point: LatLng(marker.coordinates.latitude, marker.coordinates.longitude),
@@ -215,7 +225,7 @@ class _MapPageState extends State<MapPage> {
         severity: marker.severity,
         categoryIcon: marker.categoryIcon,
         semanticLabel: '${marker.title}, ${marker.categoryName}, gravedad ${marker.severity.labelSpanish}',
-        onTap: () => Navigator.pushNamed(context, AppRoutes.reportDetail, arguments: marker.id),
+        onTap: () => _openReport(marker.id),
       ),
     );
   }

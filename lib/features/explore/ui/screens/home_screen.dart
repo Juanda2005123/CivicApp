@@ -74,6 +74,14 @@ class _HomeScreenState extends State<HomeScreen> {
     context.read<ProfileBloc>().add(ProfileRefreshed());
   }
 
+  /// A report was edited or deleted in its detail (HU-18): the map, the feed and
+  /// the profile (its XP changes when a report is deleted) read again.
+  void _reloadReports() {
+    context.read<MapBloc>().add(MapStarted());
+    context.read<FeedBloc>().add(FeedRefreshed());
+    context.read<ProfileBloc>().add(ProfileRefreshed());
+  }
+
   @override
   Widget build(BuildContext context) {
     // Forwarding the city is a side effect, so it runs once per change here and
@@ -113,13 +121,14 @@ class _HomeScreenState extends State<HomeScreen> {
           // a hidden tab's spinner would keep drawing frames nobody sees.
           children: [
             for (final (index, page) in [
-              const MapPage(),
+              MapPage(onReportChanged: _reloadReports),
               // Only the position matters to the feed: the distance of each card.
               BlocSelector<MapBloc, MapState, Coordinates?>(
                 selector: (state) => state.myLocation,
                 builder: (context, myLocation) => FeedPage(
                   myLocation: myLocation,
                   onReportPressed: () => _onReportPressed(isGuest),
+                  onReportChanged: _reloadReports,
                 ),
               ),
               ProfilePage(onReportPressed: () => _onReportPressed(isGuest)),
