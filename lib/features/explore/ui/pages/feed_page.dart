@@ -25,7 +25,10 @@ class FeedPage extends StatefulWidget {
   /// the sign-in modal for a guest (HU-22).
   final VoidCallback onReportPressed;
 
-  const FeedPage({super.key, this.myLocation, required this.onReportPressed});
+  /// A report changed in its detail (edited or deleted, HU-18): the shell reloads.
+  final VoidCallback? onReportChanged;
+
+  const FeedPage({super.key, this.myLocation, required this.onReportPressed, this.onReportChanged});
 
   @override
   State<FeedPage> createState() => _FeedPageState();
@@ -125,6 +128,13 @@ class _FeedPageState extends State<FeedPage> {
     );
   }
 
+  /// Opens the report detail. It answers `true` when the author edited or deleted
+  /// the report there (HU-18), and then the shell reloads the map and the feed.
+  Future<void> _openReport(String incidentId) async {
+    final changed = await Navigator.pushNamed(context, AppRoutes.reportDetail, arguments: incidentId);
+    if (changed == true && mounted) widget.onReportChanged?.call();
+  }
+
   Widget _buildList(BuildContext context, FeedState state) {
     final failedRefresh = state.status == FeedStatus.failure;
     final hasFooter = state.isLoadingMore || state.loadMoreFailed;
@@ -164,7 +174,7 @@ class _FeedPageState extends State<FeedPage> {
         return FeedIncidentCard(
           incident: incident,
           distanceMeters: location == null ? null : incident.coordinates.distanceInMetersTo(location),
-          onTap: () => Navigator.pushNamed(context, AppRoutes.reportDetail, arguments: incident.id),
+          onTap: () => _openReport(incident.id),
         );
       },
     );

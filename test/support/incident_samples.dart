@@ -10,6 +10,7 @@ Incident sampleIncident({
   List<String>? upvoterIds,
   IncidentStatus status = IncidentStatus.reported,
   DateTime? validatedAt,
+  DateTime? createdAt,
 }) {
   return Incident(
     id: id,
@@ -27,7 +28,7 @@ Incident sampleIncident({
     city: 'Cali',
     upvotesCount: upvotesCount,
     upvoterIds: upvoterIds ?? List.generate(upvotesCount, (i) => 'voter-${i + 1}'),
-    createdAt: DateTime(2026, 11, 12),
+    createdAt: createdAt ?? DateTime(2026, 11, 12),
     validatedAt: validatedAt,
   );
 }
