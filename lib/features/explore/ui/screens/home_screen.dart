@@ -9,8 +9,10 @@ import '../../../dashboard/ui/bloc/profile_bloc.dart';
 import '../../../dashboard/ui/bloc/profile_event.dart';
 import '../../../dashboard/ui/bloc/profile_state.dart';
 import '../../../dashboard/ui/pages/profile_page.dart';
+import '../../domain/entities/report_filter.dart';
 import '../bloc/feed_bloc.dart';
 import '../bloc/feed_event.dart';
+import '../bloc/feed_state.dart';
 import '../bloc/map_bloc.dart';
 import '../bloc/map_event.dart';
 import '../bloc/map_state.dart';
@@ -82,6 +84,22 @@ class _HomeScreenState extends State<HomeScreen> {
     context.read<ProfileBloc>().add(ProfileRefreshed());
   }
 
+  /// "Más cercanos" without a known position (HU-20, criterion 4): the map tries
+  /// to locate the citizen. If the permission is blocked the map explains how to
+  /// unblock it in its own modal; either way the answer says whether it worked.
+  Future<bool> _locateForNearestOrder() async {
+    final map = context.read<MapBloc>();
+    if (map.state.myLocation != null) return true;
+
+    final answer = map.stream.firstWhere((state) =>
+        state.myLocationStatus == MyLocationStatus.found ||
+        state.myLocationStatus == MyLocationStatus.failure ||
+        state.myLocationStatus == MyLocationStatus.blocked);
+    map.add(MyLocationRequested());
+    final state = await answer;
+    return state.myLocationStatus == MyLocationStatus.found && state.myLocation != null;
+  }
+
   @override
   Widget build(BuildContext context) {
     // Forwarding the city is a side effect, so it runs once per change here and
@@ -121,13 +139,22 @@ class _HomeScreenState extends State<HomeScreen> {
           // a hidden tab's spinner would keep drawing frames nobody sees.
           children: [
             for (final (index, page) in [
-              MapPage(onReportChanged: _reloadReports),
+              // The filters of Comunidad also narrow the pins (HU-20, criterion 5).
+              BlocSelector<FeedBloc, FeedState, ReportFilter>(
+                selector: (state) => state.filter,
+                builder: (context, filter) => MapPage(
+                  filter: filter,
+                  onClearFilters: () => context.read<FeedBloc>().add(FeedFiltersCleared()),
+                  onReportChanged: _reloadReports,
+                ),
+              ),
               // Only the position matters to the feed: the distance of each card.
               BlocSelector<MapBloc, MapState, Coordinates?>(
                 selector: (state) => state.myLocation,
                 builder: (context, myLocation) => FeedPage(
                   myLocation: myLocation,
                   onReportPressed: () => _onReportPressed(isGuest),
+                  onLocationNeeded: _locateForNearestOrder,
                   onReportChanged: _reloadReports,
                 ),
               ),

@@ -6,14 +6,23 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_notice.dart';
 import '../../../../core/widgets/dotted_spinner.dart';
 import '../../../auth/domain/entities/coordinates.dart';
+import '../../../reports/domain/entities/feed_incident.dart';
+import '../../domain/entities/feed_filter_options.dart';
+import '../../domain/entities/report_sort.dart';
 import '../bloc/feed_bloc.dart';
 import '../bloc/feed_event.dart';
 import '../bloc/feed_state.dart';
+import '../widgets/choice_sheet.dart';
+import '../widgets/feed_filter_bar.dart';
 import '../widgets/feed_incident_card.dart';
 
 /// "Comunidad" tab of the shell (HU-19): the reports of the active city, newest
 /// first, 20 at a time as the citizen scrolls, with pull-to-refresh. A Page, so
 /// it has no Scaffold of its own. Stateful only to own the [ScrollController].
+///
+/// Above the list, the search bar and the filters (HU-20): the text, the
+/// category, the neighborhood and the order are kept by the [FeedBloc], which
+/// the map reads too. With no match, the empty state offers "Limpiar filtros".
 ///
 /// The city arrives through the [FeedBloc] (the shell forwards it from the
 /// map); [myLocation] only adds the distance to each card.
@@ -25,10 +34,21 @@ class FeedPage extends StatefulWidget {
   /// the sign-in modal for a guest (HU-22).
   final VoidCallback onReportPressed;
 
+  /// Asked when the citizen orders by "Más cercanos" and the position is not
+  /// known: the shell tries to locate them and answers whether it could. If not,
+  /// the previous order stays (HU-20, criterion 4).
+  final Future<bool> Function()? onLocationNeeded;
+
   /// A report changed in its detail (edited or deleted, HU-18): the shell reloads.
   final VoidCallback? onReportChanged;
 
-  const FeedPage({super.key, this.myLocation, required this.onReportPressed, this.onReportChanged});
+  const FeedPage({
+    super.key,
+    this.myLocation,
+    required this.onReportPressed,
+    this.onLocationNeeded,
+    this.onReportChanged,
+  });
 
   @override
   State<FeedPage> createState() => _FeedPageState();
@@ -96,6 +116,9 @@ class _FeedPageState extends State<FeedPage> {
           return const Center(child: DottedSpinner(size: 40, semanticLabel: 'Cargando los reportes'));
         }
 
+        final filter = state.filter;
+        final visible = filter.applyToFeed(state.items, myLocation: widget.myLocation);
+
         final Widget body;
         if (state.items.isEmpty) {
           body = state.status == FeedStatus.failure
@@ -113,14 +136,44 @@ class _FeedPageState extends State<FeedPage> {
                   actionLabel: 'Reportar daño',
                   onAction: widget.onReportPressed,
                 );
+        } else if (visible.isEmpty && state.isLoadingMore) {
+          // The rest of the city is still arriving: it may hold a match.
+          body = const Center(child: DottedSpinner(size: 32, semanticLabel: 'Buscando en los reportes'));
+        } else if (visible.isEmpty && state.loadMoreFailed) {
+          body = _Message(
+            icon: Icons.cloud_off_outlined,
+            title: 'No pudimos buscar en todos los reportes',
+            message: state.errorMessage ?? 'Revisa tu conexión e inténtalo de nuevo.',
+            actionLabel: 'Reintentar',
+            onAction: () => context.read<FeedBloc>().add(FeedAllPagesRequested()),
+          );
+        } else if (visible.isEmpty) {
+          body = _Message(
+            icon: Icons.search_off_outlined,
+            title: 'Ningún reporte coincide',
+            message: 'Prueba con otras palabras o quita algún filtro para ver los reportes de ${city.name}.',
+            actionLabel: 'Limpiar filtros',
+            onAction: () => context.read<FeedBloc>().add(FeedFiltersCleared()),
+          );
         } else {
-          body = _buildList(context, state);
+          body = _buildList(context, state, visible);
         }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _CityHeader(cityName: '${city.name}, ${city.department}'),
+            // A city with no reports at all has nothing to search.
+            if (state.items.isNotEmpty)
+              FeedFilterBar(
+                filter: filter,
+                resultCount: filter.isActive ? visible.length : null,
+                onQueryChanged: (query) => context.read<FeedBloc>().add(FeedSearchChanged(query)),
+                onCategoryPressed: _openCategorySheet,
+                onNeighborhoodPressed: _openNeighborhoodSheet,
+                onSortPressed: _openSortSheet,
+                onClearFilters: () => context.read<FeedBloc>().add(FeedFiltersCleared()),
+              ),
             Expanded(child: RefreshIndicator(onRefresh: _refresh, child: body)),
           ],
         );
@@ -135,7 +188,70 @@ class _FeedPageState extends State<FeedPage> {
     if (changed == true && mounted) widget.onReportChanged?.call();
   }
 
-  Widget _buildList(BuildContext context, FeedState state) {
+  /// The sheets list what the city has, which may still be loading when they
+  /// open: they ask for the rest of the pages and redraw as they arrive.
+  void _openCategorySheet() {
+    final bloc = context.read<FeedBloc>()..add(FeedAllPagesRequested());
+    showChoiceSheet<String?>(
+      context,
+      title: 'Categoría',
+      updates: bloc.stream,
+      selected: () => bloc.state.filter.categoryName,
+      options: () => [
+        const ChoiceOption<String?>('Todas las categorías', null),
+        for (final name in FeedFilterOptions.fromItems(bloc.state.items).categories) ChoiceOption<String?>(name, name),
+      ],
+      onSelected: (name) => bloc.add(FeedCategorySelected(name)),
+    );
+  }
+
+  void _openNeighborhoodSheet() {
+    final bloc = context.read<FeedBloc>()..add(FeedAllPagesRequested());
+    showChoiceSheet<String?>(
+      context,
+      title: 'Barrio',
+      updates: bloc.stream,
+      selected: () => bloc.state.filter.neighborhood,
+      options: () => [
+        const ChoiceOption<String?>('Todos los barrios', null),
+        for (final name in FeedFilterOptions.fromItems(bloc.state.items).neighborhoods)
+          ChoiceOption<String?>(name, name),
+      ],
+      onSelected: (name) => bloc.add(FeedNeighborhoodSelected(name)),
+    );
+  }
+
+  void _openSortSheet() {
+    final bloc = context.read<FeedBloc>();
+    showChoiceSheet<ReportSort>(
+      context,
+      title: 'Ordenar por',
+      selected: () => bloc.state.filter.sort,
+      options: () => [for (final sort in ReportSort.values) ChoiceOption<ReportSort>(sort.labelSpanish, sort)],
+      onSelected: _selectSort,
+    );
+  }
+
+  /// "Más cercanos" needs the position. When it cannot be found the previous
+  /// order stays and the citizen is told how to turn the location on.
+  Future<void> _selectSort(ReportSort sort) async {
+    final bloc = context.read<FeedBloc>();
+    if (sort == ReportSort.nearest && widget.myLocation == null) {
+      final located = await (widget.onLocationNeeded?.call() ?? Future.value(false));
+      if (!mounted) return;
+      if (!located) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(const SnackBar(
+            content: Text('Para ordenar por cercanía activa tu ubicación. Dejamos el orden anterior.'),
+          ));
+        return;
+      }
+    }
+    bloc.add(FeedSortSelected(sort));
+  }
+
+  Widget _buildList(BuildContext context, FeedState state, List<FeedIncident> visible) {
     final failedRefresh = state.status == FeedStatus.failure;
     final hasFooter = state.isLoadingMore || state.loadMoreFailed;
     final location = widget.myLocation;
@@ -145,7 +261,7 @@ class _FeedPageState extends State<FeedPage> {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, _bottomClearance),
       // A failed refresh keeps the list and puts the notice on top (criterion 5).
-      itemCount: (failedRefresh ? 1 : 0) + state.items.length + (hasFooter ? 1 : 0),
+      itemCount: (failedRefresh ? 1 : 0) + visible.length + (hasFooter ? 1 : 0),
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
       itemBuilder: (context, index) {
         if (failedRefresh) {
@@ -158,7 +274,7 @@ class _FeedPageState extends State<FeedPage> {
           index -= 1;
         }
 
-        if (index == state.items.length) {
+        if (index == visible.length) {
           return state.loadMoreFailed
               ? _RetryNotice(
                   message: state.errorMessage ?? 'No pudimos cargar más reportes.',
@@ -170,7 +286,7 @@ class _FeedPageState extends State<FeedPage> {
                 );
         }
 
-        final incident = state.items[index];
+        final incident = visible[index];
         return FeedIncidentCard(
           incident: incident,
           distanceMeters: location == null ? null : incident.coordinates.distanceInMetersTo(location),

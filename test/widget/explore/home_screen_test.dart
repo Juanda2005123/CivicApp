@@ -32,6 +32,7 @@ import 'package:vigia_app/features/reports/domain/usecases/get_current_location_
 
 import '../../support/fakes.dart';
 import '../../support/profile_bloc_factory.dart';
+import '../../support/report_filter_samples.dart';
 
 const _cali = City(
   id: 1,
@@ -486,6 +487,127 @@ void main() {
       await openFeed(tester);
 
       expect(find.text('Hueco grande en la Cra 15'), findsOneWidget);
+    });
+  });
+
+  group('Search and filters across Comunidad and Mapa (HU-20)', () {
+    /// Two reports in the city, as pins and as feed cards: a pothole and a traffic light.
+    void stageTwoReports() {
+      incidents
+        ..cityMarkers = [
+          filterMarker(id: 'inc-1', title: 'Hueco en la Calle 5', neighborhood: 'Centro'),
+          filterMarker(
+            id: 'inc-2',
+            code: '#VIG-1002',
+            title: 'Semáforo apagado',
+            neighborhood: 'Granada',
+            category: 'Semáforo dañado o apagado',
+          ),
+        ]
+        ..feed = [
+          filterFeedIncident(id: 'inc-1', title: 'Hueco en la Calle 5', neighborhood: 'Centro'),
+          filterFeedIncident(
+            id: 'inc-2',
+            code: '#VIG-1002',
+            title: 'Semáforo apagado',
+            neighborhood: 'Granada',
+            category: 'Semáforo dañado o apagado',
+          ),
+        ];
+      // Permission denied on open: the map keeps the city view, where the pins are.
+      location = FakeLocationRepository(error: Exception('Sin permiso de ubicación. Elige tu ciudad en la lista.'));
+    }
+
+    testWidgets('a filter set in Comunidad stays on the pins of Mapa and can be cleared there (criterion 5)',
+        (tester) async {
+      stageTwoReports();
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+      expect(find.byType(IncidentMapMarker), findsNWidgets(2));
+
+      await tester.tap(find.byIcon(Icons.groups_outlined));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'semaforo');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.map_outlined));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(IncidentMapMarker), findsOneWidget);
+      expect(find.bySemanticsLabel('Semáforo apagado, Semáforo dañado o apagado, gravedad Alta'), findsOneWidget);
+      expect(find.text('1 filtro activo: 1 de 2 reportes'), findsOneWidget);
+
+      await tester.tap(find.text('Limpiar'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(IncidentMapMarker), findsNWidgets(2));
+      expect(find.textContaining('filtro activo'), findsNothing);
+
+      // Back in Comunidad the search is empty too: it is the same filter.
+      await tester.tap(find.byIcon(Icons.groups_outlined));
+      await tester.pumpAndSettle();
+      expect(tester.widget<TextField>(find.byType(TextField)).controller?.text, isEmpty);
+    });
+
+    testWidgets('the neighborhood and the category chosen in Comunidad narrow the pins too (criterion 5)',
+        (tester) async {
+      stageTwoReports();
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.groups_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Barrio'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.descendant(of: find.byType(ListTile), matching: find.text('Granada')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.map_outlined));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(IncidentMapMarker), findsOneWidget);
+    });
+
+    testWidgets('"Más cercanos" with a blocked permission opens the explanation and keeps the order (criterion 4)',
+        (tester) async {
+      stageTwoReports();
+      location = FakeLocationRepository(error: Exception(LocationRepository.blockedMessage));
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.groups_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Más recientes'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Más cercanos'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ubicación bloqueada'), findsOneWidget);
+      expect(find.textContaining('activa tu ubicación'), findsOneWidget);
+
+      await tester.tap(find.text('Ahora no'));
+      await tester.pumpAndSettle();
+      expect(find.text('Más recientes'), findsOneWidget, reason: 'the previous order stays');
+    });
+
+    testWidgets('"Más cercanos" locates the citizen when the first attempt was denied and then orders', (tester) async {
+      stageTwoReports();
+      location = FakeLocationRepository(
+        coordinates: const Coordinates(latitude: 3.40, longitude: -76.55),
+        firstCallError: Exception('Sin permiso de ubicación. Elige tu ciudad en la lista.'),
+      );
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.groups_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Más recientes'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Más cercanos'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Más cercanos'), findsOneWidget, reason: 'the chip names the new order');
+      expect(find.textContaining('activa tu ubicación'), findsNothing);
     });
   });
 }

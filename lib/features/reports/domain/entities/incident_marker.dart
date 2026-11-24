@@ -11,6 +11,12 @@ class IncidentMarker extends Equatable {
   final String title;
   final String categoryName;
 
+  /// The place and the text of the report, so the filters of Comunidad also
+  /// narrow the map (HU-20, criterion 5).
+  final String neighborhood;
+  final String description;
+  final String formattedAddress;
+
   /// Material icon key stored in `incident_category.icon` (e.g. `traffic`).
   final String categoryIcon;
   final IncidentSeverity severity;
@@ -21,11 +27,25 @@ class IncidentMarker extends Equatable {
     required this.trackingCode,
     required this.title,
     required this.categoryName,
+    this.neighborhood = '',
+    this.description = '',
+    this.formattedAddress = '',
     required this.categoryIcon,
     required this.severity,
     required this.coordinates,
   });
 
   @override
-  List<Object?> get props => [id, trackingCode, title, categoryName, categoryIcon, severity, coordinates];
+  List<Object?> get props => [
+        id,
+        trackingCode,
+        title,
+        categoryName,
+        neighborhood,
+        description,
+        formattedAddress,
+        categoryIcon,
+        severity,
+        coordinates,
+      ];
 }

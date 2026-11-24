@@ -13,6 +13,10 @@ class FeedIncident extends Equatable {
   final String neighborhood;
   final String categoryName;
 
+  /// What the author wrote, so the search of Comunidad can find it (HU-20).
+  final String description;
+  final String formattedAddress;
+
   /// Material icon key stored in `incident_category.icon` (e.g. `traffic`).
   /// The card draws it when the report has no photo.
   final String categoryIcon;
@@ -38,6 +42,8 @@ class FeedIncident extends Equatable {
     required this.title,
     required this.neighborhood,
     required this.categoryName,
+    this.description = '',
+    this.formattedAddress = '',
     required this.categoryIcon,
     required this.severity,
     required this.status,
@@ -58,6 +64,8 @@ class FeedIncident extends Equatable {
         title,
         neighborhood,
         categoryName,
+        description,
+        formattedAddress,
         categoryIcon,
         severity,
         status,
