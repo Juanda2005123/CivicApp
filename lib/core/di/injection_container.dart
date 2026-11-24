@@ -49,6 +49,14 @@ import '../../features/reports/domain/repositories/photo_picker_repository.dart'
 import '../../features/reports/domain/usecases/create_incident_usecase.dart';
 import '../../features/reports/domain/usecases/endorse_incident_usecase.dart';
 import '../../features/reports/domain/usecases/toggle_endorsement_usecase.dart';
+import '../../features/reports/domain/usecases/add_comment_usecase.dart';
+import '../../features/reports/domain/usecases/delete_comment_usecase.dart';
+import '../../features/reports/domain/usecases/get_comments_usecase.dart';
+import '../../features/reports/domain/usecases/pick_comment_photo_usecase.dart';
+import '../../features/reports/domain/repositories/comment_repository.dart';
+import '../../features/reports/data/datasources/comment_remote_data_source.dart';
+import '../../features/reports/data/repositories/comment_repository_impl.dart';
+import '../../features/reports/ui/bloc/comments_bloc.dart';
 import '../../features/reports/domain/usecases/get_categories_usecase.dart';
 import '../../features/reports/domain/usecases/geocode_address_usecase.dart';
 import '../../features/reports/domain/usecases/get_city_center_usecase.dart';
@@ -84,6 +92,7 @@ Future<void> initDependencies({
   IncidentRepository? incidentRepository,
   PhotoPickerRepository? photoPickerRepository,
   GeocodingRepository? geocodingRepository,
+  CommentRepository? commentRepository,
 }) async {
   await sl.reset();
 
@@ -100,6 +109,7 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => CategoryRemoteDataSource(sl()));
   sl.registerLazySingleton(() => PhotoStorageDataSource(sl()));
   sl.registerLazySingleton(() => IncidentRemoteDataSource(sl()));
+  sl.registerLazySingleton(() => CommentRemoteDataSource(sl(), sl()));
   sl.registerLazySingleton(() => PhotoPickerDataSource());
   sl.registerLazySingleton(() => NominatimDataSource(sl()));
   sl.registerLazySingleton(() => RecentCitiesLocalDataSource());
@@ -122,6 +132,9 @@ Future<void> initDependencies({
   );
   sl.registerLazySingleton<IncidentRepository>(
     () => incidentRepository ?? IncidentRepositoryImpl(sl(), sl()),
+  );
+  sl.registerLazySingleton<CommentRepository>(
+    () => commentRepository ?? CommentRepositoryImpl(sl()),
   );
   sl.registerLazySingleton<PhotoPickerRepository>(
     () => photoPickerRepository ?? PhotoPickerRepositoryImpl(sl()),
@@ -149,6 +162,10 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => GeocodeAddressUseCase(sl(), sl()));
   sl.registerLazySingleton(() => EndorseIncidentUseCase(sl()));
   sl.registerLazySingleton(() => ToggleEndorsementUseCase(sl()));
+  sl.registerLazySingleton(() => GetCommentsUseCase(sl()));
+  sl.registerLazySingleton(() => AddCommentUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteCommentUseCase(sl()));
+  sl.registerLazySingleton(() => PickCommentPhotoUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentLocationUseCase(sl()));
   sl.registerLazySingleton(() => SuggestAddressUseCase(sl()));
   sl.registerLazySingleton(() => PickPhotoUseCase(sl()));
@@ -182,4 +199,5 @@ Future<void> initDependencies({
     ),
   );
   sl.registerFactory(() => IncidentDetailBloc(sl(), sl(), sl()));
+  sl.registerFactory(() => CommentsBloc(sl(), sl(), sl(), sl(), sl()));
 }

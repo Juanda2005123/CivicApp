@@ -12,6 +12,7 @@ import 'package:vigia_app/core/widgets/sign_in_required_dialog.dart';
 import 'package:vigia_app/core/widgets/validation_seal.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_photo.dart';
+import '../widgets/incident_comments_section.dart';
 import '../bloc/incident_detail_bloc.dart';
 import '../bloc/incident_detail_event.dart';
 import '../bloc/incident_detail_state.dart';
@@ -177,6 +178,10 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
 
           // Author Identity and Timestamp (Excluding email)
           _buildAuthorCard(context, incident, theme),
+          const SizedBox(height: AppSpacing.xl),
+
+          // Discussion thread and composer (HU-17)
+          IncidentCommentsSection(incidentId: incident.id),
           const SizedBox(height: AppSpacing.xl),
         ],
       ),
