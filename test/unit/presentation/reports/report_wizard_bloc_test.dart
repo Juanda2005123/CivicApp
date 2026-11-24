@@ -622,6 +622,65 @@ void main() {
       expect(fakeIncidentRepo.calls, contains('incident.endorse'));
     });
 
+    group('NearbyReportEndorsed and the author of the nearby report (RN-05, HU-09 criterion 3)', () {
+      /// Opens Step 2 with one nearby report written by [reporterId].
+      Future<void> stageNearbyReport(String? reporterId) async {
+        fakeIncidentRepo.nearbyToReturn = [
+          NearbyIncident(
+            id: 'inc-99',
+            trackingCode: '#VIG-9999',
+            title: 'Hueco peligroso',
+            categoryId: 1,
+            categoryName: 'Hueco',
+            severity: 'HIGH',
+            distanceInMeters: 40.0,
+            reporterId: reporterId,
+          ),
+        ];
+        bloc.add(const LocationPitched(
+          coordinates: Coordinates(latitude: 3.4516, longitude: -76.5320),
+          formattedAddress: 'Calle 5 # 10 - 20',
+          neighborhood: 'San Fernando',
+          city: 'Cali',
+        ));
+        await pumpEventQueue();
+        bloc.add(const CategoryAndSeveritySelected(categoryId: 1, severity: IncidentSeverity.high));
+        await pumpEventQueue();
+        expect(bloc.state.nearbyIncidents, hasLength(1));
+        fakeIncidentRepo.calls.clear();
+      }
+
+      test('"Es este" on a report the citizen wrote leaves without voting', () async {
+        await stageNearbyReport('user-123');
+
+        final states = await emittedStates(bloc, const NearbyReportEndorsed('inc-99'));
+
+        expect(states.last.status, WizardStatus.success);
+        expect(states.last.isOwnNearbyReport, isTrue);
+        expect(states.last.isEndorsedNearby, isFalse);
+        expect(fakeIncidentRepo.calls, isNot(contains('incident.endorse')));
+      });
+
+      test('"Es este" on a report of someone else still endorses it', () async {
+        await stageNearbyReport('someone-else');
+
+        final states = await emittedStates(bloc, const NearbyReportEndorsed('inc-99'));
+
+        expect(states.last.isEndorsedNearby, isTrue);
+        expect(states.last.isOwnNearbyReport, isFalse);
+        expect(fakeIncidentRepo.calls, contains('incident.endorse'));
+      });
+
+      test('when the author is unknown it still tries to endorse and the server decides', () async {
+        await stageNearbyReport(null);
+
+        final states = await emittedStates(bloc, const NearbyReportEndorsed('inc-99'));
+
+        expect(states.last.isOwnNearbyReport, isFalse);
+        expect(fakeIncidentRepo.calls, contains('incident.endorse'));
+      });
+    });
+
     test('Full wizard flow from Step 1 to Step 5 submits successfully', () async {
       // Step 1: Location
       bloc.add(const LocationPitched(

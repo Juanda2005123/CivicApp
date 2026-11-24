@@ -361,6 +361,18 @@ class ReportWizardBloc extends Bloc<ReportWizardEvent, ReportWizardState> {
       return;
     }
 
+    // Nobody endorses their own report (RN-05): "Es este" on it leaves the wizard
+    // without voting, as HU-09 asks. The server refuses it too.
+    final target = state.nearbyIncidents.where((n) => n.id == event.incidentId).firstOrNull;
+    if (target?.reporterId == profile.id) {
+      emit(state.copyWith(
+        status: WizardStatus.success,
+        isOwnNearbyReport: true,
+        clearErrorMessage: true,
+      ));
+      return;
+    }
+
     emit(state.copyWith(status: WizardStatus.submitting, clearErrorMessage: true));
     try {
       await _endorseIncident(

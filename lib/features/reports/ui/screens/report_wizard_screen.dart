@@ -114,6 +114,13 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
               const SnackBar(content: Text('¡Apoyaste el reporte existente con éxito!')),
             );
             Navigator.of(context).pop();
+          } else if (state.isOwnNearbyReport) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Ese reporte ya es tuyo, así que no suma un apoyo. No hace falta reportarlo otra vez.'),
+              ),
+            );
+            Navigator.of(context).pop();
           } else if (state.publishedIncident != null) {
             _showPublishedDialog(context, state.publishedIncident!);
           }

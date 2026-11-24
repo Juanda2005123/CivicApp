@@ -99,7 +99,7 @@ class IncidentRemoteDataSource {
       // Query active reports of the given category
       final rows = await _client
           .from('road_incident')
-          .select('id_incident, tracking_code, title, severity, latitude, longitude, incident_category(name), incident_photo(file_url, is_primary), incident_upvote(id_user)')
+          .select('id_incident, id_reporter_user, tracking_code, title, severity, latitude, longitude, incident_category(name), incident_photo(file_url, is_primary), incident_upvote(id_user)')
           .eq('id_category', categoryId)
           .neq('current_status', 'RESOLVED')
           .limit(50);
@@ -137,6 +137,7 @@ class IncidentRemoteDataSource {
             distanceInMeters: distance,
             primaryPhotoUrl: primaryUrl,
             upvotesCount: upvotesData?.length ?? 0,
+            reporterId: row['id_reporter_user'] as String?,
           ));
         }
       }

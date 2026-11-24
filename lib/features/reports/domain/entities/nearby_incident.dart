@@ -12,6 +12,9 @@ class NearbyIncident extends Equatable {
   final String? primaryPhotoUrl;
   final int upvotesCount;
 
+  /// Author of the report, so the wizard can tell the citizen's own report (RN-05). Null when unknown.
+  final String? reporterId;
+
   const NearbyIncident({
     required this.id,
     required this.trackingCode,
@@ -22,6 +25,7 @@ class NearbyIncident extends Equatable {
     required this.distanceInMeters,
     this.primaryPhotoUrl,
     this.upvotesCount = 0,
+    this.reporterId,
   });
 
   @override
@@ -35,5 +39,6 @@ class NearbyIncident extends Equatable {
         distanceInMeters,
         primaryPhotoUrl,
         upvotesCount,
+        reporterId,
       ];
 }
