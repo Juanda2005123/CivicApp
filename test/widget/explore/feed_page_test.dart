@@ -87,7 +87,7 @@ void main() {
   /// Drags the list up until the bloc has [count] reports (or gives up).
   Future<void> scrollUntilLoaded(WidgetTester tester, int count) async {
     for (var i = 0; i < 40 && bloc.state.items.length < count; i++) {
-      await tester.drag(find.byType(Scrollable).first, const Offset(0, -1500));
+      await tester.drag(find.byType(ListView), const Offset(0, -1500));
       await tester.pumpAndSettle();
     }
   }
@@ -184,7 +184,7 @@ void main() {
     await pumpPage(tester);
     incidents.feed = _reports(3, prefix: 'Nuevo');
 
-    await tester.fling(find.byType(Scrollable).first, const Offset(0, 400), 1500);
+    await tester.fling(find.byType(ListView), const Offset(0, 400), 1500);
     await tester.pumpAndSettle();
 
     expect(bloc.state.items, hasLength(3));
@@ -196,7 +196,7 @@ void main() {
     await pumpPage(tester);
     incidents.feedError = Exception('Sin conexión.');
 
-    await tester.fling(find.byType(Scrollable).first, const Offset(0, 400), 1500);
+    await tester.fling(find.byType(ListView), const Offset(0, 400), 1500);
     await tester.pumpAndSettle();
 
     expect(find.text('Sin conexión.'), findsOneWidget);
@@ -221,7 +221,7 @@ void main() {
     expect(bloc.state.loadMoreFailed, isTrue);
     final callsAfterFailure = incidents.calls.where((c) => c == 'incident.getCityFeed').length;
 
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
 
     expect(incidents.calls.where((c) => c == 'incident.getCityFeed').length, callsAfterFailure);
