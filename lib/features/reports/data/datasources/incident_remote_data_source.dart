@@ -158,7 +158,7 @@ class IncidentRemoteDataSource {
     try {
       final rows = await _client
           .from('road_incident')
-          .select('id_incident, tracking_code, title, severity, latitude, longitude, incident_category(name, icon)')
+          .select('id_incident, tracking_code, title, description, formatted_address, neighborhood, severity, latitude, longitude, incident_category(name, icon)')
           .eq('city', city)
           .order('created_at', ascending: false)
           .limit(_mapLimit);
@@ -171,6 +171,9 @@ class IncidentRemoteDataSource {
           trackingCode: row['tracking_code'] as String,
           title: row['title'] as String,
           categoryName: (category?['name'] as String?) ?? 'Otro daño vial',
+          neighborhood: (row['neighborhood'] as String?) ?? '',
+          description: (row['description'] as String?) ?? '',
+          formattedAddress: (row['formatted_address'] as String?) ?? '',
           categoryIcon: (category?['icon'] as String?) ?? 'more_horiz',
           severity: IncidentSeverity.fromDbValue((row['severity'] as String?) ?? 'MEDIUM'),
           coordinates: Coordinates(

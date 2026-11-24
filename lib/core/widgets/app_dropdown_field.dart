@@ -1,20 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_spacing.dart';
+import '../utils/search_text.dart';
 import 'app_text_field.dart';
 
-/// Lower-cases [text] and strips Spanish accents, so that a search for
-/// `bogota` finds `Bogotá` and `narino` finds `Nariño`.
-String normalizeSearchText(String text) {
-  const from = 'áàäâéèëêíìïîóòöôúùüûñ';
-  const to = 'aaaaeeeeiiiioooouuuun';
-  final buffer = StringBuffer();
-  for (final char in text.toLowerCase().split('')) {
-    final index = from.indexOf(char);
-    buffer.write(index == -1 ? char : to[index]);
-  }
-  return buffer.toString();
-}
+// Kept here so the widget and its tests keep importing it from this file.
+export '../utils/search_text.dart';
 
 /// Searchable dropdown of the design system, with the same look as
 /// [AppTextField]: the user opens the list or types to filter it (accent and

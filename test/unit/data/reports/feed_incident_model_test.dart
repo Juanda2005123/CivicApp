@@ -51,6 +51,28 @@ void main() {
       expect(model.createdAt, DateTime.utc(2026, 11, 14, 10));
     });
 
+    test('reads the description and the address the search of Comunidad needs (HU-20)', () {
+      final model = FeedIncidentModel.fromJson(_row(overrides: {
+        'description': 'Cráter en el carril derecho.',
+        'formatted_address': 'Calle 5 # 38-20',
+      }));
+
+      expect(model.description, 'Cráter en el carril derecho.');
+      expect(model.formattedAddress, 'Calle 5 # 38-20');
+    });
+
+    test('a row without them reads as empty text, so a search never fails on null', () {
+      final model = FeedIncidentModel.fromJson(_row());
+
+      expect(model.description, '');
+      expect(model.formattedAddress, '');
+    });
+
+    test('the select asks for both columns', () {
+      expect(FeedIncidentModel.select, contains('description'));
+      expect(FeedIncidentModel.select, contains('formatted_address'));
+    });
+
     test('the cover is the primary photo, wherever it is in the list', () {
       final model = FeedIncidentModel.fromJson(_row(photos: [
         {'file_url': 'https://example.com/a.jpg', 'is_primary': false},
