@@ -1,5 +1,6 @@
 import '../../../auth/domain/entities/city.dart';
 import '../../../reports/domain/entities/feed_incident.dart';
+import '../../domain/entities/report_filter.dart';
 
 /// `loading` covers the first page and a refresh; the next page has its own
 /// flag so the list stays on screen while it arrives.
@@ -20,6 +21,10 @@ class FeedState {
   final bool loadMoreFailed;
   final String? errorMessage;
 
+  /// What the citizen searched, filtered and ordered by (HU-20). The map reads
+  /// it too, so both screens narrow the same way. A new city starts clean.
+  final ReportFilter filter;
+
   const FeedState({
     this.status = FeedStatus.initial,
     this.city,
@@ -28,6 +33,7 @@ class FeedState {
     this.isLoadingMore = false,
     this.loadMoreFailed = false,
     this.errorMessage,
+    this.filter = const ReportFilter(),
   });
 
   /// First load of [city]: loading, with nothing left of the previous city.
@@ -37,7 +43,8 @@ class FeedState {
         hasMore = false,
         isLoadingMore = false,
         loadMoreFailed = false,
-        errorMessage = null;
+        errorMessage = null,
+        filter = const ReportFilter();
 
   FeedState copyWith({
     FeedStatus? status,
@@ -47,6 +54,7 @@ class FeedState {
     bool? loadMoreFailed,
     String? errorMessage,
     bool clearErrorMessage = false,
+    ReportFilter? filter,
   }) {
     return FeedState(
       status: status ?? this.status,
@@ -56,6 +64,7 @@ class FeedState {
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       loadMoreFailed: loadMoreFailed ?? this.loadMoreFailed,
       errorMessage: clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
+      filter: filter ?? this.filter,
     );
   }
 }
