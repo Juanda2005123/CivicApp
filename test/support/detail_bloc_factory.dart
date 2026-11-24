@@ -14,6 +14,7 @@ import 'package:vigia_app/features/reports/ui/bloc/comments_bloc.dart';
 import 'package:vigia_app/features/reports/ui/bloc/incident_detail_bloc.dart';
 
 import 'fakes.dart';
+import 'package:vigia_app/features/reports/domain/usecases/delete_incident_usecase.dart';
 
 /// The detail Bloc wired to fakes. By default citizen `me` is signed in; with
 /// [guest] nobody is (HU-22).
@@ -26,6 +27,7 @@ IncidentDetailBloc buildDetailBloc(IncidentRepository repository, {bool guest = 
     GetIncidentByIdUseCase(repository),
     GetCurrentProfileUseCase(auth, profiles),
     ToggleEndorsementUseCase(repository),
+    DeleteIncidentUseCase(repository),
   );
 }
 
