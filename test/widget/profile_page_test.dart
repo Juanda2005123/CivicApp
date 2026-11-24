@@ -17,7 +17,7 @@ import '../support/fakes.dart';
 import '../support/profile_bloc_factory.dart';
 import '../support/fake_impact_repository.dart';
 
-Widget createProfileTestWidget(ProfileBloc bloc) {
+Widget createProfileTestWidget(ProfileBloc bloc, {VoidCallback? onReportPressed}) {
   return MultiBlocProvider(
     providers: [
       BlocProvider<ThemeCubit>(create: (_) => ThemeCubit()),
@@ -26,9 +26,12 @@ Widget createProfileTestWidget(ProfileBloc bloc) {
     child: MaterialApp(
       theme: AppTheme.light,
       // A Page has no Scaffold; the shell hosts it in the app.
-      home: const Scaffold(body: ProfilePage()),
+      home: Scaffold(body: ProfilePage(onReportPressed: onReportPressed ?? () {})),
       routes: {
         AppRoutes.login: (context) => const Scaffold(body: Text('Login Screen Mock')),
+        AppRoutes.reportDetail: (context) => Scaffold(
+              body: Text('Detalle ${ModalRoute.of(context)!.settings.arguments}'),
+            ),
       },
     ),
   );

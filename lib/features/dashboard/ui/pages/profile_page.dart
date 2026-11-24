@@ -5,20 +5,29 @@ import '../../../../core/constants/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_notice.dart';
 import '../../../../core/widgets/app_status_chip.dart';
 import '../../../../core/widgets/dotted_spinner.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/widgets/rank_seal.dart';
 import '../../../auth/domain/entities/profile.dart';
+import '../../../reports/domain/entities/feed_incident.dart';
 import '../bloc/profile_bloc.dart';
 import '../bloc/profile_event.dart';
 import '../bloc/profile_state.dart';
+import '../widgets/impact_counters.dart';
+import '../widgets/my_reports_section.dart';
+import '../widgets/rank_progress_card.dart';
 
-/// "Mi perfil" tab of the shell: the citizen's profile summary (Sprint 1) with
-/// secure logout. A Page, so it has no Scaffold; it only draws the
-/// [ProfileState]. A guest (HU-22) sees an invitation to sign in instead.
+/// "Mi perfil" tab of the shell: the citizen's civic impact dashboard (HU-23),
+/// built on the profile summary of Sprint 1, with secure logout. A Page, so it
+/// has no Scaffold; it only draws the [ProfileState]. A guest (HU-22) sees an
+/// invitation to sign in instead.
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+  /// Opens the report wizard. The shell owns it because it also reloads the map and the feed.
+  final VoidCallback onReportPressed;
+
+  const ProfilePage({super.key, required this.onReportPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +68,16 @@ class ProfilePage extends StatelessWidget {
             children: [
               _IdentityCard(profile: profile),
               const SizedBox(height: AppSpacing.lg),
+              _ImpactPanel(state: state),
+              if (state.impactStatus == ImpactStatus.success) ...[
+                const SizedBox(height: AppSpacing.xl),
+                MyReportsSection(
+                  reports: state.myReports,
+                  onOpen: (report) => _openReport(context, report),
+                  onReportFirst: onReportPressed,
+                ),
+              ],
+              const SizedBox(height: AppSpacing.lg),
               _DetailsCard(profile: profile),
               const SizedBox(height: AppSpacing.xl),
               OutlinedButton.icon(
@@ -70,6 +89,62 @@ class ProfilePage extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  /// The detail opens on top of the shell. Back from it the numbers are read
+  /// again: the citizen may have received or given an endorsement meanwhile.
+  Future<void> _openReport(BuildContext context, FeedIncident report) async {
+    final bloc = context.read<ProfileBloc>();
+    await Navigator.pushNamed(context, AppRoutes.reportDetail, arguments: report.id);
+    bloc.add(ProfileRefreshed());
+  }
+}
+
+/// Progress to the next rank and the four counters (HU-23). While they load a
+/// spinner holds the place; if they cannot load, the message and a retry show
+/// and the rest of the profile stays usable.
+class _ImpactPanel extends StatelessWidget {
+  final ProfileState state;
+
+  const _ImpactPanel({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    final impact = state.impact;
+    final progress = state.rankProgress;
+
+    if (impact != null && progress != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          RankProgressCard(progress: progress),
+          const SizedBox(height: AppSpacing.md),
+          ImpactCounters(impact: impact),
+        ],
+      );
+    }
+
+    if (state.impactStatus == ImpactStatus.failure) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppNotice(
+            kind: NoticeKind.error,
+            message: state.impactErrorMessage ?? 'No pudimos cargar tu impacto.',
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          OutlinedButton(
+            onPressed: () => context.read<ProfileBloc>().add(ProfileStarted()),
+            child: const Text('Reintentar'),
+          ),
+        ],
+      );
+    }
+
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
+      child: Center(child: DottedSpinner(size: 32, semanticLabel: 'Cargando tu impacto')),
     );
   }
 }
@@ -155,6 +230,10 @@ class _IdentityCard extends StatelessWidget {
                     style: theme.textTheme.headlineSmall?.copyWith(fontSize: 22, height: 28 / 22),
                   ),
                   const SizedBox(height: AppSpacing.xs / 2),
+                  Text(
+                    'Ciudadano',
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
                   Text(profile.rankName, style: theme.textTheme.labelMedium),
                   const SizedBox(height: AppSpacing.sm),
                   const Align(
