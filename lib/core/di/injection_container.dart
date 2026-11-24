@@ -48,6 +48,7 @@ import '../../features/reports/domain/repositories/incident_repository.dart';
 import '../../features/reports/domain/repositories/photo_picker_repository.dart';
 import '../../features/reports/domain/usecases/create_incident_usecase.dart';
 import '../../features/reports/domain/usecases/endorse_incident_usecase.dart';
+import '../../features/reports/domain/usecases/toggle_endorsement_usecase.dart';
 import '../../features/reports/domain/usecases/get_categories_usecase.dart';
 import '../../features/reports/domain/usecases/geocode_address_usecase.dart';
 import '../../features/reports/domain/usecases/get_city_center_usecase.dart';
@@ -147,6 +148,7 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => GetCityCenterUseCase(sl()));
   sl.registerLazySingleton(() => GeocodeAddressUseCase(sl(), sl()));
   sl.registerLazySingleton(() => EndorseIncidentUseCase(sl()));
+  sl.registerLazySingleton(() => ToggleEndorsementUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentLocationUseCase(sl()));
   sl.registerLazySingleton(() => SuggestAddressUseCase(sl()));
   sl.registerLazySingleton(() => PickPhotoUseCase(sl()));
@@ -179,5 +181,5 @@ Future<void> initDependencies({
       sl(),
     ),
   );
-  sl.registerFactory(() => IncidentDetailBloc(sl()));
+  sl.registerFactory(() => IncidentDetailBloc(sl(), sl(), sl()));
 }

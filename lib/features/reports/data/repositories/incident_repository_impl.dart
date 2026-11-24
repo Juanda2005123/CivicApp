@@ -109,4 +109,15 @@ class IncidentRepositoryImpl implements IncidentRepository {
       userId: userId,
     );
   }
+
+  @override
+  Future<void> revokeEndorsement({
+    required String incidentId,
+    required String userId,
+  }) {
+    return _remoteDataSource.revokeEndorsement(
+      incidentId: incidentId,
+      userId: userId,
+    );
+  }
 }

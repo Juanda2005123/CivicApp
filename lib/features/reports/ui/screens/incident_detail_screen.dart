@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vigia_app/core/constants/app_routes.dart';
 import 'package:vigia_app/core/theme/app_colors.dart';
 import 'package:vigia_app/core/theme/app_spacing.dart';
 import 'package:vigia_app/core/theme/app_text_styles.dart';
@@ -7,6 +8,8 @@ import 'package:vigia_app/core/widgets/app_notice.dart';
 import 'package:vigia_app/core/widgets/dotted_spinner.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/core/widgets/rank_seal.dart';
+import 'package:vigia_app/core/widgets/sign_in_required_dialog.dart';
+import 'package:vigia_app/core/widgets/validation_seal.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_photo.dart';
 import '../bloc/incident_detail_bloc.dart';
@@ -57,7 +60,15 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
         title: Text('Detalle del reporte', style: AppTextStyles.appBarTitle),
         centerTitle: false,
       ),
-      body: BlocBuilder<IncidentDetailBloc, IncidentDetailState>(
+      body: BlocListener<IncidentDetailBloc, IncidentDetailState>(
+        listenWhen: (previous, current) =>
+            current.endorsementError != null && previous.endorsementError != current.endorsementError,
+        listener: (context, state) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(content: Text(state.endorsementError!)));
+        },
+        child: BlocBuilder<IncidentDetailBloc, IncidentDetailState>(
         builder: (context, state) {
           switch (state.status) {
             case IncidentDetailStatus.initial:
@@ -107,14 +118,33 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
               if (incident == null) {
                 return const Center(child: Text('Reporte no encontrado'));
               }
-              return _buildIncidentDetail(context, incident, theme);
+              return _buildIncidentDetail(context, state, incident, theme);
           }
         },
+        ),
       ),
     );
   }
 
-  Widget _buildIncidentDetail(BuildContext context, Incident incident, ThemeData theme) {
+  void _toggleEndorsement(BuildContext context, IncidentDetailState state) {
+    if (state.isGuest) {
+      showSignInRequiredDialog(
+        context,
+        message: 'Para apoyar un reporte necesitas una cuenta. Inicia sesión o regístrate; es gratis.',
+        onSignIn: () => Navigator.pushNamed(context, AppRoutes.login),
+        onRegister: () => Navigator.pushNamed(context, AppRoutes.register),
+      );
+      return;
+    }
+    context.read<IncidentDetailBloc>().add(const IncidentEndorsementToggled());
+  }
+
+  Widget _buildIncidentDetail(
+    BuildContext context,
+    IncidentDetailState state,
+    Incident incident,
+    ThemeData theme,
+  ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.screen),
       child: Column(
@@ -130,6 +160,11 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
 
           // Community Validation / Endorsement Progress Bar
           _buildEndorsementCard(context, incident, theme),
+          // The author never endorses their own report (RN-05): no button for them.
+          if (!state.viewerIsAuthor) ...[
+            const SizedBox(height: AppSpacing.md),
+            _buildEndorseButton(context, state),
+          ],
           const SizedBox(height: AppSpacing.md),
 
           // Problem Information Card
@@ -350,56 +385,88 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
   }
 
   Widget _buildEndorsementCard(BuildContext context, Incident incident, ThemeData theme) {
-    const targetEndorsements = 10;
-    final progress = (incident.upvotesCount / targetEndorsements).clamp(0.0, 1.0);
+    const target = Incident.validationTarget;
+    final progress = (incident.upvotesCount / target).clamp(0.0, 1.0);
+    final missing = incident.endorsementsMissing;
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadii.md),
-        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // The seal stays once earned, even if later revocations drop the count (HU-16).
+        if (incident.isCommunityValidated) ...[
+          ValidationSeal(endorsements: incident.upvotesCount),
+          const SizedBox(height: AppSpacing.md),
+        ],
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(AppRadii.md),
+            border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Validación comunitaria',
-                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Validación comunitaria',
+                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    '${incident.upvotesCount} de $target apoyos',
+                    style: AppTextStyles.data(size: 13).copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
               ),
+              const SizedBox(height: AppSpacing.sm),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 8,
+                  backgroundColor: theme.colorScheme.outline.withValues(alpha: 0.2),
+                  valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
               Text(
-                '${incident.upvotesCount} de $targetEndorsements apoyos',
-                style: AppTextStyles.data(size: 13).copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
+                incident.isCommunityValidated
+                    ? 'Los vecinos ya validaron este reporte.'
+                    : 'Faltan $missing ${missing == 1 ? 'apoyo' : 'apoyos'} para validar este reporte (+500 XP).',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 8,
-              backgroundColor: theme.colorScheme.outline.withValues(alpha: 0.2),
-              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+        ),
+      ],
+    );
+  }
+
+  /// "Apoyar" / "Apoyado" (HU-15): icon and text change with the state, never color alone.
+  Widget _buildEndorseButton(BuildContext context, IncidentDetailState state) {
+    final endorsed = state.viewerEndorsed;
+    final onPressed = state.isEndorsing ? null : () => _toggleEndorsement(context, state);
+
+    return SizedBox(
+      width: double.infinity,
+      child: endorsed
+          ? OutlinedButton.icon(
+              onPressed: onPressed,
+              icon: const Icon(Icons.thumb_up, size: AppSizes.icon),
+              label: const Text('Apoyado'),
+            )
+          : FilledButton.icon(
+              onPressed: onPressed,
+              icon: const Icon(Icons.thumb_up_outlined, size: AppSizes.icon),
+              label: const Text('Apoyar este reporte'),
             ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            progress >= 1.0
-                ? '¡Este reporte ha sido validado por los ciudadanos!'
-                : 'Se requieren $targetEndorsements apoyos para elevar el reporte a revisión prioritaria.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

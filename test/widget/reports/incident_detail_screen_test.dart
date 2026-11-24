@@ -8,10 +8,11 @@ import 'package:vigia_app/core/widgets/dotted_spinner.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_photo.dart';
-import 'package:vigia_app/features/reports/domain/usecases/get_incident_by_id_usecase.dart';
+
 import 'package:vigia_app/features/reports/ui/bloc/incident_detail_bloc.dart';
 import 'package:vigia_app/features/reports/ui/screens/incident_detail_screen.dart';
 
+import '../../support/detail_bloc_factory.dart';
 import '../../support/fakes.dart';
 
 void main() {
@@ -53,7 +54,7 @@ void main() {
     });
 
     IncidentDetailBloc newBloc() {
-      final bloc = IncidentDetailBloc(GetIncidentByIdUseCase(repository));
+      final bloc = buildDetailBloc(repository);
       addTearDown(bloc.close);
       return bloc;
     }
@@ -86,7 +87,7 @@ void main() {
 
     testWidgets('while the report loads it shows the spinner, never the error view', (tester) async {
       final pending = Completer<Incident>();
-      final bloc = IncidentDetailBloc(GetIncidentByIdUseCase(_SlowIncidentRepository(pending.future)));
+      final bloc = buildDetailBloc(_SlowIncidentRepository(pending.future));
       addTearDown(bloc.close);
 
       await tester.pumpWidget(createWidgetUnderTest(bloc, incidentIdOrCode: '#VIG-1001'));

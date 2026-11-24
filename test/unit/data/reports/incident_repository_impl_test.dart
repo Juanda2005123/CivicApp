@@ -78,6 +78,11 @@ class FakeIncidentRemoteDataSource implements IncidentRemoteDataSource {
   }
 
   @override
+  Future<void> revokeEndorsement({required String incidentId, required String userId}) async {
+    calls.add('remote.revokeEndorsement');
+  }
+
+  @override
   Future<void> endorseIncident({required String incidentId, required String userId}) async {
     calls.add('remote.endorseIncident');
   }
@@ -150,6 +155,12 @@ void main() {
       expect(fakeRemote.calls, ['remote.getCityFeed']);
       expect(fakeRemote.lastFeedOffset, 40);
       expect(fakeRemote.lastFeedLimit, 20);
+    });
+
+    test('revokeEndorsement delegates to remote data source', () async {
+      await repository.revokeEndorsement(incidentId: 'inc-1', userId: 'user-1');
+
+      expect(fakeRemote.calls, ['remote.revokeEndorsement']);
     });
 
     test('endorseIncident delegates to remote data source', () async {
