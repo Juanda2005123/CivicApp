@@ -357,6 +357,69 @@ class FakeIncidentRepository implements IncidentRepository {
     _updateStored(incidentId, (incident) => incident.withoutEndorsementBy(userId));
   }
 
+  Exception? updateError;
+  Exception? deleteError;
+
+  /// Reports deleted, by id.
+  final List<String> deletedIds = [];
+
+  /// Like the server: the report keeps its code and place, the photos follow the
+  /// edit, and a frozen report (window over or 5 endorsements) is refused.
+  @override
+  Future<Incident> updateIncident({
+    required String incidentId,
+    required String reporterId,
+    required int categoryId,
+    required String title,
+    required String description,
+    required IncidentSeverity severity,
+    String? estimatedDimensions,
+    required List<IncidentPhoto> removedPhotos,
+    required List<PickedPhoto> addedPhotos,
+  }) async {
+    calls.add('incident.update');
+    if (updateError != null) throw updateError!;
+    final current = stored[incidentId];
+    if (current == null) throw Exception('Reporte no encontrado');
+
+    final removedIds = removedPhotos.map((p) => p.id).toSet();
+    final photos = [
+      ...current.photos.where((p) => !removedIds.contains(p.id)),
+      for (final (i, _) in addedPhotos.indexed)
+        IncidentPhoto(
+          id: 'new-photo-${current.photos.length + i + 1}',
+          incidentId: incidentId,
+          fileUrl: 'https://example.com/new-${current.photos.length + i + 1}.jpg',
+          uploadedAt: DateTime(2026, 11, 12),
+        ),
+    ];
+    final updated = current.copyWith(
+      categoryId: categoryId,
+      title: title,
+      description: description,
+      severity: severity,
+      estimatedDimensions: estimatedDimensions,
+      clearEstimatedDimensions: estimatedDimensions == null,
+      photos: photos,
+    );
+    _storeUpdated(current, updated);
+    return updated;
+  }
+
+  @override
+  Future<void> deleteIncident(Incident incident) async {
+    calls.add('incident.delete');
+    if (deleteError != null) throw deleteError!;
+    deletedIds.add(incident.id);
+    stored.remove(incident.id);
+    stored.remove(incident.trackingCode);
+  }
+
+  void _storeUpdated(Incident current, Incident updated) {
+    stored[current.id] = updated;
+    stored[current.trackingCode] = updated;
+  }
+
   /// Mimics the server: the stored report reflects the endorsement, so a later
   /// read of the report shows it.
   void _updateStored(String incidentId, Incident Function(Incident) change) {
