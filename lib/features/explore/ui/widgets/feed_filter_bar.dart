@@ -80,7 +80,8 @@ class _FeedFilterBarState extends State<FeedFilterBar> {
               setState(() {});
             },
             decoration: InputDecoration(
-              hintText: 'Buscar por título, descripción o dirección',
+              // Short on purpose: a longer hint is cut off on a 375 dp phone.
+              hintText: 'Buscar reportes',
               prefixIcon: const Icon(Icons.search, size: AppSizes.icon),
               suffixIcon: _controller.text.isEmpty
                   ? null
@@ -132,7 +133,8 @@ class _FeedFilterBarState extends State<FeedFilterBar> {
                     style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
                 ),
-                TextButton(onPressed: widget.onClearFilters, child: const Text('Limpiar filtros')),
+                // With no match the empty state already offers it: one button, not two.
+                if (count > 0) TextButton(onPressed: widget.onClearFilters, child: const Text('Limpiar filtros')),
               ],
             ),
           ],

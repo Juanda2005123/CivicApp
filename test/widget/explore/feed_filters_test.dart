@@ -90,7 +90,7 @@ void main() {
 
       expect(find.text('Cali, Valle del Cauca'), findsOneWidget);
       expect(find.byType(TextField), findsOneWidget);
-      expect(find.text('Buscar por título, descripción o dirección'), findsOneWidget);
+      expect(find.text('Buscar reportes'), findsOneWidget);
       expect(find.text('Categoría'), findsOneWidget);
       expect(find.text('Barrio'), findsOneWidget);
       expect(find.text('Más recientes'), findsOneWidget);
@@ -259,7 +259,8 @@ void main() {
       expect(find.text('Ningún reporte coincide'), findsOneWidget);
       expect(find.byType(FeedIncidentCard), findsNothing);
 
-      // The button in the empty state and the one under the search bar do the same.
+      // With no match there is one "Limpiar filtros": the one of the empty state.
+      expect(find.text('Limpiar filtros'), findsOneWidget);
       await tester.tap(find.widgetWithText(OutlinedButton, 'Limpiar filtros'));
       await tester.pumpAndSettle();
 
