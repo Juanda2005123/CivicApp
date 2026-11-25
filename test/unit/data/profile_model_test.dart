@@ -35,6 +35,7 @@ void main() {
         'reference_city': 'Cali',
         'last_city': 'Cali',
         'experience_points': 0,
+        'show_real_name': true,
         'is_active': true,
       });
 
@@ -57,6 +58,7 @@ void main() {
         'reference_city': 'Cali',
         'last_city': 'Cali',
         'experience_points': 0,
+        'show_real_name': true,
         'is_active': true,
       });
       expect(json.containsKey('residence_city_id'), isFalse);

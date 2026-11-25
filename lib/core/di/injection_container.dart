@@ -23,6 +23,7 @@ import '../../features/auth/domain/usecases/open_location_settings_usecase.dart'
 import '../../features/auth/domain/usecases/sign_in_usecase.dart';
 import '../../features/auth/domain/usecases/sign_out_usecase.dart';
 import '../../features/auth/domain/usecases/sign_up_usecase.dart';
+import '../../features/auth/domain/usecases/update_privacy_usecase.dart';
 import '../../features/auth/ui/bloc/login_bloc.dart';
 import '../../features/auth/ui/bloc/register_bloc.dart';
 import '../../features/auth/ui/bloc/startup_bloc.dart';
@@ -32,6 +33,7 @@ import '../../features/dashboard/domain/repositories/impact_repository.dart';
 import '../../features/dashboard/domain/usecases/get_civic_impact_usecase.dart';
 import '../../features/dashboard/domain/usecases/get_my_reports_usecase.dart';
 import '../../features/dashboard/domain/usecases/get_rank_progress_usecase.dart';
+import '../../features/dashboard/ui/bloc/privacy_bloc.dart';
 import '../../features/dashboard/ui/bloc/profile_bloc.dart';
 import '../../features/explore/data/datasources/recent_cities_local_data_source.dart';
 import '../../features/explore/data/repositories/recent_cities_repository_impl.dart';
@@ -163,6 +165,7 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => SignInUseCase(sl(), sl()));
   sl.registerLazySingleton(() => SignOutUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentProfileUseCase(sl(), sl()));
+  sl.registerLazySingleton(() => UpdatePrivacyUseCase(sl()));
   sl.registerLazySingleton(() => GetCivicImpactUseCase(sl()));
   sl.registerLazySingleton(() => GetRankProgressUseCase(sl()));
   sl.registerLazySingleton(() => GetMyReportsUseCase(sl()));
@@ -198,6 +201,7 @@ Future<void> initDependencies({
   sl.registerFactory(() => LoginBloc(sl()));
   sl.registerFactory(() => RegisterBloc(sl(), sl(), sl(), sl()));
   sl.registerFactory(() => ProfileBloc(sl(), sl(), sl(), sl(), sl()));
+  sl.registerFactory(() => PrivacyBloc(sl()));
   sl.registerFactory(() => MapBloc(sl(), sl(), sl(), sl()));
   sl.registerFactory(() => CitySwitcherBloc(sl(), sl()));
   sl.registerFactory(() => FeedBloc(sl()));

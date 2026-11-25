@@ -103,6 +103,26 @@ class FakeProfileRepository implements ProfileRepository {
       rankId: profile.rankId,
       rankName: profile.rankName,
       experiencePoints: profile.experiencePoints,
+      showRealName: profile.showRealName,
+      isActive: profile.isActive,
+    );
+  }
+
+  @override
+  Future<void> updatePrivacy({required String userId, required bool showRealName}) async {
+    calls.add('profile.updatePrivacy');
+    final profile = stored[userId];
+    if (profile == null) throw Exception('Civic profile not found');
+    stored[userId] = Profile(
+      id: profile.id,
+      email: profile.email,
+      fullName: profile.fullName,
+      cityName: profile.cityName,
+      lastCityName: profile.lastCityName,
+      rankId: profile.rankId,
+      rankName: profile.rankName,
+      experiencePoints: profile.experiencePoints,
+      showRealName: showRealName,
       isActive: profile.isActive,
     );
   }

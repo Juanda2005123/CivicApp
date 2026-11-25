@@ -90,6 +90,12 @@ class ProfilePage extends StatelessWidget {
               _DetailsCard(profile: profile),
               const SizedBox(height: AppSpacing.xl),
               OutlinedButton.icon(
+                onPressed: () => _openSettings(context, profile),
+                icon: const Icon(Icons.settings_outlined, size: AppSizes.icon),
+                label: const Text('Configuración'),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              OutlinedButton.icon(
                 onPressed: () => context.read<ProfileBloc>().add(SignOutRequested()),
                 icon: const Icon(Icons.logout, size: AppSizes.icon),
                 label: const Text('Cerrar sesión'),
@@ -99,6 +105,14 @@ class ProfilePage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Opens "Configuración" (HU-01) and refreshes the profile on return so any
+  /// privacy or profile changes are reflected immediately.
+  Future<void> _openSettings(BuildContext context, Profile profile) async {
+    final bloc = context.read<ProfileBloc>();
+    await Navigator.pushNamed(context, AppRoutes.profileSettings, arguments: profile);
+    bloc.add(ProfileRefreshed());
   }
 
   /// The detail opens on top of the shell. Back from it the numbers are read
