@@ -56,6 +56,20 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   AuthUser? currentUser() => user;
+
+  @override
+  Future<void> updateEmail(String newEmail) async {
+    calls.add('auth.updateEmail');
+  }
+
+  @override
+  Future<void> updatePassword({
+    required String currentEmail,
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    calls.add('auth.updatePassword');
+  }
 }
 
 class FakeProfileRepository implements ProfileRepository {
@@ -100,6 +114,28 @@ class FakeProfileRepository implements ProfileRepository {
       fullName: profile.fullName,
       cityName: profile.cityName,
       lastCityName: cityName,
+      rankId: profile.rankId,
+      rankName: profile.rankName,
+      experiencePoints: profile.experiencePoints,
+      isActive: profile.isActive,
+    );
+  }
+
+  @override
+  Future<void> updateProfileInfo({
+    required String userId,
+    required String fullName,
+    required String cityName,
+  }) async {
+    calls.add('profile.updateProfileInfo');
+    final profile = stored[userId];
+    if (profile == null) throw Exception('Civic profile not found');
+    stored[userId] = Profile(
+      id: profile.id,
+      email: profile.email,
+      fullName: fullName,
+      cityName: cityName,
+      lastCityName: profile.lastCityName,
       rankId: profile.rankId,
       rankName: profile.rankName,
       experiencePoints: profile.experiencePoints,
