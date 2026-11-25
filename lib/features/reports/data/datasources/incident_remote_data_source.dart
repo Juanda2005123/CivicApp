@@ -35,7 +35,7 @@ class IncidentRemoteDataSource {
       final createdRow = await _client
           .from('road_incident')
           .insert(insertData)
-          .select('*, category:incident_category(name, icon), reporter:user_profile!fk_incident_reporter_user(full_name, civic_rank(name))')
+          .select('*, category:incident_category(name, icon), reporter:user_profile!fk_incident_reporter_user(full_name, show_real_name, civic_rank(name))')
           .single();
 
       final createdIncidentId = createdRow['id_incident'] as String;
@@ -302,7 +302,7 @@ class IncidentRemoteDataSource {
       var query = _client.from('road_incident').select('''
         *,
         category:incident_category(name, icon),
-        reporter:user_profile!fk_incident_reporter_user(full_name, civic_rank(name)),
+        reporter:user_profile!fk_incident_reporter_user(full_name, show_real_name, civic_rank(name)),
         incident_photo(*),
         incident_upvote(id_user),
         incident_comment(id_comment)

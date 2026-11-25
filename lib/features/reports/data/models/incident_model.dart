@@ -51,7 +51,9 @@ class IncidentModel extends Incident {
       id: json['id_incident'] as String,
       trackingCode: json['tracking_code'] as String,
       reporterId: json['id_reporter_user'] as String,
-      reporterName: reporter?['full_name'] as String?,
+      reporterName: (reporter == null || reporter['show_real_name'] == false)
+          ? null
+          : reporter['full_name'] as String?,
       reporterRankName: (reporter?['civic_rank'] as Map<String, dynamic>?)?['name'] as String?,
       categoryId: json['id_category'] as int,
       categoryName: category?['name'] as String?,

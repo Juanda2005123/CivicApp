@@ -23,7 +23,9 @@ class IncidentCommentModel extends IncidentComment {
       id: json['id_comment'] as String,
       incidentId: json['id_incident'] as String,
       authorId: json['id_user'] as String,
-      authorName: author?['full_name'] as String?,
+      authorName: (author == null || author['show_real_name'] == false)
+          ? null
+          : author['full_name'] as String?,
       authorRankLevel: ((author?['id_rank'] as num?)?.toInt() ?? 1).clamp(1, 4),
       authorRankName: rank?['name'] as String?,
       text: (json['content'] as String?) ?? '',
