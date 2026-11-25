@@ -14,10 +14,13 @@ import '../../features/dashboard/ui/bloc/privacy_bloc.dart';
 import '../../features/dashboard/ui/bloc/privacy_event.dart';
 import '../../features/dashboard/ui/bloc/edit_profile_bloc.dart';
 import '../../features/dashboard/ui/bloc/edit_profile_event.dart';
+import '../../features/dashboard/ui/bloc/permissions_bloc.dart';
+import '../../features/dashboard/ui/bloc/permissions_event.dart';
 import '../../features/dashboard/ui/bloc/profile_bloc.dart';
 import '../../features/dashboard/ui/bloc/profile_event.dart';
 import '../../features/dashboard/ui/screens/profile_settings_screen.dart';
 import '../../features/dashboard/ui/screens/edit_profile_screen.dart';
+import '../../features/dashboard/ui/screens/permissions_screen.dart';
 import '../../features/explore/ui/bloc/city_switcher_bloc.dart';
 import '../../features/explore/ui/bloc/feed_bloc.dart';
 import '../../features/explore/ui/bloc/map_bloc.dart';
@@ -45,6 +48,7 @@ class AppRoutes {
   static const String reportEdit = '/report-edit';
   static const String profileSettings = '/profile-settings';
   static const String editProfile = '/edit-profile';
+  static const String permissions = '/permissions';
 
   static Map<String, WidgetBuilder> get routes => {
         splash: (context) => BlocProvider(
@@ -98,5 +102,9 @@ class AppRoutes {
             child: EditProfileScreen(initialProfile: profile),
           );
         },
+        permissions: (context) => BlocProvider(
+              create: (_) => sl<PermissionsBloc>()..add(PermissionsStarted()),
+              child: const PermissionsScreen(),
+            ),
       };
 }

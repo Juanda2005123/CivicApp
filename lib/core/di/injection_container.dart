@@ -30,14 +30,20 @@ import '../../features/auth/domain/usecases/update_avatar_usecase.dart';
 import '../../features/auth/ui/bloc/login_bloc.dart';
 import '../../features/auth/ui/bloc/register_bloc.dart';
 import '../../features/auth/ui/bloc/startup_bloc.dart';
+import '../../features/dashboard/data/datasources/device_permissions_data_source.dart';
 import '../../features/dashboard/data/datasources/impact_remote_data_source.dart';
+import '../../features/dashboard/data/repositories/device_permissions_repository_impl.dart';
 import '../../features/dashboard/data/repositories/impact_repository_impl.dart';
+import '../../features/dashboard/domain/repositories/device_permissions_repository.dart';
 import '../../features/dashboard/domain/repositories/impact_repository.dart';
 import '../../features/dashboard/domain/usecases/get_civic_impact_usecase.dart';
+import '../../features/dashboard/domain/usecases/get_device_permissions_usecase.dart';
 import '../../features/dashboard/domain/usecases/get_my_reports_usecase.dart';
 import '../../features/dashboard/domain/usecases/get_rank_progress_usecase.dart';
 import '../../features/dashboard/ui/bloc/privacy_bloc.dart';
 import '../../features/dashboard/ui/bloc/edit_profile_bloc.dart';
+import '../../features/dashboard/domain/usecases/request_device_permission_usecase.dart';
+import '../../features/dashboard/ui/bloc/permissions_bloc.dart';
 import '../../features/dashboard/ui/bloc/profile_bloc.dart';
 import '../../features/explore/data/datasources/recent_cities_local_data_source.dart';
 import '../../features/explore/data/repositories/recent_cities_repository_impl.dart';
@@ -119,6 +125,7 @@ Future<void> initDependencies({
   // Data sources
   sl.registerLazySingleton(() => AuthRemoteDataSource(sl()));
   sl.registerLazySingleton(() => ProfileRemoteDataSource(sl()));
+  sl.registerLazySingleton(() => DevicePermissionsDataSource());
   sl.registerLazySingleton(() => ImpactRemoteDataSource(sl()));
   sl.registerLazySingleton(() => CityRemoteDataSource(sl()));
   sl.registerLazySingleton(() => CityLocalDataSource());
@@ -140,6 +147,9 @@ Future<void> initDependencies({
   );
   sl.registerLazySingleton<ImpactRepository>(
     () => impactRepository ?? ImpactRepositoryImpl(sl()),
+  );
+  sl.registerLazySingleton<DevicePermissionsRepository>(
+    () => DevicePermissionsRepositoryImpl(sl()),
   );
   sl.registerLazySingleton<CityRepository>(
     () => cityRepository ?? CityRepositoryImpl(sl(), sl()),
@@ -176,6 +186,8 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => GetCivicImpactUseCase(sl()));
   sl.registerLazySingleton(() => GetRankProgressUseCase(sl()));
   sl.registerLazySingleton(() => GetMyReportsUseCase(sl()));
+  sl.registerLazySingleton(() => GetDevicePermissionsUseCase(sl()));
+  sl.registerLazySingleton(() => RequestDevicePermissionUseCase(sl()));
   sl.registerLazySingleton(() => GetCitiesUseCase(sl()));
   sl.registerLazySingleton(() => DetectNearestCityUseCase(sl(), sl()));
   sl.registerLazySingleton(() => OpenLocationSettingsUseCase(sl()));
@@ -210,6 +222,7 @@ Future<void> initDependencies({
   sl.registerFactory(() => ProfileBloc(sl(), sl(), sl(), sl(), sl(), pickPhoto: sl(), updateAvatar: sl()));
   sl.registerFactory(() => PrivacyBloc(sl()));
   sl.registerFactory(() => EditProfileBloc(sl(), sl(), sl(), sl(), sl()));
+  sl.registerFactory(() => PermissionsBloc(sl(), sl()));
   sl.registerFactory(() => MapBloc(sl(), sl(), sl(), sl()));
   sl.registerFactory(() => CitySwitcherBloc(sl(), sl()));
   sl.registerFactory(() => FeedBloc(sl()));
