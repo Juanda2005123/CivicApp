@@ -17,4 +17,12 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<void> updateLastCity(String id, String cityName) => _dataSource.updateLastCity(id, cityName);
+
+  @override
+  Future<void> updateProfileInfo({
+    required String userId,
+    required String fullName,
+    required String cityName,
+  }) =>
+      _dataSource.updateProfileInfo(id: userId, fullName: fullName, cityName: cityName);
 }

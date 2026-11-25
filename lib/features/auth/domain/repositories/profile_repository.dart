@@ -9,4 +9,11 @@ abstract class ProfileRepository {
 
   /// Remembers the city the citizen is exploring (`last_city`, HU-21).
   Future<void> updateLastCity(String id, String cityName);
+
+  /// Updates personal info (`full_name`, `reference_city`) for HU-04.
+  Future<void> updateProfileInfo({
+    required String userId,
+    required String fullName,
+    required String cityName,
+  });
 }
