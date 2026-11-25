@@ -6,6 +6,7 @@
 **Rama de integración:** `develop` (cada HU entra con su rama `feat/hu-XX-…` y un merge commit)  
 **Fecha de corte:** 14 de noviembre de 2026  
 **Progreso Sprint 2:** 17 de 17 historias completadas (100 % en código; falta validarlas en un dispositivo).
+**Progreso Sprint 3 (corte 24 de noviembre de 2026):** 6 de 12 historias en `develop` (HU-15, 16, 17, 18, 20 y 23); faltan HU-01, 02, 04, 05, 24 y 25. Ver sección 4.
 
 ---
 
@@ -165,24 +166,56 @@ Las 17 historias del Sprint 2 están implementadas. Lo que queda no es una histo
 
 ---
 
-## 4. Panorama del Sprint 3 (Para referencia del equipo)
+## 4. Estado del Sprint 3 (corte: 24 de noviembre de 2026)
 
-*Nota: Todas las historias de usuario completas del Sprint 3 están documentadas en detalle en `docs/06-sprint-3-backlog.md`.*
+*Las historias completas están en `docs/06-sprint-3-backlog.md`.* El Sprint 3 se enfoca en la interacción social ciudadana, la gamificación y los requisitos académicos. Seis de sus doce historias ya están en `develop`; cada una entró con su rama y un merge commit.
 
-El **Sprint 3** se enfoca en la **interacción social ciudadana, gamificación y cumplimiento de requisitos académicos**:
-- **Interacción comunitaria con reportes:**
-  - **HU-15:** Apoyar reportes de otros ciudadanos (*Upvote* / Endoso cívico).
-  - **HU-16:** Seguimiento a la validación comunitaria (barra de 0 a 10 apoyos para elevar a prioritario).
-  - **HU-17:** Hilo de discusión cívica (comentarios en reportes con foto opcional de evolución).
-  - **HU-18:** Edición y retiro de reportes propios.
-  - **HU-20:** Búsqueda avanzada, filtros por gravedad/categoría y ordenamiento.
-- **Auditoría cívica y cierre:**
-  - **HU-25 (RN-11):** Propuesta de resolución ciudadana (subir evidencia de que la vía fue reparada) y verificación comunitaria.
-- **Perfil, gamificación y privacidad:**
-  - **HU-01 / HU-02 / HU-04:** Configuración de privacidad, permisos del dispositivo y edición de perfil.
-  - **HU-05 / HU-23:** Avatar cívico y panel de impacto (medallas ganadas, XP total, reportes resueltos).
-- **Requisito Académico Obligatorio (Prof. Domiciano Rincón):**
-  - **HU-24: Notificaciones Push para al menos 2 eventos** (ej. "Tu reporte recibió 5 apoyos", "El bache que reportaste cambió a estado En Revisión" o "Nuevo daño crítico en tu barrio").
+### Historias hechas
+
+| Historia | Título | Qué hace |
+|---|---|---|
+| **HU-15** | Apoyar un reporte | Botón **Apoyar / Apoyado** en el detalle (toggle, RN-04). El toque se dibuja al instante y se deshace si falla. El autor no ve el botón (RN-05) y el invitado ve el modal "Necesitas iniciar sesión". Arreglo de HU-09: "Es este" sobre un reporte propio ya no intenta apoyarlo. |
+| **HU-16** | Validación comunitaria | "Faltan N apoyos para validar este reporte (+500 XP)" y el sello **Reporte validado** (`ValidationSeal`), que se queda aunque los apoyos bajen de 10. |
+| **HU-17** | Comentarios con foto opcional | Hilo del más antiguo al más nuevo al final del detalle. Texto de hasta 500 caracteres, una foto opcional (JPG, PNG o WebP, máx. 5 MB), solo-foto es válido. El autor puede eliminarlo solo en los primeros 5 minutos (+15 XP al publicar, −15 XP al eliminar). |
+| **HU-18** | Editar o eliminar mi reporte | Tarjeta "Tu reporte" con **Editar** y **Eliminar** durante los primeros 30 minutos y con menos de 5 apoyos; después "Reporte congelado". El formulario edita categoría, gravedad, título, descripción, dimensiones y hasta 3 fotos; el código `#VIG` y la ubicación no cambian. Eliminar pide confirmación y devuelve el XP que ese reporte produjo. El servidor rechaza con mensaje si la ventana se cerró con la pantalla abierta. |
+| **HU-20** | Buscar, filtrar y ordenar | En Comunidad: búsqueda sin tildes ni mayúsculas (título, descripción, dirección, barrio, código), filtros de categoría y barrio, orden **Más recientes / Más votados / Más cercanos** y estado vacío con "Limpiar filtros". El mismo filtro oculta pines en el Mapa. Sin ubicación, "Más cercanos" explica cómo activarla y deja el orden anterior. Filtra en el dispositivo y carga toda la ciudad (hasta 200 reportes) mientras hay filtro u orden. |
+| **HU-23** | Panel de impacto | En Mi perfil: avance al siguiente rango (leído de `civic_rank`), cuatro contadores reales (reportes creados, apoyos recibidos, apoyos otorgados, comentarios publicados) y "Mis reportes", que abre el detalle. Los números se releen al volver a la pestaña, al publicar y al volver de un detalle. |
+
+### Historias pendientes (para el resto del equipo)
+
+- **HU-01** Privacidad cívica · **HU-02** Permisos del dispositivo · **HU-04** Editar datos personales · **HU-05** Avatar cívico.
+- **HU-24** Notificaciones push (requisito académico obligatorio): ya se escriben filas en la tabla `notification` (apoyo, comentario, validación); falta el envío push, que necesita Firebase.
+- **HU-25** Propuesta de resolución y verificación (RN-11).
+
+### Reglas del servidor (migraciones aplicadas en Supabase)
+
+Las reglas de puntos y ventanas viven en la base de datos, no en la app. Todas están aplicadas en el proyecto compartido y tienen una prueba de humo en `data model/tests/` que siempre termina en excepción para no dejar datos.
+
+| Migración | Qué garantiza |
+|---|---|
+| **004** | +10 XP al votante y al autor por apoyo, −10 al quitarlo; el 10.º apoyo valida el reporte y paga +500 XP una sola vez; el rango sigue al XP (RN-09); sin autoapoyo (RN-05); filas en `notification`; RLS en `notification` e `incident_follow`. |
+| **005** | Comentarios inmutables, hasta 500 caracteres, +15 XP al publicar y −15 al eliminar (solo en 5 minutos); RLS en `comment_photo`. |
+| **006** | Editar o eliminar un reporte solo en 30 minutos y con menos de 5 apoyos (RN-03); el servidor paga los +100 XP de publicar (la app ya no los escribe); nadie puede escribir su propia XP ni su rango; fotos solo del autor, solo dentro de la ventana y máximo 3. |
+| **007** | Eliminar un reporte devuelve todo el XP que produjo (comentarios y apoyos incluidos); una foto no puede cambiar de reporte; un reporte nuevo siempre nace como REPORTADO, con la fecha de ahora. |
+| **008** | Política `UPDATE` de `road_incident` para el autor: `schema.sql` la declaraba pero el proyecto real nunca la tuvo, y sin ella ninguna edición se guardaba. |
+
+**Siguiente migración: `009`.** Quien necesite una nueva debe avisar antes para no chocar en la numeración. Las pruebas de humo corren como el rol del SQL Editor y se saltan la seguridad por filas; la de la 008 corre como `authenticated` justamente por eso.
+
+### Qué se probó con sesión real
+
+El 24 de noviembre se probó `develop` en la versión web contra el Supabase real con una cuenta de prueba: publicar un reporte (XP 100 exacto), comentar (115 XP), buscar en Comunidad, ver los contadores del perfil, editar título y gravedad (el código no cambió) y eliminar (el XP volvió a 0). Esa prueba encontró la política faltante de la migración 008.
+
+### Límites conocidos del Sprint 3
+
+1. **Sin probar con sesión real:** subir o editar fotos en Storage, apoyar entre dos cuentas, Android, el GPS real y las notificaciones.
+2. **Barra de filtros fija:** en una pantalla muy baja (el teléfono en horizontal) la barra de filtros de Comunidad se desborda unos 18 píxeles. En vertical no pasa.
+3. **Fotos huérfanas:** al quitar una foto o eliminar un reporte, el archivo queda en el bucket `incident-evidence`. No hay política de borrado a propósito: permitiría destruir la evidencia de un reporte congelado.
+4. **Congelado por apoyos:** el servidor cuenta los apoyos actuales, así que un reporte que baja de 5 a 4 apoyos dentro de sus 30 minutos se puede volver a editar.
+5. **Reloj del teléfono:** los botones Editar y Eliminar dependen del reloj del teléfono; el servidor siempre decide con el suyo y rechaza con un mensaje claro.
+6. **Reintento tras un fallo a medias:** si al guardar una edición falla justo el último paso de las fotos, un segundo intento puede duplicar una foto.
+7. **Filtros hasta 200 reportes:** en una ciudad con más de 200 reportes, la búsqueda y el orden solo ven los 200 más nuevos (el mismo límite del mapa).
+
+**Regla para lo que venga (sigue vigente):** toda acción que necesite cuenta debe abrir `showSignInRequiredDialog` cuando el usuario es invitado (`ProfileStatus.guest`).
 
 ---
 
