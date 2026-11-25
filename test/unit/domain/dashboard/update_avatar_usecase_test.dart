@@ -20,6 +20,16 @@ class _FakeProfileRepo implements ProfileRepository {
   Future<void> updateLastCity(String id, String cityName) async {}
 
   @override
+  Future<void> updatePrivacy({required String userId, required bool showRealName}) async {}
+
+  @override
+  Future<void> updateProfileInfo({
+    required String userId,
+    required String fullName,
+    required String cityName,
+  }) async {}
+
+  @override
   Future<String> updateAvatar({
     required String userId,
     required Uint8List bytes,

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
 import 'package:vigia_app/features/auth/domain/entities/city.dart';
@@ -24,6 +26,15 @@ class _FakeProfileRepo implements ProfileRepository {
   Future<Profile> getProfile(String id) async => throw UnimplementedError();
   @override
   Future<void> updateLastCity(String id, String cityName) async {}
+  @override
+  Future<void> updatePrivacy({required String userId, required bool showRealName}) async {}
+  @override
+  Future<String> updateAvatar({
+    required String userId,
+    required Uint8List bytes,
+    required String extension,
+  }) async =>
+      '';
   @override
   Future<void> updateProfileInfo({
     required String userId,

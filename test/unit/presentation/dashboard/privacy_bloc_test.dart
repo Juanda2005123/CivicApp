@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/features/auth/domain/entities/profile.dart';
 import 'package:vigia_app/features/auth/domain/repositories/profile_repository.dart';
@@ -24,6 +26,21 @@ class _FakeProfileRepository implements ProfileRepository {
     if (shouldFail) throw Exception('Sin conexión. Revisa tu internet e inténtalo de nuevo.');
     savedShowRealName = showRealName;
   }
+
+  @override
+  Future<void> updateProfileInfo({
+    required String userId,
+    required String fullName,
+    required String cityName,
+  }) async {}
+
+  @override
+  Future<String> updateAvatar({
+    required String userId,
+    required Uint8List bytes,
+    required String extension,
+  }) async =>
+      '';
 }
 
 void main() {

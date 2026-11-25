@@ -158,6 +158,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         rankId: profile.rankId,
         rankName: profile.rankName,
         experiencePoints: profile.experiencePoints,
+        showRealName: profile.showRealName,
         avatarUrl: url,
         isActive: profile.isActive,
       );

@@ -39,3 +39,4 @@ class ProfileRepositoryImpl implements ProfileRepository {
     required String extension,
   }) =>
       _dataSource.updateAvatar(id: userId, bytes: bytes, extension: extension);
+}

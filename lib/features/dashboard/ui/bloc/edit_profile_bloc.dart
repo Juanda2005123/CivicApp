@@ -112,6 +112,8 @@ class EditProfileBloc extends Bloc<EditProfileEvent, EditProfileState> {
         rankId: profile.rankId,
         rankName: profile.rankName,
         experiencePoints: profile.experiencePoints,
+        showRealName: profile.showRealName,
+        avatarUrl: profile.avatarUrl,
         isActive: profile.isActive,
       );
       emit(state.copyWith(

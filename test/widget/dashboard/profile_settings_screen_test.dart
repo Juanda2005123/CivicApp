@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,6 +30,21 @@ class _FakeProfileRepository implements ProfileRepository {
     if (shouldFail) throw Exception('No pudimos guardar tu privacidad.');
     lastSaved = showRealName;
   }
+
+  @override
+  Future<void> updateProfileInfo({
+    required String userId,
+    required String fullName,
+    required String cityName,
+  }) async {}
+
+  @override
+  Future<String> updateAvatar({
+    required String userId,
+    required Uint8List bytes,
+    required String extension,
+  }) async =>
+      '';
 }
 
 void main() {

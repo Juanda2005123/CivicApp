@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,6 +29,15 @@ class _FakeProfileRepo implements ProfileRepository {
   Future<Profile> getProfile(String id) async => throw UnimplementedError();
   @override
   Future<void> updateLastCity(String id, String cityName) async {}
+  @override
+  Future<void> updatePrivacy({required String userId, required bool showRealName}) async {}
+  @override
+  Future<String> updateAvatar({
+    required String userId,
+    required Uint8List bytes,
+    required String extension,
+  }) async =>
+      '';
   @override
   Future<void> updateProfileInfo({
     required String userId,
