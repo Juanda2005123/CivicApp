@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../features/auth/domain/entities/profile.dart';
 import '../../features/auth/ui/bloc/login_bloc.dart';
 import '../../features/auth/ui/bloc/register_bloc.dart';
 import '../../features/auth/ui/bloc/register_event.dart';
@@ -9,8 +10,11 @@ import '../../features/auth/ui/bloc/startup_event.dart';
 import '../../features/auth/ui/screens/login_screen.dart';
 import '../../features/auth/ui/screens/register_screen.dart';
 import '../../features/auth/ui/screens/splash_screen.dart';
+import '../../features/dashboard/ui/bloc/edit_profile_bloc.dart';
+import '../../features/dashboard/ui/bloc/edit_profile_event.dart';
 import '../../features/dashboard/ui/bloc/profile_bloc.dart';
 import '../../features/dashboard/ui/bloc/profile_event.dart';
+import '../../features/dashboard/ui/screens/edit_profile_screen.dart';
 import '../../features/explore/ui/bloc/city_switcher_bloc.dart';
 import '../../features/explore/ui/bloc/feed_bloc.dart';
 import '../../features/explore/ui/bloc/map_bloc.dart';
@@ -36,6 +40,7 @@ class AppRoutes {
   static const String reportWizard = '/report-wizard';
   static const String reportDetail = '/report-detail';
   static const String reportEdit = '/report-edit';
+  static const String editProfile = '/edit-profile';
 
   static Map<String, WidgetBuilder> get routes => {
         splash: (context) => BlocProvider(
@@ -74,5 +79,12 @@ class AppRoutes {
               ],
               child: const IncidentDetailScreen(),
             ),
+        editProfile: (context) {
+          final profile = ModalRoute.of(context)!.settings.arguments as Profile;
+          return BlocProvider(
+            create: (_) => sl<EditProfileBloc>()..add(EditProfileStarted(profile)),
+            child: EditProfileScreen(initialProfile: profile),
+          );
+        },
       };
 }
