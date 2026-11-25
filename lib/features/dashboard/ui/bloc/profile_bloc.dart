@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../auth/domain/entities/profile.dart';
 import '../../../auth/domain/usecases/get_current_profile_usecase.dart';
 import '../../../auth/domain/usecases/sign_out_usecase.dart';
+import '../../../auth/domain/usecases/update_avatar_usecase.dart';
+import '../../../reports/domain/usecases/pick_photo_usecase.dart';
 import '../../domain/usecases/get_civic_impact_usecase.dart';
 import '../../domain/usecases/get_my_reports_usecase.dart';
 import '../../domain/usecases/get_rank_progress_usecase.dart';
@@ -17,6 +19,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final GetCivicImpactUseCase _getImpact;
   final GetRankProgressUseCase _getRankProgress;
   final GetMyReportsUseCase _getMyReports;
+  final PickPhotoUseCase? _pickPhoto;
+  final UpdateAvatarUseCase? _updateAvatar;
 
   /// A refresh is already running: another one would only repeat its requests.
   bool _refreshing = false;
@@ -26,11 +30,16 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     this._signOut,
     this._getImpact,
     this._getRankProgress,
-    this._getMyReports,
-  ) : super(const ProfileState()) {
+    this._getMyReports, {
+    PickPhotoUseCase? pickPhoto,
+    UpdateAvatarUseCase? updateAvatar,
+  })  : _pickPhoto = pickPhoto,
+        _updateAvatar = updateAvatar,
+        super(const ProfileState()) {
     on<ProfileStarted>(_onStarted);
     on<ProfileRefreshed>(_onRefreshed);
     on<SignOutRequested>(_onSignOutRequested);
+    on<ProfileAvatarChangeRequested>(_onAvatarChangeRequested);
   }
 
   Future<void> _onStarted(ProfileStarted event, Emitter<ProfileState> emit) async {
@@ -111,6 +120,53 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       emit(state.copyWith(status: ProfileStatus.signedOut));
     } on Exception catch (e) {
       emit(state.copyWith(status: ProfileStatus.failure, errorMessage: _message(e)));
+    }
+  }
+
+  Future<void> _onAvatarChangeRequested(
+    ProfileAvatarChangeRequested event,
+    Emitter<ProfileState> emit,
+  ) async {
+    final profile = state.profile;
+    final pickPhoto = _pickPhoto;
+    final updateAvatar = _updateAvatar;
+    if (profile == null ||
+        pickPhoto == null ||
+        updateAvatar == null ||
+        state.avatarStatus == AvatarUploadStatus.uploading) {
+      return;
+    }
+
+    emit(state.copyWith(avatarStatus: AvatarUploadStatus.uploading, clearAvatarErrorMessage: true));
+    try {
+      final picked = await pickPhoto(fromCamera: event.fromCamera);
+      if (picked == null) {
+        emit(state.copyWith(avatarStatus: AvatarUploadStatus.idle));
+        return;
+      }
+      final url = await updateAvatar(
+        userId: profile.id,
+        bytes: picked.bytes,
+        extension: picked.extension,
+      );
+      final updatedProfile = Profile(
+        id: profile.id,
+        email: profile.email,
+        fullName: profile.fullName,
+        cityName: profile.cityName,
+        lastCityName: profile.lastCityName,
+        rankId: profile.rankId,
+        rankName: profile.rankName,
+        experiencePoints: profile.experiencePoints,
+        avatarUrl: url,
+        isActive: profile.isActive,
+      );
+      emit(state.copyWith(profile: updatedProfile, avatarStatus: AvatarUploadStatus.idle));
+    } on Exception catch (e) {
+      emit(state.copyWith(
+        avatarStatus: AvatarUploadStatus.failure,
+        avatarErrorMessage: _message(e),
+      ));
     }
   }
 

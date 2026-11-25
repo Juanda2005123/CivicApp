@@ -12,6 +12,8 @@ enum ProfileStatus { initial, loading, success, failure, guest, signedOut }
 /// reading the counters never hides the profile that did load.
 enum ImpactStatus { initial, loading, success, failure }
 
+enum AvatarUploadStatus { idle, uploading, failure }
+
 class ProfileState {
   final ProfileStatus status;
   final Profile? profile;
@@ -25,6 +27,9 @@ class ProfileState {
   final List<FeedIncident> myReports;
   final String? impactErrorMessage;
 
+  final AvatarUploadStatus avatarStatus;
+  final String? avatarErrorMessage;
+
   const ProfileState({
     this.status = ProfileStatus.initial,
     this.profile,
@@ -34,6 +39,8 @@ class ProfileState {
     this.rankProgress,
     this.myReports = const [],
     this.impactErrorMessage,
+    this.avatarStatus = AvatarUploadStatus.idle,
+    this.avatarErrorMessage,
   });
 
   ProfileState copyWith({
@@ -47,6 +54,9 @@ class ProfileState {
     List<FeedIncident>? myReports,
     String? impactErrorMessage,
     bool clearImpactErrorMessage = false,
+    AvatarUploadStatus? avatarStatus,
+    String? avatarErrorMessage,
+    bool clearAvatarErrorMessage = false,
   }) {
     return ProfileState(
       status: status ?? this.status,
@@ -57,6 +67,8 @@ class ProfileState {
       rankProgress: rankProgress ?? this.rankProgress,
       myReports: myReports ?? this.myReports,
       impactErrorMessage: clearImpactErrorMessage ? null : (impactErrorMessage ?? this.impactErrorMessage),
+      avatarStatus: avatarStatus ?? this.avatarStatus,
+      avatarErrorMessage: clearAvatarErrorMessage ? null : (avatarErrorMessage ?? this.avatarErrorMessage),
     );
   }
 }

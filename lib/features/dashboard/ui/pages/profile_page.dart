@@ -7,9 +7,9 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_notice.dart';
 import '../../../../core/widgets/app_status_chip.dart';
+import '../../../../core/widgets/civic_avatar.dart';
 import '../../../../core/widgets/dotted_spinner.dart';
 import '../../../../core/widgets/primary_button.dart';
-import '../../../../core/widgets/rank_seal.dart';
 import '../../../auth/domain/entities/profile.dart';
 import '../../../reports/domain/entities/feed_incident.dart';
 import '../bloc/profile_bloc.dart';
@@ -75,7 +75,16 @@ class ProfilePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _IdentityCard(profile: profile),
+              _IdentityCard(
+                profile: profile,
+                isUploadingAvatar: state.avatarStatus == AvatarUploadStatus.uploading,
+                onAvatarTap: () => _pickAvatarSource(context),
+              ),
+              if (state.avatarStatus == AvatarUploadStatus.failure &&
+                  state.avatarErrorMessage != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                AppNotice(kind: NoticeKind.error, message: state.avatarErrorMessage!),
+              ],
               const SizedBox(height: AppSpacing.lg),
               _ImpactPanel(state: state),
               if (state.impactStatus == ImpactStatus.success) ...[
@@ -98,6 +107,39 @@ class ProfilePage extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  /// Opens a bottom sheet so the citizen can pick a new avatar from camera or gallery (HU-05).
+  Future<void> _pickAvatarSource(BuildContext context) async {
+    final bloc = context.read<ProfileBloc>();
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined),
+                title: const Text('Tomar foto'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  bloc.add(ProfileAvatarChangeRequested(fromCamera: true));
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: const Text('Elegir de la galería'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  bloc.add(ProfileAvatarChangeRequested(fromCamera: false));
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -212,8 +254,14 @@ class _GuestInvitation extends StatelessWidget {
 
 class _IdentityCard extends StatelessWidget {
   final Profile profile;
+  final bool isUploadingAvatar;
+  final VoidCallback onAvatarTap;
 
-  const _IdentityCard({required this.profile});
+  const _IdentityCard({
+    required this.profile,
+    required this.isUploadingAvatar,
+    required this.onAvatarTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -224,10 +272,29 @@ class _IdentityCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.xl - 4),
         child: Row(
           children: [
-            RankSeal(
-              level: profile.rankId,
-              size: 72,
-              semanticLabel: 'Nivel ${profile.rankId}, ${profile.rankName}',
+            Semantics(
+              button: true,
+              label: 'Cambiar foto de perfil. Nivel ${profile.rankId}, ${profile.rankName}',
+              child: InkWell(
+                borderRadius: BorderRadius.circular(36),
+                onTap: isUploadingAvatar ? null : onAvatarTap,
+                child: SizedBox(
+                  width: 72,
+                  height: 72,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CivicAvatar(
+                        avatarUrl: profile.avatarUrl,
+                        rankId: profile.rankId,
+                        size: 72,
+                      ),
+                      if (isUploadingAvatar)
+                        const DottedSpinner(size: 32, semanticLabel: 'Subiendo avatar'),
+                    ],
+                  ),
+                ),
+              ),
             ),
             const SizedBox(width: AppSpacing.lg),
             Expanded(

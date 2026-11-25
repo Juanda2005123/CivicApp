@@ -9,3 +9,10 @@ class ProfileRefreshed extends ProfileEvent {}
 
 /// The citizen asked to log out.
 class SignOutRequested extends ProfileEvent {}
+
+/// The citizen tapped their avatar to pick and upload a new one (HU-05).
+class ProfileAvatarChangeRequested extends ProfileEvent {
+  final bool fromCamera;
+
+  ProfileAvatarChangeRequested({required this.fromCamera});
+}

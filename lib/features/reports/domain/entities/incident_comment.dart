@@ -18,6 +18,7 @@ class IncidentComment extends Equatable {
   /// Civic rank level of the author, 1 to 4 (RN-09).
   final int authorRankLevel;
   final String? authorRankName;
+  final String? authorAvatarUrl;
 
   /// Empty when the comment is only a photo (RN-06).
   final String text;
@@ -31,6 +32,7 @@ class IncidentComment extends Equatable {
     this.authorName,
     this.authorRankLevel = 1,
     this.authorRankName,
+    this.authorAvatarUrl,
     this.text = '',
     this.photoUrl,
     required this.createdAt,
@@ -56,6 +58,7 @@ class IncidentComment extends Equatable {
         authorName,
         authorRankLevel,
         authorRankName,
+        authorAvatarUrl,
         text,
         photoUrl,
         createdAt,
