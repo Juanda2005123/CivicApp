@@ -1,7 +1,7 @@
 # Document 6: Sprint Backlog 3 — Community Interaction, Lifecycle, Gamification, and Notifications
 
 **Branch:** `develop` (documented in `docs/sprint-2-3-backlogs`)  
-**Status:** In progress. HU-15, HU-16, HU-17, HU-18, HU-20 and HU-23 are implemented on `develop` (details in `docs/07-sprint-handoff-status.md`, section 4); HU-01, HU-02, HU-04, HU-05, HU-24 and HU-25 are pending.  
+**Status:** In progress. HU-01, HU-02, HU-04, HU-05, HU-15, HU-16, HU-17, HU-18, HU-20 and HU-23 are implemented on `develop` (details in `docs/07-sprint-handoff-status.md`, section 4); HU-24 and HU-25 are pending.  
 **Sprint Goal:** Activate VIGÍA's participatory community loop: enable citizen endorsement (*upvotes*), collective validation upon reaching 10 votes (+500 XP), neighborhood discussion threads with photographic evidence, strict time-window moderation for reports and comments, live impact dashboard with gamified rank progression, complete profile/privacy settings, and academic-requirement **push notifications**.
 
 ---

@@ -6,7 +6,7 @@
 **Rama de integración:** `develop` (cada HU entra con su rama `feat/hu-XX-…` y un merge commit)  
 **Fecha de corte:** 14 de noviembre de 2026  
 **Progreso Sprint 2:** 17 de 17 historias completadas (100 % en código; falta validarlas en un dispositivo).
-**Progreso Sprint 3 (corte 24 de noviembre de 2026):** 6 de 12 historias en `develop` (HU-15, 16, 17, 18, 20 y 23); faltan HU-01, 02, 04, 05, 24 y 25. Ver sección 4.
+**Progreso Sprint 3 (corte 25 de noviembre de 2026):** 10 de 12 historias en `develop` (HU-01, 02, 04, 05, 15, 16, 17, 18, 20 y 23); faltan únicamente HU-24 y HU-25. Ver sección 4.
 
 ---
 
@@ -166,9 +166,9 @@ Las 17 historias del Sprint 2 están implementadas. Lo que queda no es una histo
 
 ---
 
-## 4. Estado del Sprint 3 (corte: 24 de noviembre de 2026)
+## 4. Estado del Sprint 3 (corte: 25 de noviembre de 2026)
 
-*Las historias completas están en `docs/06-sprint-3-backlog.md`.* El Sprint 3 se enfoca en la interacción social ciudadana, la gamificación y los requisitos académicos. Seis de sus doce historias ya están en `develop`; cada una entró con su rama y un merge commit.
+*Las historias completas están en `docs/06-sprint-3-backlog.md`.* El Sprint 3 se enfoca en la interacción social ciudadana, la gamificación y los requisitos académicos. Diez de sus doce historias ya están en `develop`.
 
 ### Historias hechas
 
@@ -180,12 +180,15 @@ Las 17 historias del Sprint 2 están implementadas. Lo que queda no es una histo
 | **HU-18** | Editar o eliminar mi reporte | Tarjeta "Tu reporte" con **Editar** y **Eliminar** durante los primeros 30 minutos y con menos de 5 apoyos; después "Reporte congelado". El formulario edita categoría, gravedad, título, descripción, dimensiones y hasta 3 fotos; el código `#VIG` y la ubicación no cambian. Eliminar pide confirmación y devuelve el XP que ese reporte produjo. El servidor rechaza con mensaje si la ventana se cerró con la pantalla abierta. |
 | **HU-20** | Buscar, filtrar y ordenar | En Comunidad: búsqueda sin tildes ni mayúsculas (título, descripción, dirección, barrio, código), filtros de categoría y barrio, orden **Más recientes / Más votados / Más cercanos** y estado vacío con "Limpiar filtros". El mismo filtro oculta pines en el Mapa. Sin ubicación, "Más cercanos" explica cómo activarla y deja el orden anterior. Filtra en el dispositivo y carga toda la ciudad (hasta 200 reportes) mientras hay filtro u orden. |
 | **HU-23** | Panel de impacto | En Mi perfil: avance al siguiente rango (leído de `civic_rank`), cuatro contadores reales (reportes creados, apoyos recibidos, apoyos otorgados, comentarios publicados) y "Mis reportes", que abre el detalle. Los números se releen al volver a la pestaña, al publicar y al volver de un detalle. |
+| **HU-01** | Privacidad cívica | En Mi perfil → **Configuración**: interruptor **"Mostrar mi nombre"** (`show_real_name` en `user_profile`, migración `009`). Al desactivarlo, reportes y comentarios muestran `"Ciudadano anónimo"` conservando el rango; si falla al guardar, revierte al estado anterior. |
+| **HU-02** | Permisos del dispositivo | En Mi perfil → **Permisos**: muestra **Cámara** y **Ubicación** en texto claro (*Permitido*, *No solicitado*, *Denegado*, *Bloqueado*). Solicita permiso nativo si no se ha pedido o abre ajustes del SO si ya fue respondido, refrescando al volver a la app. |
+| **HU-04** | Editar datos personales | En Mi perfil → **Datos personales**: edita nombre completo (≥ 2 palabras), ciudad del catálogo DANE (con apoyo GPS), correo (con aviso de verificación al cambiarlo) y contraseña (validando la actual y complejidad). Conserva borradores si falla. |
+| **HU-05** | Avatar cívico | Tocar el avatar/sello en Mi perfil permite tomar foto o elegir de galería (JPG, PNG o WebP, máx. 5 MB), sube a `incident-evidence/avatars/` y actualiza `profile_picture_url` en Mi perfil y comentarios; sin foto muestra `RankSeal`. |
 
 ### Historias pendientes (para el resto del equipo)
 
-- **HU-01** Privacidad cívica · **HU-02** Permisos del dispositivo · **HU-04** Editar datos personales · **HU-05** Avatar cívico.
-- **HU-24** Notificaciones push (requisito académico obligatorio): ya se escriben filas en la tabla `notification` (apoyo, comentario, validación); falta el envío push, que necesita Firebase.
-- **HU-25** Propuesta de resolución y verificación (RN-11).
+- **HU-24** Notificaciones push (requisito académico obligatorio): ya se escriben filas en la tabla `notification` (apoyo, comentario, validación); falta el envío push, que necesita Firebase (FCM + Edge Functions/Webhooks + deep-link al detalle).
+- **HU-25** Propuesta de resolución y verificación (RN-11): las tablas `incident_resolution`, `resolution_confirmation`, `resolution_objection` y el índice `idx_single_active_resolution` ya están en `schema.sql`; faltan triggers/RLS en migración y la UI/Bloc en el detalle del reporte.
 
 ### Reglas del servidor (migraciones aplicadas en Supabase)
 
@@ -198,8 +201,9 @@ Las reglas de puntos y ventanas viven en la base de datos, no en la app. Todas e
 | **006** | Editar o eliminar un reporte solo en 30 minutos y con menos de 5 apoyos (RN-03); el servidor paga los +100 XP de publicar (la app ya no los escribe); nadie puede escribir su propia XP ni su rango; fotos solo del autor, solo dentro de la ventana y máximo 3. |
 | **007** | Eliminar un reporte devuelve todo el XP que produjo (comentarios y apoyos incluidos); una foto no puede cambiar de reporte; un reporte nuevo siempre nace como REPORTADO, con la fecha de ahora. |
 | **008** | Política `UPDATE` de `road_incident` para el autor: `schema.sql` la declaraba pero el proyecto real nunca la tuvo, y sin ella ninguna edición se guardaba. |
+| **009** | Columna `show_real_name BOOLEAN NOT NULL DEFAULT TRUE` en `user_profile` para la privacidad cívica (HU-01). |
 
-**Siguiente migración: `009`.** Quien necesite una nueva debe avisar antes para no chocar en la numeración. Las pruebas de humo corren como el rol del SQL Editor y se saltan la seguridad por filas; la de la 008 corre como `authenticated` justamente por eso.
+**Siguiente migración: `010`.** Quien necesite una nueva debe avisar antes para no chocar en la numeración. Las pruebas de humo corren como el rol del SQL Editor y se saltan la seguridad por filas; la de la 008 corre como `authenticated` justamente por eso.
 
 ### Qué se probó con sesión real
 
