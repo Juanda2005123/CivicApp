@@ -26,6 +26,7 @@ import '../../features/auth/domain/usecases/sign_out_usecase.dart';
 import '../../features/auth/domain/usecases/sign_up_usecase.dart';
 import '../../features/auth/domain/usecases/update_privacy_usecase.dart';
 import '../../features/auth/domain/usecases/update_personal_info_usecase.dart';
+import '../../features/auth/domain/usecases/update_avatar_usecase.dart';
 import '../../features/auth/ui/bloc/login_bloc.dart';
 import '../../features/auth/ui/bloc/register_bloc.dart';
 import '../../features/auth/ui/bloc/startup_bloc.dart';
@@ -171,6 +172,7 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => UpdatePrivacyUseCase(sl()));
   sl.registerLazySingleton(() => UpdatePersonalInfoUseCase(sl(), sl()));
   sl.registerLazySingleton(() => ChangePasswordUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateAvatarUseCase(sl()));
   sl.registerLazySingleton(() => GetCivicImpactUseCase(sl()));
   sl.registerLazySingleton(() => GetRankProgressUseCase(sl()));
   sl.registerLazySingleton(() => GetMyReportsUseCase(sl()));
@@ -205,7 +207,7 @@ Future<void> initDependencies({
   sl.registerFactory(() => StartupBloc(sl()));
   sl.registerFactory(() => LoginBloc(sl()));
   sl.registerFactory(() => RegisterBloc(sl(), sl(), sl(), sl()));
-  sl.registerFactory(() => ProfileBloc(sl(), sl(), sl(), sl(), sl()));
+  sl.registerFactory(() => ProfileBloc(sl(), sl(), sl(), sl(), sl(), pickPhoto: sl(), updateAvatar: sl()));
   sl.registerFactory(() => PrivacyBloc(sl()));
   sl.registerFactory(() => EditProfileBloc(sl(), sl(), sl(), sl(), sl()));
   sl.registerFactory(() => MapBloc(sl(), sl(), sl(), sl()));

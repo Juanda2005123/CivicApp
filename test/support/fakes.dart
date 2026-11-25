@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
 import 'package:vigia_app/features/auth/domain/entities/city.dart';
@@ -118,6 +119,7 @@ class FakeProfileRepository implements ProfileRepository {
       rankName: profile.rankName,
       experiencePoints: profile.experiencePoints,
       showRealName: profile.showRealName,
+      avatarUrl: profile.avatarUrl,
       isActive: profile.isActive,
     );
   }
@@ -137,6 +139,7 @@ class FakeProfileRepository implements ProfileRepository {
       rankName: profile.rankName,
       experiencePoints: profile.experiencePoints,
       showRealName: showRealName,
+      avatarUrl: profile.avatarUrl,
       isActive: profile.isActive,
     );
   }
@@ -159,8 +162,20 @@ class FakeProfileRepository implements ProfileRepository {
       rankId: profile.rankId,
       rankName: profile.rankName,
       experiencePoints: profile.experiencePoints,
+      showRealName: profile.showRealName,
+      avatarUrl: profile.avatarUrl,
       isActive: profile.isActive,
     );
+  }
+
+  @override
+  Future<String> updateAvatar({
+    required String userId,
+    required Uint8List bytes,
+    required String extension,
+  }) async {
+    calls.add('profile.updateAvatar');
+    return 'https://example.com/avatars/$userId/avatar.$extension';
   }
 }
 

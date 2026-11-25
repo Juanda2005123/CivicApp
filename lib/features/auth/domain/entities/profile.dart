@@ -15,6 +15,7 @@ class Profile extends Equatable {
   final String rankName;
   final int experiencePoints;
   final bool showRealName;
+  final String? avatarUrl;
   final bool isActive;
 
   const Profile({
@@ -27,6 +28,7 @@ class Profile extends Equatable {
     this.rankName = 'Observador Urbano',
     this.experiencePoints = 0,
     this.showRealName = true,
+    this.avatarUrl,
     this.isActive = true,
   }) : lastCityName = lastCityName ?? cityName;
 
@@ -41,6 +43,7 @@ class Profile extends Equatable {
         rankName,
         experiencePoints,
         showRealName,
+        avatarUrl,
         isActive,
       ];
 }

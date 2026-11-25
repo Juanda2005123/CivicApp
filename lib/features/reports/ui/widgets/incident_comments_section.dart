@@ -6,8 +6,8 @@ import 'package:vigia_app/core/constants/app_routes.dart';
 import 'package:vigia_app/core/theme/app_spacing.dart';
 import 'package:vigia_app/core/theme/app_text_styles.dart';
 import 'package:vigia_app/core/widgets/app_notice.dart';
+import 'package:vigia_app/core/widgets/civic_avatar.dart';
 import 'package:vigia_app/core/widgets/dotted_spinner.dart';
-import 'package:vigia_app/core/widgets/rank_seal.dart';
 import 'package:vigia_app/core/widgets/sign_in_required_dialog.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_comment.dart';
 import 'package:vigia_app/features/reports/domain/entities/picked_photo.dart';
@@ -275,8 +275,9 @@ class _CommentTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              RankSeal(
-                level: comment.authorRankLevel,
+              CivicAvatar(
+                avatarUrl: comment.authorAvatarUrl,
+                rankId: comment.authorRankLevel,
                 size: 36,
                 semanticLabel: 'Nivel ${comment.authorRankLevel}${rank != null ? ', $rank' : ''}',
               ),

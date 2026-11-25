@@ -8,7 +8,7 @@ import 'photo_storage_data_source.dart';
 /// stores the comment photo in the evidence bucket.
 class CommentRemoteDataSource {
   static const String _columns =
-      '*, author:user_profile!fk_comment_user(full_name, show_real_name, id_rank, civic_rank(name)), comment_photo(file_url)';
+      '*, author:user_profile!fk_comment_user(full_name, show_real_name, id_rank, profile_picture_url, civic_rank(name)), comment_photo(file_url)';
 
   final SupabaseClient _client;
   final PhotoStorageDataSource _storage;
