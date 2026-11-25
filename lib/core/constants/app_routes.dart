@@ -9,8 +9,11 @@ import '../../features/auth/ui/bloc/startup_event.dart';
 import '../../features/auth/ui/screens/login_screen.dart';
 import '../../features/auth/ui/screens/register_screen.dart';
 import '../../features/auth/ui/screens/splash_screen.dart';
+import '../../features/dashboard/ui/bloc/permissions_bloc.dart';
+import '../../features/dashboard/ui/bloc/permissions_event.dart';
 import '../../features/dashboard/ui/bloc/profile_bloc.dart';
 import '../../features/dashboard/ui/bloc/profile_event.dart';
+import '../../features/dashboard/ui/screens/permissions_screen.dart';
 import '../../features/explore/ui/bloc/city_switcher_bloc.dart';
 import '../../features/explore/ui/bloc/feed_bloc.dart';
 import '../../features/explore/ui/bloc/map_bloc.dart';
@@ -36,6 +39,7 @@ class AppRoutes {
   static const String reportWizard = '/report-wizard';
   static const String reportDetail = '/report-detail';
   static const String reportEdit = '/report-edit';
+  static const String permissions = '/permissions';
 
   static Map<String, WidgetBuilder> get routes => {
         splash: (context) => BlocProvider(
@@ -73,6 +77,10 @@ class AppRoutes {
                 BlocProvider(create: (_) => sl<CommentsBloc>()),
               ],
               child: const IncidentDetailScreen(),
+            ),
+        permissions: (context) => BlocProvider(
+              create: (_) => sl<PermissionsBloc>()..add(PermissionsStarted()),
+              child: const PermissionsScreen(),
             ),
       };
 }

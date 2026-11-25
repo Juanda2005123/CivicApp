@@ -90,6 +90,12 @@ class ProfilePage extends StatelessWidget {
               _DetailsCard(profile: profile),
               const SizedBox(height: AppSpacing.xl),
               OutlinedButton.icon(
+                onPressed: () => Navigator.pushNamed(context, AppRoutes.permissions),
+                icon: const Icon(Icons.security_outlined, size: AppSizes.icon),
+                label: const Text('Permisos'),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              OutlinedButton.icon(
                 onPressed: () => context.read<ProfileBloc>().add(SignOutRequested()),
                 icon: const Icon(Icons.logout, size: AppSizes.icon),
                 label: const Text('Cerrar sesión'),
