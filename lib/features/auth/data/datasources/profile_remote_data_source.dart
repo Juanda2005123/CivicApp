@@ -1,3 +1,6 @@
+import 'dart:math';
+import 'dart:typed_data';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/profile_model.dart';
@@ -35,6 +38,50 @@ class ProfileRemoteDataSource {
       await _client.from('user_profile').update({'last_city': cityName}).eq('id_user', id);
     } on PostgrestException catch (e) {
       throw Exception('No pudimos guardar tu ciudad: ${e.message}');
+    }
+  }
+
+  Future<String> updateAvatar({
+    required String id,
+    required Uint8List bytes,
+    required String extension,
+  }) async {
+    const bucketName = 'incident-evidence';
+    try {
+      final cleanExt = extension.toLowerCase().replaceAll('.', '');
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final randomSuffix = Random().nextInt(999999).toString().padLeft(6, '0');
+      final path = 'avatars/$id/$timestamp-$randomSuffix.$cleanExt';
+
+      await _client.storage.from(bucketName).uploadBinary(
+            path,
+            bytes,
+            fileOptions: FileOptions(
+              contentType: _contentType(cleanExt),
+              upsert: false,
+            ),
+          );
+
+      final publicUrl = _client.storage.from(bucketName).getPublicUrl(path);
+      await _client.from('user_profile').update({'profile_picture_url': publicUrl}).eq('id_user', id);
+      return publicUrl;
+    } on StorageException catch (e) {
+      throw Exception('No pudimos subir tu avatar: ${e.message}');
+    } on PostgrestException catch (e) {
+      throw Exception('No pudimos guardar tu avatar: ${e.message}');
+    }
+  }
+
+  String _contentType(String ext) {
+    switch (ext) {
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      case 'jpg':
+      case 'jpeg':
+      default:
+        return 'image/jpeg';
     }
   }
 }
