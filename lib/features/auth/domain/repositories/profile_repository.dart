@@ -12,4 +12,11 @@ abstract class ProfileRepository {
 
   /// Updates whether the citizen's real name is shown on reports and comments (HU-01).
   Future<void> updatePrivacy({required String userId, required bool showRealName});
+
+  /// Updates personal info (`full_name`, `reference_city`) for HU-04.
+  Future<void> updateProfileInfo({
+    required String userId,
+    required String fullName,
+    required String cityName,
+  });
 }

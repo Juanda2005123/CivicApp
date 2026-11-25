@@ -12,9 +12,12 @@ import '../../features/auth/ui/screens/register_screen.dart';
 import '../../features/auth/ui/screens/splash_screen.dart';
 import '../../features/dashboard/ui/bloc/privacy_bloc.dart';
 import '../../features/dashboard/ui/bloc/privacy_event.dart';
+import '../../features/dashboard/ui/bloc/edit_profile_bloc.dart';
+import '../../features/dashboard/ui/bloc/edit_profile_event.dart';
 import '../../features/dashboard/ui/bloc/profile_bloc.dart';
 import '../../features/dashboard/ui/bloc/profile_event.dart';
 import '../../features/dashboard/ui/screens/profile_settings_screen.dart';
+import '../../features/dashboard/ui/screens/edit_profile_screen.dart';
 import '../../features/explore/ui/bloc/city_switcher_bloc.dart';
 import '../../features/explore/ui/bloc/feed_bloc.dart';
 import '../../features/explore/ui/bloc/map_bloc.dart';
@@ -41,6 +44,7 @@ class AppRoutes {
   static const String reportDetail = '/report-detail';
   static const String reportEdit = '/report-edit';
   static const String profileSettings = '/profile-settings';
+  static const String editProfile = '/edit-profile';
 
   static Map<String, WidgetBuilder> get routes => {
         splash: (context) => BlocProvider(
@@ -85,6 +89,13 @@ class AppRoutes {
             create: (_) => sl<PrivacyBloc>()
               ..add(PrivacyStarted(userId: profile.id, showRealName: profile.showRealName)),
             child: const ProfileSettingsScreen(),
+          );
+        },
+        editProfile: (context) {
+          final profile = ModalRoute.of(context)!.settings.arguments as Profile;
+          return BlocProvider(
+            create: (_) => sl<EditProfileBloc>()..add(EditProfileStarted(profile)),
+            child: EditProfileScreen(initialProfile: profile),
           );
         },
       };

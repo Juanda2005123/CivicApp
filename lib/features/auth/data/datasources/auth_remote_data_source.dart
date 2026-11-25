@@ -52,6 +52,34 @@ class AuthRemoteDataSource {
     return AuthUser(id: user.id, email: user.email ?? '');
   }
 
+  Future<void> updateEmail(String newEmail) async {
+    try {
+      await _client.auth.updateUser(UserAttributes(email: newEmail));
+    } on AuthException catch (e) {
+      throw Exception(_message(e));
+    }
+  }
+
+  Future<void> updatePassword({
+    required String currentEmail,
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await _client.auth.signInWithPassword(email: currentEmail, password: currentPassword);
+    } on AuthException catch (e) {
+      if (e.message.toLowerCase().contains('invalid login credentials')) {
+        throw Exception('La contraseña actual es incorrecta.');
+      }
+      throw Exception(_message(e));
+    }
+    try {
+      await _client.auth.updateUser(UserAttributes(password: newPassword));
+    } on AuthException catch (e) {
+      throw Exception(_message(e));
+    }
+  }
+
   String _message(AuthException e) {
     if (e is AuthRetryableFetchException) {
       return 'Sin conexión. Revisa tu internet e inténtalo de nuevo.';
@@ -60,7 +88,7 @@ class AuthRemoteDataSource {
     if (text.contains('invalid login credentials')) {
       return 'Correo o contraseña incorrectos. Revisa tus datos e inténtalo de nuevo.';
     }
-    if (text.contains('already registered')) {
+    if (text.contains('already registered') || text.contains('already been registered')) {
       return 'Ese correo ya está registrado en VIGÍA.';
     }
     return e.message;
