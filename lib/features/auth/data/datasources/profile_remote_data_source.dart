@@ -37,4 +37,12 @@ class ProfileRemoteDataSource {
       throw Exception('No pudimos guardar tu ciudad: ${e.message}');
     }
   }
+
+  Future<void> updatePrivacy({required String id, required bool showRealName}) async {
+    try {
+      await _client.from('user_profile').update({'show_real_name': showRealName}).eq('id_user', id);
+    } on PostgrestException catch (e) {
+      throw Exception('No pudimos guardar tu privacidad: ${e.message}');
+    }
+  }
 }

@@ -17,4 +17,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<void> updateLastCity(String id, String cityName) => _dataSource.updateLastCity(id, cityName);
+
+  @override
+  Future<void> updatePrivacy({required String userId, required bool showRealName}) =>
+      _dataSource.updatePrivacy(id: userId, showRealName: showRealName);
 }

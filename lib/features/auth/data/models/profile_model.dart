@@ -14,6 +14,7 @@ class ProfileModel extends Profile {
     super.rankId,
     super.rankName,
     super.experiencePoints,
+    super.showRealName,
     super.isActive,
   });
 
@@ -27,6 +28,7 @@ class ProfileModel extends Profile {
       rankId: profile.rankId,
       rankName: profile.rankName,
       experiencePoints: profile.experiencePoints,
+      showRealName: profile.showRealName,
       isActive: profile.isActive,
     );
   }
@@ -43,6 +45,7 @@ class ProfileModel extends Profile {
       rankId: json['id_rank'] as int,
       rankName: (rank?['name'] as String?) ?? 'Observador Urbano',
       experiencePoints: json['experience_points'] as int,
+      showRealName: (json['show_real_name'] as bool?) ?? true,
       isActive: json['is_active'] as bool,
     );
   }
@@ -57,6 +60,7 @@ class ProfileModel extends Profile {
       'reference_city': cityName,
       'last_city': lastCityName,
       'experience_points': experiencePoints,
+      'show_real_name': showRealName,
       'is_active': isActive,
     };
   }
