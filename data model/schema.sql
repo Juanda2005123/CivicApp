@@ -40,6 +40,7 @@ CREATE TABLE user_profile (
     last_city VARCHAR(80) NOT NULL,
     profile_picture_url VARCHAR(500) NULL,
     experience_points INT NOT NULL DEFAULT 0 CHECK (experience_points >= 0),
+    show_real_name BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     
