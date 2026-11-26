@@ -151,20 +151,20 @@ class _CityHeroState extends State<CityHero> with SingleTickerProviderStateMixin
             child: Text(
               place.toUpperCase(),
               semanticsLabel: place,
-              style: AppTextStyles.eyebrow.copyWith(color: Colors.white),
+              style: AppTextStyles.eyebrow.copyWith(color: CityTheme.onVeil),
             ),
           ),
         ],
       ),
       const SizedBox(height: AppSpacing.xs),
       if (widget.compact)
-        Text(city.copy.slogan, style: AppTextStyles.bodyStrong.copyWith(color: Colors.white))
+        Text(city.copy.slogan, style: AppTextStyles.bodyStrong.copyWith(color: CityTheme.onVeil))
       else ...[
         Semantics(
           header: true,
-          child: Text(city.copy.greeting, style: AppTextStyles.cityHeadline.copyWith(color: Colors.white)),
+          child: Text(city.copy.greeting, style: AppTextStyles.cityHeadline.copyWith(color: CityTheme.onVeil)),
         ),
-        Text(city.copy.slogan, style: AppTextStyles.bodySmall.copyWith(color: Colors.white)),
+        Text(city.copy.slogan, style: AppTextStyles.bodySmall.copyWith(color: CityTheme.onVeil)),
       ],
     ];
   }

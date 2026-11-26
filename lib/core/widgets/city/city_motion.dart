@@ -31,9 +31,12 @@ class PressScale extends StatefulWidget {
 }
 
 class _PressScaleState extends State<PressScale> with SingleTickerProviderStateMixin {
+  // The times are the design's (with reduced motion the press is a 100 ms fade),
+  // so the system must not shorten them.
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: AppMotion.micro ~/ 2,
+    animationBehavior: AnimationBehavior.preserve,
   );
   Offset? _downAt;
 
@@ -61,6 +64,7 @@ class _PressScaleState extends State<PressScale> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final reduce = AppMotion.reduceOf(context);
+    _controller.duration = (reduce ? AppMotion.reduced : AppMotion.micro) ~/ 2;
 
     return Listener(
       onPointerDown: (event) {
@@ -155,8 +159,12 @@ class DelayedReveal extends StatefulWidget {
 }
 
 class _DelayedRevealState extends State<DelayedReveal> with SingleTickerProviderStateMixin {
-  late final AnimationController _delay = AnimationController(vsync: this, duration: AppMotion.loadingDelay)
-    ..forward();
+  // A wait, not a motion: reduced motion does not shorten it.
+  late final AnimationController _delay = AnimationController(
+    vsync: this,
+    duration: AppMotion.loadingDelay,
+    animationBehavior: AnimationBehavior.preserve,
+  )..forward();
 
   @override
   void dispose() {
@@ -342,10 +350,7 @@ class FlagCurtain extends StatelessWidget {
 
   const FlagCurtain({super.key, required this.flag, required this.progress});
 
-  /// Time the screen stays fully covered between the two sweeps.
-  static const Duration hold = Duration(milliseconds: 40);
-
-  static Duration get duration => AppMotion.curtainIn + hold + AppMotion.curtainOut;
+  static Duration get duration => AppMotion.curtainIn + AppMotion.curtainHold + AppMotion.curtainOut;
 
   /// Share of [duration] after which the screen is fully covered.
   static double get coverShare => AppMotion.curtainIn.inMicroseconds / duration.inMicroseconds;

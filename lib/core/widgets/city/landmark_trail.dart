@@ -169,7 +169,7 @@ class _CityHeading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final city = CityTheme.of(context);
-    final small = Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white);
+    final small = Theme.of(context).textTheme.bodySmall?.copyWith(color: CityTheme.onVeil);
 
     return ColoredBox(
       color: city.veil,
@@ -186,7 +186,7 @@ class _CityHeading extends StatelessWidget {
                   child: Text(
                     climbTitle.toUpperCase(),
                     semanticsLabel: climbTitle,
-                    style: AppTextStyles.eyebrow.copyWith(color: Colors.white),
+                    style: AppTextStyles.eyebrow.copyWith(color: CityTheme.onVeil),
                   ),
                 ),
               ],
@@ -194,7 +194,7 @@ class _CityHeading extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             Semantics(
               header: true,
-              child: Text(headline, style: AppTextStyles.cityTitle.copyWith(color: Colors.white)),
+              child: Text(headline, style: AppTextStyles.cityTitle.copyWith(color: CityTheme.onVeil)),
             ),
             const SizedBox(height: AppSpacing.xs),
             Row(

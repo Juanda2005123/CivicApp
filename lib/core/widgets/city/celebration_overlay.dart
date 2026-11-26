@@ -185,7 +185,7 @@ class ValidationCelebration extends StatelessWidget {
                   children: [
                     Text(
                       'REPORTE $reportCode',
-                      style: AppTextStyles.eyebrow.copyWith(color: Colors.white),
+                      style: AppTextStyles.eyebrow.copyWith(color: CityTheme.onVeil),
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     _Seal(time: time, animate: !reduce),
@@ -193,7 +193,7 @@ class ValidationCelebration extends StatelessWidget {
                     Text(
                       city.copy.validationCheer,
                       textAlign: TextAlign.center,
-                      style: AppTextStyles.cityHeadline.copyWith(color: Colors.white),
+                      style: AppTextStyles.cityHeadline.copyWith(color: CityTheme.onVeil),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     ConstrainedBox(
@@ -201,7 +201,7 @@ class ValidationCelebration extends StatelessWidget {
                       child: Text(
                         message,
                         textAlign: TextAlign.center,
-                        style: AppTextStyles.bodySmall.copyWith(color: Colors.white),
+                        style: AppTextStyles.bodySmall.copyWith(color: CityTheme.onVeil),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -211,7 +211,7 @@ class ValidationCelebration extends StatelessWidget {
                       style: AppTextStyles.data(size: 16, line: 24).copyWith(color: city.accent),
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    Text('Toca para cerrar', style: AppTextStyles.caption.copyWith(color: Colors.white)),
+                    Text('Toca para cerrar', style: AppTextStyles.caption.copyWith(color: CityTheme.onVeil)),
                   ],
                 ),
               ),
@@ -272,7 +272,7 @@ class _Seal extends StatelessWidget {
     if (!animate) return seal;
 
     final drop = time.drive(CurveTween(curve: Interval(0, _at(AppMotion.stampDrop), curve: AppMotion.curveStamp)));
-    final waveStart = _at(const Duration(milliseconds: 380));
+    final waveStart = _at(AppMotion.shockwaveDelay);
     final wave = time.drive(CurveTween(
       curve: Interval(waveStart, waveStart + _at(AppMotion.shockwave), curve: AppMotion.curve),
     ));
@@ -369,7 +369,7 @@ class ConfettiPainter extends CustomPainter {
 
     for (var i = 0; i < pieces; i++) {
       final x = random.nextDouble() * size.width;
-      final delay = 360 + random.nextDouble() * 350;
+      final delay = AppMotion.confettiDelay.inMilliseconds + random.nextDouble() * 350;
       final length = base + random.nextDouble() * 900;
       final drift = (random.nextDouble() - 0.5) * 80;
       final turns = (360 + random.nextDouble() * 540) * math.pi / 180;
@@ -419,15 +419,15 @@ class RankCelebration extends StatelessWidget {
       children: [
         const FlagStripe(),
         const SizedBox(height: AppSpacing.sm),
-        Text(eyebrow.toUpperCase(), style: AppTextStyles.eyebrow.copyWith(color: Colors.white)),
+        Text(eyebrow.toUpperCase(), style: AppTextStyles.eyebrow.copyWith(color: CityTheme.onVeil)),
         const SizedBox(height: AppSpacing.xs),
-        Text(name, style: AppTextStyles.cityDisplay.copyWith(color: Colors.white)),
+        Text(name, style: AppTextStyles.cityDisplay.copyWith(color: CityTheme.onVeil)),
         if (points != null) ...[
           const SizedBox(height: AppSpacing.xs),
           Text('$points pts', style: AppTextStyles.data(size: 16, line: 24).copyWith(color: city.accent)),
         ],
         const SizedBox(height: AppSpacing.md),
-        Text('Toca para cerrar', style: AppTextStyles.caption.copyWith(color: Colors.white)),
+        Text('Toca para cerrar', style: AppTextStyles.caption.copyWith(color: CityTheme.onVeil)),
       ],
     );
 

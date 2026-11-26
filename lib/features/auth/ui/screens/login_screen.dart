@@ -182,7 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   data: IconButtonThemeData(
                     style: IconButton.styleFrom(
                       minimumSize: const Size.square(AppSizes.touchTarget),
-                      foregroundColor: Colors.white,
+                      foregroundColor: CityTheme.onVeil,
                       backgroundColor: city.veil.withValues(alpha: 0.6),
                     ),
                   ),

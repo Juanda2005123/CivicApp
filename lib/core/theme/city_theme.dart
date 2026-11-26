@@ -90,6 +90,10 @@ class CityThemeCopy {
 /// here as data (docs/design/04-city-identity.md, section 3.1).
 @immutable
 class CityTheme extends ThemeExtension<CityTheme> {
+  /// Text and icons over a photo or the veil: white in every city, which every
+  /// veil passes AA against (checked by the contrast test).
+  static const Color onVeil = Colors.white;
+
   final String slug;
 
   /// City and department being shown; empty before any city is known.

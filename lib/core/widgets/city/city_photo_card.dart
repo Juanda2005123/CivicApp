@@ -77,8 +77,11 @@ class CityPhotoCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(city.name, style: AppTextStyles.cityCard.copyWith(color: Colors.white)),
-                          Text(city.department, style: AppTextStyles.data(size: 11, line: 16).copyWith(color: Colors.white)),
+                          Text(city.name, style: AppTextStyles.cityCard.copyWith(color: CityTheme.onVeil)),
+                          Text(
+                            city.department,
+                            style: AppTextStyles.data(size: 11, line: 16).copyWith(color: CityTheme.onVeil),
+                          ),
                           const SizedBox(height: AppSpacing.xs),
                           Row(
                             children: [

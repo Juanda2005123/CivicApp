@@ -127,8 +127,13 @@ abstract final class AppMotion {
   static const Duration validationHold = Duration(milliseconds: 2500);
   static const Duration rankHold = Duration(milliseconds: 2600);
 
-  /// 7A, changing city: the flag sweeps in and then leaves.
+  /// 3A: the wave and the confetti leave once the seal has landed.
+  static const Duration shockwaveDelay = Duration(milliseconds: 380);
+  static const Duration confettiDelay = Duration(milliseconds: 360);
+
+  /// 7A, changing city: the flag sweeps in, holds and then leaves.
   static const Duration curtainIn = Duration(milliseconds: 300);
+  static const Duration curtainHold = Duration(milliseconds: 40);
   static const Duration curtainOut = Duration(milliseconds: 380);
 
   /// 8D: nothing is shown for work shorter than this.
