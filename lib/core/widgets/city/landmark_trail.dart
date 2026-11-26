@@ -308,7 +308,7 @@ class _Stop extends StatelessWidget {
                       runSpacing: AppSpacing.xs,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        Text(name, style: theme.textTheme.titleSmall),
+                        Text(name, style: AppTextStyles.landmark.copyWith(color: scheme.onSurface)),
                         if (tag != null)
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm - 2),

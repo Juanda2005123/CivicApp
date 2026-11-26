@@ -76,6 +76,9 @@ abstract final class AppTextStyles {
   /// City name on its photo card.
   static final TextStyle cityCard = _anton(22);
 
+  /// Name of a step of the rank climb, in Fraunces.
+  static final TextStyle landmark = _fraunces(16, 22, 700);
+
   /// Small uppercase line in monospace over a photo ("CALI · TARDE").
   static TextStyle get eyebrow => data(size: 11, line: 16).copyWith(letterSpacing: 0.9);
 
