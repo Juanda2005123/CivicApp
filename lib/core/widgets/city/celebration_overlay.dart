@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../features/city_identity/domain/entities/city_identity.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/city_theme.dart';
@@ -193,7 +194,11 @@ class ValidationCelebration extends StatelessWidget {
                     Text(
                       city.copy.validationCheer,
                       textAlign: TextAlign.center,
-                      style: AppTextStyles.cityHeadline.copyWith(color: CityTheme.onVeil),
+                      // Anton is for a city's own words; the default look keeps Fraunces.
+                      style: (city.level == CityIdentityLevel.fallback
+                              ? AppTextStyles.headline
+                              : AppTextStyles.cityHeadline)
+                          .copyWith(color: CityTheme.onVeil),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     ConstrainedBox(
@@ -421,7 +426,10 @@ class RankCelebration extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         Text(eyebrow.toUpperCase(), style: AppTextStyles.eyebrow.copyWith(color: CityTheme.onVeil)),
         const SizedBox(height: AppSpacing.xs),
-        Text(name, style: AppTextStyles.cityDisplay.copyWith(color: CityTheme.onVeil)),
+        Text(
+          name,
+          style: (photo == null ? AppTextStyles.display : AppTextStyles.cityDisplay).copyWith(color: CityTheme.onVeil),
+        ),
         if (points != null) ...[
           const SizedBox(height: AppSpacing.xs),
           Text('$points pts', style: AppTextStyles.data(size: 16, line: 24).copyWith(color: city.accent)),
