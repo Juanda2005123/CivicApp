@@ -8,7 +8,6 @@ import 'package:vigia_app/features/city_identity/domain/usecases/get_last_city_u
 import 'package:vigia_app/features/city_identity/domain/usecases/save_last_city_usecase.dart';
 import 'package:vigia_app/features/city_identity/ui/bloc/city_ambience_bloc.dart';
 import 'package:vigia_app/features/city_identity/ui/bloc/city_ambience_event.dart';
-import 'package:vigia_app/features/city_identity/ui/bloc/city_ambience_state.dart';
 
 import '../../../support/bloc_helpers.dart';
 import '../../../support/fake_city_identity_repository.dart';
