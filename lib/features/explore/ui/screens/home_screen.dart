@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_routes.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/city_theme.dart';
 import '../../../../core/widgets/sign_in_required_dialog.dart';
 import '../../../../core/widgets/theme_toggle_button.dart';
 import '../../../auth/domain/entities/city.dart';
@@ -23,6 +25,28 @@ import '../bloc/map_state.dart';
 import '../pages/feed_page.dart';
 import '../pages/map_page.dart';
 import 'package:vigia_app/core/widgets/city/city_motion.dart';
+
+/// Icon of a tab. In a city the active one sits in a pill of its accent; the
+/// default look has a transparent pill.
+class _NavIcon extends StatelessWidget {
+  final IconData icon;
+  final bool active;
+
+  const _NavIcon(this.icon, {this.active = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: AppSizes.navPillWidth,
+      height: AppSizes.navPillHeight,
+      alignment: Alignment.center,
+      decoration: active
+          ? ShapeDecoration(color: CityTheme.of(context).navPill, shape: const StadiumBorder())
+          : null,
+      child: Icon(icon),
+    );
+  }
+}
 
 /// The shell: host Screen with the bottom navigation bar. Each tab is a Page;
 /// `IndexedStack` keeps them alive, so switching tabs does not reload the map
@@ -219,18 +243,18 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(LucideIcons.map),
-              activeIcon: Icon(LucideIcons.map),
+              icon: _NavIcon(LucideIcons.map),
+              activeIcon: _NavIcon(LucideIcons.map, active: true),
               label: 'Mapa',
             ),
             BottomNavigationBarItem(
-              icon: Icon(LucideIcons.usersRound),
-              activeIcon: Icon(LucideIcons.usersRound),
+              icon: _NavIcon(LucideIcons.usersRound),
+              activeIcon: _NavIcon(LucideIcons.usersRound, active: true),
               label: 'Comunidad',
             ),
             BottomNavigationBarItem(
-              icon: Icon(LucideIcons.circleUserRound),
-              activeIcon: Icon(LucideIcons.circleUserRound),
+              icon: _NavIcon(LucideIcons.circleUserRound),
+              activeIcon: _NavIcon(LucideIcons.circleUserRound, active: true),
               label: 'Mi perfil',
             ),
           ],

@@ -5,6 +5,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/severity_colors.dart';
 import '../../../../core/widgets/app_status_chip.dart';
+import '../../../../core/widgets/city/city_motion.dart';
 import '../../../../core/widgets/dotted_spinner.dart';
 import '../../../../core/widgets/rank_seal.dart';
 import '../../../../core/widgets/severity_chip.dart';
@@ -63,72 +64,74 @@ class FeedIncidentCard extends StatelessWidget {
       '${incident.commentsCount} comentarios',
     ].join(', ');
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Semantics(
-        button: true,
-        container: true,
-        label: spoken,
-        excludeSemantics: true,
-        child: InkWell(
-          onTap: onTap,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _Cover(incident: incident),
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      spacing: AppSpacing.sm,
-                      runSpacing: AppSpacing.xs,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        SeverityChip(level: incident.severity.level),
-                        Text(
-                          [incident.neighborhood, if (distance != null) 'a ${formatDistance(distance)}']
-                              .where((part) => part.isNotEmpty)
-                              .join(' · '),
-                          style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(incident.title, style: theme.textTheme.titleMedium),
-                    const SizedBox(height: AppSpacing.sm),
-                    Row(
-                      children: [
-                        RankSeal(level: incident.reporterRankId ?? 1, size: AppSizes.iconLarge),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          child: Text(
-                            [author, if (incident.reporterRankName != null) incident.reporterRankName!].join(' · '),
-                            style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+    return PressScale(
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: Semantics(
+          button: true,
+          container: true,
+          label: spoken,
+          excludeSemantics: true,
+          child: InkWell(
+            onTap: onTap,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _Cover(incident: incident),
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.xs,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          SeverityChip(level: incident.severity.level),
+                          Text(
+                            [incident.neighborhood, if (distance != null) 'a ${formatDistance(distance)}']
+                                .where((part) => part.isNotEmpty)
+                                .join(' · '),
+                            style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Wrap(
-                      spacing: AppSpacing.md,
-                      runSpacing: AppSpacing.sm,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        _Counter(icon: LucideIcons.thumbsUp, count: incident.upvotesCount),
-                        _Counter(icon: LucideIcons.messageCircle, count: incident.commentsCount),
-                        AppStatusChip(label: incident.status.labelSpanish, met: isClosedOrValidated),
-                        Text(
-                          formatDate(incident.createdAt),
-                          style: AppTextStyles.data(size: 12, line: 16).copyWith(color: scheme.onSurfaceVariant),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(incident.title, style: theme.textTheme.titleMedium),
+                      const SizedBox(height: AppSpacing.sm),
+                      Row(
+                        children: [
+                          RankSeal(level: incident.reporterRankId ?? 1, size: AppSizes.iconLarge),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              [author, if (incident.reporterRankName != null) incident.reporterRankName!].join(' · '),
+                              style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Wrap(
+                        spacing: AppSpacing.md,
+                        runSpacing: AppSpacing.sm,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          _Counter(icon: LucideIcons.thumbsUp, count: incident.upvotesCount),
+                          _Counter(icon: LucideIcons.messageCircle, count: incident.commentsCount),
+                          AppStatusChip(label: incident.status.labelSpanish, met: isClosedOrValidated),
+                          Text(
+                            formatDate(incident.createdAt),
+                            style: AppTextStyles.data(size: 12, line: 16).copyWith(color: scheme.onSurfaceVariant),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
