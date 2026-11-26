@@ -296,7 +296,12 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
-          Row(
+          // A long status and a long category ("Validado por la comunidad · Fuga
+          // de agua o alcantarillado") do not fit one line on a phone.
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.xs,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -319,8 +324,7 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
                   ],
                 ),
               ),
-              if (incident.categoryName != null) ...[
-                const SizedBox(width: AppSpacing.sm),
+              if (incident.categoryName != null)
                 Text(
                   '· ${incident.categoryName}',
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -328,7 +332,6 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-              ],
             ],
           ),
         ],
