@@ -1,8 +1,8 @@
 # VIGÍA: identidad por ciudad ("Ciudad Viva")
 
-Estado: **diseño aprobado para construir** (2026-11-25). Base: rama `develop` (commit `88d0749`).
+Estado: **implementado** para Cali y Medellín (2026-11-25) en la rama `claude/ciudad-viva-redesign-798c30`, sobre `develop` (commit `88d0749`). Lo que cambió al construirlo está en la [§10](#10-lo-que-cambió-al-construirlo). Capturas de la app: [`screenshots/ciudad-viva/`](screenshots/ciudad-viva/).
 Maqueta navegable: [`mockups/city-identity.html`](mockups/city-identity.html) (Cali y Medellín, momento del día automático o manual, claro/oscuro, paleta editable y el catálogo de animaciones).
-Fotos: originales en `docs/design/ideas/city-identity/photos/` con `CREDITS.json` (autor, licencia y enlace). La sesión que construye las convierte a WebP en `assets/cities/<slug>/`.
+Fotos: originales en `docs/design/ideas/city-identity/photos/` con `CREDITS.json` (autor, licencia y enlace). `python tool/city_photos.py` las convierte a WebP en `assets/cities/<slug>/` y escribe `assets/cities/CREDITS.md`.
 Cómo agregar otra ciudad: [`05-new-city-guide.md`](05-new-city-guide.md). Ideas que **no** se construyen ahora: [`ideas/city-identity/future-album-and-seasons.md`](ideas/city-identity/future-album-and-seasons.md).
 
 > **Alcance: solo diseño.** Es una refactorización visual de lo que ya existe en `develop`. No se agregan funciones ni pantallas. **Cero backend:** no hay migraciones, tablas, políticas, triggers ni cambios en Supabase. Cada HU hace exactamente lo mismo que hoy; solo cambia cómo se ve y cómo se mueve. Lo único nuevo en el proyecto es del lado de la app: el paquete `lucide_icons_flutter`, la fuente Anton y las fotos en `assets/cities/` (unos 4 a 6 MB más en el APK).
@@ -224,7 +224,36 @@ Ninguna función cambia. Las que no están en la maqueta reciben el tratamiento 
 Pruebas mínimas: `DayPart.of`, `GetCityIdentityUseCase` (completo → regional → por defecto, nombres con tilde), contraste AA de cada paleta, `CityAmbienceBloc` (cambio de ciudad, vuelve a primer plano), y widget tests de `CityHero`, `LandmarkTrail` y `CelebrationOverlay` con Cali, Medellín y por defecto, claro y oscuro, y con animaciones desactivadas. `dart run tool/check.dart` en verde.
 
 ## 9. Reparto
+Hecho (Juan): pasos 1 a 6 de §8 para Cali y Medellín. Pendiente: Bogotá, Cartagena y la ciudad genérica.
+
 - **Juan:** arquitectura (pasos 1–4), paquetes de Cali y Medellín, todo en una rama propia y documentado.
 - **Cano y Juan David:** Bogotá y Cartagena, siguiendo [`05-new-city-guide.md`](05-new-city-guide.md) (maqueta primero).
 - **Ciudad genérica (paquete regional, §3.4):** por asignar; sigue [`05-new-city-guide.md`](05-new-city-guide.md) §5.
 - **Julio:** HU-25 (migración 010) y HU-24 (011).
+
+## 10. Lo que cambió al construirlo
+Nada de backend, reglas de negocio ni funciones. Estas son las diferencias frente a las secciones anteriores:
+
+**Arquitectura**
+- Además de lo listado en §2: `entities/city_ref.dart`; los casos de uso `get_featured_cities`, `get_last_city` y `save_last_city`; `data/datasources/last_city_local_data_source.dart` (`shared_preferences`, solo en el teléfono) para que el splash y el login abran con la última ciudad; `ui/widgets/city_ambience_scope.dart` (vuelta a primer plano, precarga de la foto y cortina 7A); y el widget compartido `core/widgets/city/city_photo_card.dart`.
+- `CityTheme` entrega además `department`, `dayPart`, `heroDescription`, `navSelected`, `navPill`, `showcase` (ciudades con paquete, para las tarjetas del registro y las miniaturas) y `copy` (saludo del momento, eslogan, frase al validar y título de la subida). `deep` ya depende del tema: tono profundo en claro, acento en oscuro.
+- `RankProgress` ganó `ladder` (todos los rangos) para dibujar los cuatro escalones. No entra en la igualdad ni cambia lo que calcula.
+
+**Color y contraste**
+- En una ciudad también se recolorean `primaryContainer`/`secondaryContainer` y el acento semántico (foco e íconos) con el tono secundario.
+- El acento cálido no se lee sobre papel claro, así que switches, radios, casillas, cursor, íconos de chips y etiquetas flotantes usan el tono secundario, y los íconos o textos destacados usan `deep`.
+- El anillo punteado va en `deep` cuando está sobre el fondo y en el color del texto del botón cuando está dentro de uno.
+- El velo de la cabecera viaja con el texto (opacidad mínima 0,72), para cumplir AA también con texto a 200 % sobre un cielo claro.
+
+**Pantallas y movimiento**
+- El registro sigue siendo un solo formulario (la app no tiene pasos): las tarjetas con foto van encima del selector de ciudad.
+- Solo la cabecera de Comunidad hace zoom; la corta del login queda quieta. En Comunidad la cabecera se desplaza con la lista y la barra de búsqueda queda fija debajo.
+- Esqueletos también en el primer cargue de comentarios. El anillo al pie del feed (más páginas) se conserva, con la espera de 300 ms.
+- La celebración 3A sale cuando el apoyo de quien mira es el que valida el reporte, y dice que los +500 XP son para quien lo reportó.
+- La celebración 4C espera a que «Mi perfil» esté a la vista. Si la app se cerró, no se sabe cuál era el rango anterior y no hay celebración.
+- La pastilla de la pestaña activa solo existe en las ciudades con paquete; el look por defecto queda como estaba.
+- Anton solo en las palabras de la ciudad: el look por defecto celebra en Fraunces.
+
+**Pendiente conocido**
+- La subida usa `reference_city`, y el perfil solo guarda el nombre (sin departamento). Para las ciudades con paquete completo basta; para la ciudad genérica habrá que pasar el departamento (ver [`05-new-city-guide.md`](05-new-city-guide.md) §5).
+- Confirmar con la Alcaldía las franjas de la bandera de Cali (§3.3).

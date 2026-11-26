@@ -40,19 +40,23 @@ Mensaje listo para pegarle a Claude:
 > Lee `AGENTS.md`, `docs/design/04-city-identity.md` y `docs/design/05-new-city-guide.md`. Quiero agregar **[CIUDAD]** como ciudad completa de VIGÍA. Primero solo la maqueta: agrega [CIUDAD] a `docs/design/mockups/city-identity.html` (nueva entrada en `PACKS` y botón en el selector), sin tocar pantallas ni animaciones. Busca en Wikimedia Commons un banco de unas 15 fotos reales con licencia libre, con al menos 3 candidatas por espacio (cabeceras de mañana, tarde y noche, y 4 lugares icónicos para los rangos en orden de subida). Revísalas a ojo y agrégalas a `POOL` para que yo escoja en el editor. Propón la paleta (`deep`, `accent`, `onAccent`, `veil`) que pase AA, la bandera oficial y los saludos en el habla local. Guarda las fotos y sus créditos como dice la guía. Muéstrame la maqueta publicada y espera mi aprobación antes de escribir Dart.
 
 ## 4. Paso 2: el paquete en la app
-1. Rama desde la rama de Ciudad Viva de Juan: `feat/city-<slug>`.
-2. Copia `lib/features/city_identity/data/datasources/packs/cali_pack.dart` a `<slug>_pack.dart` y cambia solo los datos.
-3. Fotos en WebP en `assets/cities/<slug>/` con los nombres de `04-city-identity.md` §4; agrega sus créditos a `assets/cities/CREDITS.md`.
-4. Registra el paquete en `city_pack_local_data_source.dart` (una línea).
-5. `dart run tool/check.dart`. La prueba de contraste recorre todos los paquetes: si tu paleta no pasa AA, falla.
-6. Capturas de Comunidad, Detalle y Mi perfil en claro y oscuro, y PR a la rama de Ciudad Viva (no directo a `develop`).
+1. Rama desde la rama de Ciudad Viva de Juan (`claude/ciudad-viva-redesign-798c30`): `feat/city-<slug>`.
+2. Copia `lib/features/city_identity/data/datasources/packs/cali_pack.dart` a `<slug>_pack.dart` y cambia solo los datos: `caliPack`, la ruta `assets/cities/cali`, `slug`, `name` y `department` (escritos igual que en el catálogo DANE), paleta, bandera, fotos, lugares y textos.
+3. Fotos: agrega tu ciudad al diccionario `CITIES` de `tool/city_photos.py` (las claves de `CREDITS.json` que escogiste en la maqueta) y corre `python tool/city_photos.py` (necesita Pillow). Genera los WebP de `assets/cities/<slug>/` y reescribe `assets/cities/CREDITS.md`.
+4. Dos líneas más: la carpeta `assets/cities/<slug>/` en `pubspec.yaml` y el paquete en la lista de `city_pack_local_data_source.dart` (con su `import`).
+5. `dart run tool/check.dart`. Las pruebas recorren todos los paquetes: fallan si tu paleta no pasa AA, falta una foto o pesa 200 KB o más, o el nombre no coincide con el catálogo.
+6. Capturas de Comunidad, Detalle y Mi perfil en claro y oscuro: en `tool/screenshots/capture.mjs` y `profile_screenshots_test.dart` agrega tu ciudad a la lista (las instrucciones están al inicio de cada archivo).
+7. PR a la rama de Ciudad Viva (no directo a `develop`).
+
+No hay que tocar widgets, pantallas ni pruebas. Esto se ensayó copiando el paquete de Cali como una tercera ciudad: la suite completa pasó sin más cambios.
 
 ## 5. Ciudad genérica (paquete regional)
 Para quien tome este frente: cubre todas las ciudades que no son Cali, Medellín, Bogotá ni Cartagena (Barranquilla incluida). Se diseña **por región**, no por ciudad. Qué trae cada región está en [`04-city-identity.md`](04-city-identity.md) §3.4: paleta, franja de la bandera de Colombia, 3 fotos de cabecera, foto para cada uno de los 4 rangos (con sus nombres genéricos) y saludos regionales neutros.
 
 Mismas reglas de §1 y mismo orden:
 1. **Maqueta primero.** Pídele a Claude que agregue la opción **"Ciudad genérica"** al selector de la maqueta, con un segundo selector de región (Caribe, Pacífico, Andina, Llanos, Amazonía, Insular). Cada región va como una entrada en `PACKS`, con su banco de fotos en `POOL` (al menos 3 candidatas por espacio). Escoge en "Paquete de la ciudad", copia el paquete de cada región y muéstralo en el grupo.
-2. **Después, el código:** llena `lib/features/city_identity/data/datasources/packs/regional_packs.dart` (la estructura y el mapa departamento → región ya existen) y pon las fotos en `assets/cities/region-<nombre>/`. Se sigue el mismo paso 2 de §4.
+2. **Después, el código:** llena `lib/features/city_identity/data/datasources/packs/regional_packs.dart` (la estructura y el mapa departamento → región ya existen) y pon las fotos en `assets/cities/region-<nombre>/`. Se sigue el mismo paso 2 de §4. Un paquete regional va sin `name` ni `department`, con `level: CityIdentityLevel.regional`, los nombres genéricos de los rangos y `{ciudad}` donde el texto lleve el nombre de la ciudad.
+3. Un detalle por resolver ahí: la subida del perfil busca el paquete con `reference_city`, que no trae departamento. Para que muestre las fotos de la región, `ReferenceCityChanged` tiene que recibir también el departamento (sale del catálogo de ciudades). Es un cambio pequeño en la capa de presentación, sin base de datos; coordínalo con Juan.
 
 Mensaje listo para pegarle a Claude:
 
