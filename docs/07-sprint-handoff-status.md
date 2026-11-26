@@ -6,7 +6,7 @@
 **Rama de integración:** `develop` (cada HU entra con su rama `feat/hu-XX-…` y un merge commit)  
 **Fecha de corte:** 14 de noviembre de 2026  
 **Progreso Sprint 2:** 17 de 17 historias completadas (100 % en código; falta validarlas en un dispositivo).
-**Progreso Sprint 3 (corte 25 de noviembre de 2026):** 10 de 12 historias en `develop` (HU-01, 02, 04, 05, 15, 16, 17, 18, 20 y 23); faltan únicamente HU-24 y HU-25. Ver sección 4.
+**Progreso Sprint 3 (corte 25 de noviembre de 2026):** 10 de 12 historias en `develop` (HU-01, 02, 04, 05, 15, 16, 17, 18, 20 y 23) y HU-25 lista en `feat/hu-25-community-resolution` (migración 010 ya aplicada en Supabase); falta HU-24. Ver sección 4.
 
 ---
 
@@ -168,7 +168,7 @@ Las 17 historias del Sprint 2 están implementadas. Lo que queda no es una histo
 
 ## 4. Estado del Sprint 3 (corte: 25 de noviembre de 2026)
 
-*Las historias completas están en `docs/06-sprint-3-backlog.md`.* El Sprint 3 se enfoca en la interacción social ciudadana, la gamificación y los requisitos académicos. Diez de sus doce historias ya están en `develop`.
+*Las historias completas están en `docs/06-sprint-3-backlog.md`.* El Sprint 3 se enfoca en la interacción social ciudadana, la gamificación y los requisitos académicos. Diez de sus doce historias ya están en `develop`; HU-25 está terminada en su rama, con su migración 010 aplicada, y espera el merge.
 
 ### Historias hechas
 
@@ -183,12 +183,13 @@ Las 17 historias del Sprint 2 están implementadas. Lo que queda no es una histo
 | **HU-01** | Privacidad cívica | En Mi perfil → **Configuración**: interruptor **"Mostrar mi nombre"** (`show_real_name` en `user_profile`, migración `009`). Al desactivarlo, reportes y comentarios muestran `"Ciudadano anónimo"` conservando el rango; si falla al guardar, revierte al estado anterior. |
 | **HU-02** | Permisos del dispositivo | En Mi perfil → **Permisos**: muestra **Cámara** y **Ubicación** en texto claro (*Permitido*, *No solicitado*, *Denegado*, *Bloqueado*). Solicita permiso nativo si no se ha pedido o abre ajustes del SO si ya fue respondido, refrescando al volver a la app. |
 | **HU-04** | Editar datos personales | En Mi perfil → **Datos personales**: edita nombre completo (≥ 2 palabras), ciudad del catálogo DANE (con apoyo GPS), correo (con aviso de verificación al cambiarlo) y contraseña (validando la actual y complejidad). Conserva borradores si falla. |
+| **HU-25** | Propuesta de resolución y verificación (RN-11) | En el detalle, encima de los comentarios: **Reportar como reparado** abre una hoja con foto obligatoria y "¿Cómo quedó la vía?". Si la envía el autor, el reporte queda **Resuelto** al instante (sin XP). Si la envía un vecino, el reporte pasa a **En revisión** y aparece la tarjeta fijada de borde verde "Reparación en verificación" con la foto, "Confirmaciones N de 3" y "Objeciones N de 3": los vecinos **Confirmar** u **Objetar** (un voto cada uno), el autor **Aceptar** o **Rechazar** con motivo. 3 confirmaciones o aceptar → Resuelto y +50 XP a quien propuso; 3 objeciones o rechazar → el reporte vuelve a su estado y admite otra propuesta. Solo una propuesta pendiente por reporte; vence a los 7 días. Un reporte resuelto sale del **Mapa** (sigue en Comunidad, en Mis reportes y en el detalle). Invitado: modal de inicio de sesión. Rama `feat/hu-25-community-resolution`. |
 | **HU-05** | Avatar cívico | Tocar el avatar/sello en Mi perfil permite tomar foto o elegir de galería (JPG, PNG o WebP, máx. 5 MB), sube a `incident-evidence/avatars/` y actualiza `profile_picture_url` en Mi perfil y comentarios; sin foto muestra `RankSeal`. |
 
 ### Historias pendientes (para el resto del equipo)
 
 - **HU-24** Notificaciones push (requisito académico obligatorio): ya se escriben filas en la tabla `notification` (apoyo, comentario, validación); falta el envío push, que necesita Firebase (FCM + Edge Functions/Webhooks + deep-link al detalle).
-- **HU-25** Propuesta de resolución y verificación (RN-11): las tablas `incident_resolution`, `resolution_confirmation`, `resolution_objection` y el índice `idx_single_active_resolution` ya están en `schema.sql`; faltan triggers/RLS en migración y la UI/Bloc en el detalle del reporte.
+- **HU-25** — terminada en `feat/hu-25-community-resolution`. La migración 010 ya está aplicada en el Supabase compartido (25 de noviembre, prueba de humo 43 PASS). Falta el merge a `develop`.
 
 ### Reglas del servidor (migraciones aplicadas en Supabase)
 
@@ -202,24 +203,61 @@ Las reglas de puntos y ventanas viven en la base de datos, no en la app. Todas e
 | **007** | Eliminar un reporte devuelve todo el XP que produjo (comentarios y apoyos incluidos); una foto no puede cambiar de reporte; un reporte nuevo siempre nace como REPORTADO, con la fecha de ahora. |
 | **008** | Política `UPDATE` de `road_incident` para el autor: `schema.sql` la declaraba pero el proyecto real nunca la tuvo, y sin ella ninguna edición se guardaba. |
 | **009** | Columna `show_real_name BOOLEAN NOT NULL DEFAULT TRUE` en `user_profile` para la privacidad cívica (HU-01). |
+| **010** | Resolución comunitaria (HU-25, RN-11): una sola propuesta pendiente por reporte, foto y descripción obligatorias; la del autor cierra el reporte sin XP; la de un vecino lo pone `UNDER_REVIEW` y notifica al autor (`RESOLUTION_PROPOSAL`); 3 confirmaciones o la aceptación del autor → `RESOLVED` y +50 XP al proponente; 3 objeciones o el rechazo del autor (con motivo) → el reporte vuelve a su estado; vence a los 7 días (se marca al proponer otra); nadie vota su propia propuesta ni el autor del reporte; un voto por persona; notificación `REPORT_RESOLVED` al autor, al proponente y a los seguidores; RLS en las tres tablas. Ajusta la 004 (el 10.º apoyo no saca de `UNDER_REVIEW`) y la 007 (borrar un reporte devuelve los +50). |
 
-**Siguiente migración: `010`.** Quien necesite una nueva debe avisar antes para no chocar en la numeración. Las pruebas de humo corren como el rol del SQL Editor y se saltan la seguridad por filas; la de la 008 corre como `authenticated` justamente por eso.
+**Siguiente migración: `011`** (reservada para HU-24, push). Quien necesite una nueva debe avisar antes para no chocar en la numeración. Las pruebas de humo corren como el rol del SQL Editor y se saltan la seguridad por filas; la de la 008 corre como `authenticated` justamente por eso.
+
+**Cómo aplicar una migración.** Desde el SQL Editor del dashboard (pegar y *Run*), o desde la terminal con el Supabase CLI, sin la contraseña de la base: basta ser miembro de la organización del proyecto y haber hecho `supabase login`.
+
+```bash
+supabase db query --linked --project-ref obdgkiwaawyqskqbnitm -f "$(pwd)/data model/migrations/0NN_nombre.sql"
+supabase db query --linked --project-ref obdgkiwaawyqskqbnitm -f "$(pwd)/data model/tests/0NN_nombre_smoke_test.sql"
+```
+
+La ruta del archivo debe ser absoluta. La prueba de humo responde con el error `SMOKE TEST REPORT`, que trae las líneas PASS/FAIL. Antes de aplicar en el proyecto compartido, la 010 se probó también en un Postgres 17 local (podman) con `schema.sql`, `seeds.sql` y las migraciones 001 a 010: las seis pruebas de humo (004 a 008 y 010) dieron 124 PASS.
 
 ### Qué se probó con sesión real
 
 El 24 de noviembre se probó `develop` en la versión web contra el Supabase real con una cuenta de prueba: publicar un reporte (XP 100 exacto), comentar (115 XP), buscar en Comunidad, ver los contadores del perfil, editar título y gravedad (el código no cambió) y eliminar (el XP volvió a 0). Esa prueba encontró la política faltante de la migración 008.
 
+El 25 de noviembre se probó HU-25 en un Android real (moto g86 5G, Android 15) contra el Supabase compartido con dos cuentas: un vecino propuso la reparación de `#VIG-9509` con foto (subida al bucket), el autor recibió la notificación `RESOLUTION_PROPOSAL` y aceptó; el reporte quedó `RESOLVED`, el vecino ganó +50 XP y recibió `REPORT_RESOLVED`.
+
 ### Límites conocidos del Sprint 3
 
-1. **Sin probar con sesión real:** subir o editar fotos en Storage, apoyar entre dos cuentas, Android, el GPS real y las notificaciones.
+1. **Sin probar con sesión real:** editar fotos de un reporte, apoyar entre dos cuentas, el GPS real, las 3 confirmaciones u objeciones de HU-25 con cuentas distintas y el envío push.
 2. **Barra de filtros fija:** en una pantalla muy baja (el teléfono en horizontal) la barra de filtros de Comunidad se desborda unos 18 píxeles. En vertical no pasa.
 3. **Fotos huérfanas:** al quitar una foto o eliminar un reporte, el archivo queda en el bucket `incident-evidence`. No hay política de borrado a propósito: permitiría destruir la evidencia de un reporte congelado.
 4. **Congelado por apoyos:** el servidor cuenta los apoyos actuales, así que un reporte que baja de 5 a 4 apoyos dentro de sus 30 minutos se puede volver a editar.
 5. **Reloj del teléfono:** los botones Editar y Eliminar dependen del reloj del teléfono; el servidor siempre decide con el suyo y rechaza con un mensaje claro.
 6. **Reintento tras un fallo a medias:** si al guardar una edición falla justo el último paso de las fotos, un segundo intento puede duplicar una foto.
 7. **Filtros hasta 200 reportes:** en una ciudad con más de 200 reportes, la búsqueda y el orden solo ven los 200 más nuevos (el mismo límite del mapa).
+8. **Vencimiento sin cron (HU-25):** una propuesta de más de 7 días deja de aceptar votos y decisiones, y la app la trata como inexistente, pero en la base sigue `PENDING` (y el reporte `UNDER_REVIEW`) hasta que alguien proponga otra. Para cerrarlas solas haría falta `pg_cron` o una Edge Function.
+9. **Votos definitivos (HU-25):** confirmar u objetar no se puede deshacer; no hay política `DELETE` en `resolution_confirmation` ni `resolution_objection`.
+10. **Contraseña de la base:** la `SUPABASE_DB_PASSWORD` que circula en el equipo (`.env`) es rechazada por Supabase (`password authentication failed`). No hace falta para migrar (ver "Cómo aplicar una migración"), pero quien administre el proyecto debería restablecerla y compartirla.
+11. **Android compila contra SDK 37:** `permission_handler_android` 14 (HU-02) exige `compileSdk` 37 y sin él `flutter run` en Android fallaba en `checkDebugAarMetadata`. `android/app/build.gradle.kts` fija `compileSdk = 37`; `minSdk` y `targetSdk` siguen siendo los de Flutter. El Android Gradle Plugin 9.1 avisa que recomienda hasta 36, pero compila.
 
 **Regla para lo que venga (sigue vigente):** toda acción que necesite cuenta debe abrir `showSignInRequiredDialog` cuando el usuario es invitado (`ProfileStatus.guest`).
+
+---
+
+### Datos de demostración (auditoría del 25 de noviembre)
+
+Se revisaron los 17 reportes de `road_incident` con la clave publicable (solo lectura), comparando sus coordenadas con el centro de su ciudad en `coverage_city`:
+
+- **Todos están bien ubicados:** Cali 10 (0,8 a 8,6 km del centro), Popayán 3, Medellín 2 y Bogotá 2, todos a menos de 8,6 km. Ya no hay reportes de otra ciudad con coordenadas en Cali.
+- **Datos de prueba que conviene limpiar:** `#VIG-1278` ("Titotatfg", en Popayán pero con el barrio "Ciudad melendez" de Cali) y `#VIG-6906` ("Hueco fueo").
+- **Fotos:** solo 2 reportes tienen foto; los 14 `#VIG-DEMO-xx` no tienen ninguna, y ninguno de los 7 comentarios tiene foto. No hay propuestas de resolución.
+
+**Seed de demostración (25 de noviembre).** `tool/seed/` crea datos de demo ordenados sin tocar los reportes reales:
+
+- **15 usuarios** que sí pueden iniciar sesión (12 de Cali, 1 de Popayán, Medellín y Bogotá): `ana.demo@vigia-demo.com`, `luis.demo@…`, `marta.demo@…`, etc. La contraseña común es `SEED_DEMO_PASSWORD` del `.env` de Julio (pedírsela; no está en el repo). Natalia tiene el nombre oculto (HU-01).
+- **40 reportes `#VIG-S001` a `#VIG-S040`** (34 en Cali), con 43 fotos, 143 apoyos, 52 comentarios (7 con foto). Validados: S001, S004, S006 y S019.
+- **6 propuestas de reparación (HU-25):** S015 pendiente con 1 de 3 confirmaciones y S027 pendiente (para votar en vivo; la autora de las dos es Marta), S003 y S009 resueltas por la comunidad, S013 aceptada por la autora, S020 rechazada con 3 objeciones.
+- 30 fotos de Wikimedia Commons en `incident-evidence/seed/`; créditos y licencias en `tool/seed/CREDITS.md`.
+
+Pasos (cada uno se corre a mano): `node tool/seed/seed.mjs plan | users | photos:download | photos:upload | sql`, y después `supabase db query --linked --project-ref obdgkiwaawyqskqbnitm -f "$(pwd)/data model/demo_data.sql"`. Los datos se editan en `tool/seed/seed_data.json`; el SQL se genera y borra solo los `#VIG-S…` antes de volver a crearlos.
+
+El 25 de noviembre se borraron todos los reportes anteriores (`#VIG-DEMO-01` a `14`, las pruebas `#VIG-1278`, `#VIG-6906` y `#VIG-9509`): la base quedó solo con los 40 de la seed. Los usuarios anteriores siguen existiendo, sin esos reportes (y sin el XP que les dieron). La seed, al volver a correrla, solo reemplaza los `#VIG-S…`.
 
 ---
 

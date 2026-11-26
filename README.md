@@ -203,6 +203,7 @@ Run once per Supabase project, in this order:
 2. **SQL Editor:** run `data model/migrations/001_drop_handle_new_user.sql`. Registration is done by the app (account first, profile second), so the old `handle_new_user` trigger must not exist.
 3. **SQL Editor:** run `data model/migrations/002_spanish_rank_names.sql` (only if the project was created before the Spanish interface: it renames the four civic ranks).
 4. **Authentication > Sign In / Providers > User Signups:** turn **Confirm email** off. The profile insert needs the session that `signUp` returns.
+5. **Later migrations** (`003` onward, in order) can also be applied from a terminal by any member of the project's organization, without the database password: `supabase login`, then `supabase db query --linked --project-ref <ref> -f "<absolute path to the .sql file>"`. Run each migration's smoke test from `data model/tests/` the same way.
 
 ---
 

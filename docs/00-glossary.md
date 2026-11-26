@@ -78,10 +78,10 @@ the **English name in Dart code** and the **database object** in `data model/sch
 
 | Term | UI (Spanish) | Code | Database | Definition |
 |---|---|---|---|---|
-| Resolution proposal | Reportar como reparado *(proposed)* | — | `incident_resolution` | Claim that the damage was repaired, with 1 recent photo and a description. Only **one** `PENDING` proposal per report (`idx_single_active_resolution`). |
+| Resolution proposal | Reportar como reparado | `IncidentResolution`, `ProposeResolutionUseCase` | `incident_resolution` | Claim that the damage was repaired, with 1 recent photo and a description. Only **one** `PENDING` proposal per report (`idx_single_active_resolution`). |
 | Proponent | — | — | `id_proponent_user` | The citizen who submits the proposal. Gets +50 XP if it is accepted. |
-| Confirmation | Confirmar *(proposed)* | — | `resolution_confirmation` | A neighbor vouches for the repair. **3** confirmations → `APPROVED_BY_COMMUNITY`. |
-| Objection | Objetar *(proposed)* | — | `resolution_objection` | A neighbor disputes the evidence. **3** objections → `REJECTED_BY_COMMUNITY`. |
+| Confirmation | Confirmar | `ConfirmResolutionUseCase` | `resolution_confirmation` | A neighbor vouches for the repair. **3** confirmations → `APPROVED_BY_COMMUNITY`. |
+| Objection | Objetar | `ObjectResolutionUseCase` | `resolution_objection` | A neighbor disputes the evidence. **3** objections → `REJECTED_BY_COMMUNITY`. |
 | Rejection reason | — | — | `rejection_reason` | Required when the report author rejects a proposal (`REJECTED_BY_AUTHOR`). |
 | Expiration | — | — | `EXPIRED` | 7 days with no quorum and no answer from the author. Frees the slot for a new proposal. |
 
