@@ -4,7 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/widgets/sign_in_required_dialog.dart';
 import '../../../../core/widgets/theme_toggle_button.dart';
+import '../../../auth/domain/entities/city.dart';
 import '../../../auth/domain/entities/coordinates.dart';
+import '../../../city_identity/ui/bloc/city_ambience_bloc.dart';
+import '../../../city_identity/ui/bloc/city_ambience_event.dart';
 import '../../../dashboard/ui/bloc/profile_bloc.dart';
 import '../../../dashboard/ui/bloc/profile_event.dart';
 import '../../../dashboard/ui/bloc/profile_state.dart';
@@ -23,8 +26,10 @@ import '../pages/map_page.dart';
 /// `IndexedStack` keeps them alive, so switching tabs does not reload the map
 /// nor the feed. The city the map shows is the one the Comunidad feed lists
 /// (HU-19): the shell forwards every change of it from the [MapBloc] to the
-/// [FeedBloc]. A guest (HU-22) browses the same shell; actions that need an
-/// account open the sign-in modal instead.
+/// [FeedBloc] and to the [CityAmbienceBloc], which dresses the app for it. The
+/// citizen's own city, from the profile, gives the places of their rank climb.
+/// A guest (HU-22) browses the same shell; actions that need an account open the
+/// sign-in modal instead.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -43,13 +48,33 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static const _titles = ['Mapa', 'Comunidad', 'Mi perfil'];
 
+  /// City the shell showed last; a different one is a switch (HU-21).
+  String? _shownCity;
+
   @override
   void initState() {
     super.initState();
-    // The map may have resolved its city before this screen was built.
+    // The map may have resolved its city, and the profile loaded, before this
+    // screen was built.
     final city = context.read<MapBloc>().state.city;
-    if (city != null) context.read<FeedBloc>().add(FeedCityChanged(city));
+    if (city != null) _showCity(city);
+    final home = context.read<ProfileBloc>().state.profile?.cityName;
+    if (home != null) _showReferenceCity(home);
   }
+
+  /// The feed lists the city of the map and the app wears its look.
+  void _showCity(City city) {
+    final switched = _shownCity != null && _shownCity != city.name;
+    _shownCity = city.name;
+    context.read<FeedBloc>().add(FeedCityChanged(city));
+    context.read<CityAmbienceBloc?>()?.add(
+          ActiveCityChanged(name: city.name, department: city.department, switched: switched),
+        );
+  }
+
+  /// Absent only in tests that pump the shell without the app around it.
+  void _showReferenceCity(String name) =>
+      context.read<CityAmbienceBloc?>()?.add(ReferenceCityChanged(name));
 
   /// A guest is invited to sign in instead of opening the wizard (HU-22).
   void _onReportPressed(bool isGuest) {
@@ -104,9 +129,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     // Forwarding the city is a side effect, so it runs once per change here and
     // never in a builder. The same city again does nothing in the FeedBloc.
-    return BlocListener<MapBloc, MapState>(
-      listenWhen: (previous, current) => current.city != null && previous.city != current.city,
-      listener: (context, state) => context.read<FeedBloc>().add(FeedCityChanged(state.city!)),
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<MapBloc, MapState>(
+          listenWhen: (previous, current) => current.city != null && previous.city != current.city,
+          listener: (context, state) => _showCity(state.city!),
+        ),
+        BlocListener<ProfileBloc, ProfileState>(
+          listenWhen: (previous, current) =>
+              current.profile != null && previous.profile?.cityName != current.profile!.cityName,
+          listener: (context, state) => _showReferenceCity(state.profile!.cityName),
+        ),
+      ],
       child: BlocBuilder<ProfileBloc, ProfileState>(
         buildWhen: (previous, current) =>
             (previous.status == ProfileStatus.guest) != (current.status == ProfileStatus.guest),

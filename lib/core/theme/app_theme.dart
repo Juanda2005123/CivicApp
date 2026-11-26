@@ -1,17 +1,57 @@
 import 'package:flutter/material.dart';
 
+import '../../features/city_identity/domain/entities/city_identity.dart';
+import '../widgets/city/city_motion.dart';
 import 'app_colors.dart';
 import 'app_spacing.dart';
 import 'app_text_styles.dart';
+import 'city_theme.dart';
 import 'severity_colors.dart';
 
-/// Light and dark themes of the "Sello comunitario" design system.
+/// Light and dark themes of the "Sello comunitario" design system, dressed for
+/// the active city.
 ///
 /// Everything visual comes from here: widgets read [ColorScheme],
-/// [TextTheme], [AppSemanticColors] and the component themes, never hex values.
+/// [TextTheme], [AppSemanticColors], [CityTheme] and the component themes,
+/// never hex values.
 abstract final class AppTheme {
-  static final ThemeData light = _build(_lightScheme, AppSemanticColors.light, AppSeverityColors.light);
-  static final ThemeData dark = _build(_darkScheme, AppSemanticColors.dark, AppSeverityColors.dark);
+  /// The themes without a city.
+  static final ThemeData light = build(Brightness.light, CityTheme.fallback(Brightness.light));
+  static final ThemeData dark = build(Brightness.dark, CityTheme.fallback(Brightness.dark));
+
+  /// The theme of [brightness] for [city]. A city with a pack recolors only the
+  /// primary and secondary roles (design document 04, section 3.2): surfaces,
+  /// text, errors and severity are the same everywhere. The default look keeps
+  /// the system's own colors.
+  static ThemeData build(Brightness brightness, CityTheme city) {
+    final isLight = brightness == Brightness.light;
+    final base = isLight ? _lightScheme : _darkScheme;
+    final semantic = isLight ? AppSemanticColors.light : AppSemanticColors.dark;
+    final severity = isLight ? AppSeverityColors.light : AppSeverityColors.dark;
+
+    if (city.level == CityIdentityLevel.fallback) {
+      return _build(base, semantic, severity, city);
+    }
+
+    // Light: the deep tone. Dark: the accent, which is the one that reads there.
+    final secondary = isLight ? city.deep : city.accent;
+    final onSecondary = isLight ? city.onDeep : city.onAccent;
+    return _build(
+      base.copyWith(
+        primary: city.accent,
+        onPrimary: city.onAccent,
+        primaryContainer: city.accent,
+        onPrimaryContainer: city.onAccent,
+        secondary: secondary,
+        onSecondary: onSecondary,
+        secondaryContainer: secondary,
+        onSecondaryContainer: onSecondary,
+      ),
+      semantic.copyWith(accent: secondary),
+      severity,
+      city,
+    );
+  }
 
   static const ColorScheme _lightScheme = ColorScheme(
     brightness: Brightness.light,
@@ -71,12 +111,24 @@ abstract final class AppTheme {
     scrim: Colors.black,
   );
 
-  static ThemeData _build(ColorScheme scheme, AppSemanticColors semantic, AppSeverityColors severity) {
+  static ThemeData _build(
+    ColorScheme scheme,
+    AppSemanticColors semantic,
+    AppSeverityColors severity,
+    CityTheme city,
+  ) {
     final textTheme = AppTextStyles.textTheme.apply(
       bodyColor: scheme.onSurface,
       displayColor: scheme.onSurface,
     );
     final isLight = scheme.brightness == Brightness.light;
+    final hasCity = city.level != CityIdentityLevel.fallback;
+
+    // Selected switches, radios and checkboxes: the tone that reads on the
+    // surface, because the warm accent does not on light paper.
+    final selectedControl = WidgetStateProperty.resolveWith<Color?>(
+      (states) => states.contains(WidgetState.selected) ? scheme.secondary : null,
+    );
 
     OutlineInputBorder border(Color color, double width) => OutlineInputBorder(
           borderRadius: AppRadii.small,
@@ -92,7 +144,26 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: scheme.surface,
       canvasColor: scheme.surfaceContainerLow,
       textTheme: textTheme,
-      extensions: [semantic, severity],
+      extensions: [semantic, severity, city],
+      // 5A, shared axis between screens; the same in every city.
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: SharedAxisPageTransitionsBuilder(),
+          TargetPlatform.iOS: SharedAxisPageTransitionsBuilder(),
+          TargetPlatform.windows: SharedAxisPageTransitionsBuilder(),
+          TargetPlatform.macOS: SharedAxisPageTransitionsBuilder(),
+          TargetPlatform.linux: SharedAxisPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: SharedAxisPageTransitionsBuilder(),
+        },
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary,
+      ),
+      switchTheme: !hasCity ? null : SwitchThemeData(trackColor: selectedControl),
+      radioTheme: !hasCity ? null : RadioThemeData(fillColor: selectedControl),
+      checkboxTheme: !hasCity ? null : CheckboxThemeData(fillColor: selectedControl),
+      textSelectionTheme: !hasCity ? null : TextSelectionThemeData(cursorColor: scheme.secondary),
       dividerTheme: DividerThemeData(color: scheme.outlineVariant, thickness: 1, space: 1),
       appBarTheme: AppBarTheme(
         backgroundColor: scheme.surface,
@@ -181,7 +252,7 @@ abstract final class AppTheme {
         backgroundColor: scheme.surface,
         elevation: 0,
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: scheme.primary,
+        selectedItemColor: city.navSelected,
         unselectedItemColor: scheme.onSurfaceVariant,
         selectedLabelStyle: textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
         unselectedLabelStyle: textTheme.labelMedium,
