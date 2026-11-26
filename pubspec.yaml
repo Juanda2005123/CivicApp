@@ -69,6 +69,9 @@ flutter:
 
   assets:
     - .env
+    # City packs (docs/design/04-city-identity.md). One line per city folder.
+    - assets/cities/cali/
+    - assets/cities/medellin/
 
   # Brand typography (open licenses in assets/fonts/licenses). Fraunces and
   # IBM Plex Sans are variable fonts: the weight is chosen with
