@@ -6,6 +6,8 @@
 //
 // It writes docs/design/screenshots/ciudad-viva/<city>-perfil-<theme>.png. It is
 // not part of the test suite.
+// A test file outside test/, so the test-only helpers are fine here.
+// ignore_for_file: invalid_use_of_visible_for_testing_member
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
