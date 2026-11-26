@@ -5,7 +5,12 @@ import 'package:vigia_app/core/theme/app_colors.dart';
 import 'package:vigia_app/core/theme/app_spacing.dart';
 import 'package:vigia_app/core/theme/app_text_styles.dart';
 import 'package:vigia_app/core/widgets/app_notice.dart';
+import 'package:vigia_app/core/theme/city_theme.dart';
+import 'package:vigia_app/core/theme/severity_colors.dart';
+import 'package:vigia_app/core/widgets/city/celebration_overlay.dart';
+import 'package:vigia_app/core/widgets/city/city_skeleton.dart';
 import 'package:vigia_app/core/widgets/dotted_spinner.dart';
+import 'package:vigia_app/core/widgets/severity_chip.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/core/widgets/rank_seal.dart';
 import 'package:vigia_app/core/widgets/sign_in_required_dialog.dart';
@@ -39,6 +44,12 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
 
   /// The author edited the report here: going back tells the caller to reload (HU-18).
   bool _changed = false;
+
+  /// The report was already validated when the citizen tapped "Apoyar".
+  bool _validatedBeforeTap = true;
+
+  /// Keeps the thumb's animation when the button changes from filled to outlined.
+  final _thumbKey = GlobalKey();
 
   @override
   void didChangeDependencies() {
@@ -80,6 +91,16 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
                 current.endorsementError != null && previous.endorsementError != current.endorsementError,
             listener: (context, state) => _showMessage(context, state.endorsementError!),
           ),
+          // The optimistic copy does not touch the validation, so this is still how
+          // the report was before the tap.
+          BlocListener<IncidentDetailBloc, IncidentDetailState>(
+            listenWhen: (previous, current) => !previous.isEndorsing && current.isEndorsing,
+            listener: (context, state) => _validatedBeforeTap = state.incident?.isCommunityValidated ?? true,
+          ),
+          BlocListener<IncidentDetailBloc, IncidentDetailState>(
+            listenWhen: (previous, current) => previous.isEndorsing && !current.isEndorsing,
+            listener: _celebrateIfValidated,
+          ),
           // The server may refuse a delete with the window over (HU-18, criterion 5).
           BlocListener<IncidentDetailBloc, IncidentDetailState>(
             listenWhen: (previous, current) =>
@@ -109,15 +130,17 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
                   ),
                 );
               }
-              return const Center(
-                child: DottedSpinner(size: 36, semanticLabel: 'Cargando reporte vial...'),
+              return const CitySkeleton(
+                shape: CitySkeletonShape.detail,
+                semanticLabel: 'Cargando reporte vial...',
               );
 
             // An empty case falls through in Dart: loading needs its own body,
             // or the screen shows the failure view until the report arrives.
             case IncidentDetailStatus.loading:
-              return const Center(
-                child: DottedSpinner(size: 36, semanticLabel: 'Cargando reporte vial...'),
+              return const CitySkeleton(
+                shape: CitySkeletonShape.detail,
+                semanticLabel: 'Cargando reporte vial...',
               );
 
             case IncidentDetailStatus.failure:
@@ -157,6 +180,14 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  /// 3A: the citizen's endorsement was the one that validated the report (HU-16).
+  void _celebrateIfValidated(BuildContext context, IncidentDetailState state) {
+    final incident = state.incident;
+    if (incident == null || _validatedBeforeTap || !incident.isCommunityValidated) return;
+    if (state.endorsementError != null) return;
+    showValidationCelebration(context, reportCode: incident.trackingCode, endorsements: incident.upvotesCount);
   }
 
   /// Opens the edit form; coming back saved, the report is read again (HU-18).
@@ -225,7 +256,7 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
           // The author never endorses their own report (RN-05): no button for them.
           if (!state.viewerIsAuthor) ...[
             const SizedBox(height: AppSpacing.md),
-            _buildEndorseButton(context, state),
+            _buildEndorseButton(context, state, incident),
           ],
           // The author can edit or delete inside the window; afterwards the card says it is frozen (HU-18).
           if (state.viewerIsAuthor) ...[
@@ -280,10 +311,10 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
                 incident.trackingCode,
                 style: AppTextStyles.data(size: 20).copyWith(
                   fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
+                  color: CityTheme.of(context).deep,
                 ),
               ),
-              _buildSeverityChip(incident.severity, theme),
+              SeverityChip(level: _levelOf(incident.severity)),
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -327,52 +358,13 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
     );
   }
 
-  Widget _buildSeverityChip(IncidentSeverity severity, ThemeData theme) {
-    String symbol;
-    Color color;
-
-    switch (severity) {
-      case IncidentSeverity.low:
-        symbol = '●';
-        color = const Color(0xFF266A70);
-        break;
-      case IncidentSeverity.medium:
-        symbol = '▲';
-        color = const Color(0xFFE8B03A);
-        break;
-      case IncidentSeverity.high:
-        symbol = '◆';
-        color = const Color(0xFFC2410C);
-        break;
-      case IncidentSeverity.critical:
-        symbol = '🛑';
-        color = const Color(0xFF8F1D2C);
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppRadii.chip),
-        border: Border.all(color: color, width: 1.5),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            symbol,
-            style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            severity.labelSpanish,
-            style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
+  /// The theme has its own severity levels, so shared widgets never import the domain.
+  SeverityLevel _levelOf(IncidentSeverity severity) => switch (severity) {
+        IncidentSeverity.low => SeverityLevel.low,
+        IncidentSeverity.medium => SeverityLevel.medium,
+        IncidentSeverity.high => SeverityLevel.high,
+        IncidentSeverity.critical => SeverityLevel.critical,
+      };
 
   Widget _buildPhotoCarousel(BuildContext context, List<IncidentPhoto> photos, ThemeData theme) {
     if (photos.isEmpty) {
@@ -495,7 +487,7 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
                     '${incident.upvotesCount} de $target apoyos',
                     style: AppTextStyles.data(size: 13).copyWith(
                       fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
+                      color: CityTheme.of(context).deep,
                     ),
                   ),
                 ],
@@ -503,11 +495,17 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
               const SizedBox(height: AppSpacing.sm),
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 8,
-                  backgroundColor: theme.colorScheme.outline.withValues(alpha: 0.2),
-                  valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                // 2D: the bar grows with each endorsement.
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(end: progress),
+                  duration: AppMotion.reduceOf(context) ? Duration.zero : AppMotion.emphasized,
+                  curve: AppMotion.curve,
+                  builder: (context, value, _) => LinearProgressIndicator(
+                    value: value,
+                    minHeight: 8,
+                    backgroundColor: theme.colorScheme.outline.withValues(alpha: 0.2),
+                    valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                  ),
                 ),
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -527,23 +525,40 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
   }
 
   /// "Apoyar" / "Apoyado" (HU-15): icon and text change with the state, never color alone.
-  Widget _buildEndorseButton(BuildContext context, IncidentDetailState state) {
+  /// The thumb jumps and its ring fills a tenth (2D); a slow request shows the
+  /// dotted spinner around it (8D).
+  Widget _buildEndorseButton(BuildContext context, IncidentDetailState state, Incident incident) {
     final endorsed = state.viewerEndorsed;
     final onPressed = state.isEndorsing ? null : () => _toggleEndorsement(context, state);
+    final scheme = Theme.of(context).colorScheme;
+    final foreground = endorsed ? scheme.onSurface : scheme.onPrimary;
+
+    final icon = Stack(
+      key: _thumbKey,
+      alignment: Alignment.center,
+      children: [
+        EndorseThumb(
+          icon: LucideIcons.thumbsUp,
+          count: incident.upvotesCount,
+          target: Incident.validationTarget,
+          endorsed: endorsed,
+          color: foreground,
+          burstColor: CityTheme.of(context).deep,
+        ),
+        if (state.isEndorsing)
+          DottedSpinner(size: AppSizes.endorseRing, color: foreground, semanticLabel: 'Guardando tu apoyo'),
+      ],
+    );
 
     return SizedBox(
       width: double.infinity,
       child: endorsed
-          ? PressScale(child: OutlinedButton.icon(
-              onPressed: onPressed,
-              icon: const Icon(LucideIcons.thumbsUp, size: AppSizes.icon),
-              label: const Text('Apoyado'),
-            ))
-          : PressScale(child: FilledButton.icon(
-              onPressed: onPressed,
-              icon: const Icon(LucideIcons.thumbsUp, size: AppSizes.icon),
-              label: const Text('Apoyar este reporte'),
-            )),
+          ? PressScale(
+              child: OutlinedButton.icon(onPressed: onPressed, icon: icon, label: const Text('Apoyado')),
+            )
+          : PressScale(
+              child: FilledButton.icon(onPressed: onPressed, icon: icon, label: const Text('Apoyar este reporte')),
+            ),
     );
   }
 
@@ -601,7 +616,7 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
         children: [
           Row(
             children: [
-              Icon(LucideIcons.mapPin, color: theme.colorScheme.primary, size: 22),
+              Icon(LucideIcons.mapPin, color: CityTheme.of(context).deep, size: 22),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 'Ubicación georreferenciada',

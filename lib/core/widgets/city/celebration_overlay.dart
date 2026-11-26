@@ -135,16 +135,19 @@ class _SelfClosingState extends State<_SelfClosing> with SingleTickerProviderSta
   Widget build(BuildContext context) {
     return Semantics(
       scopesRoute: true,
-      namesRoute: true,
-      liveRegion: true,
-      button: true,
-      label: '${widget.semanticLabel}. Toca para cerrar.',
-      onTap: _close,
-      excludeSemantics: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
+      explicitChildNodes: true,
+      child: Semantics(
+        namesRoute: true,
+        liveRegion: true,
+        button: true,
+        label: '${widget.semanticLabel}. Toca para cerrar.',
         onTap: _close,
-        child: Material(color: CityTheme.of(context).veil, child: widget.builder(context, _time)),
+        excludeSemantics: true,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _close,
+          child: Material(color: CityTheme.of(context).veil, child: widget.builder(context, _time)),
+        ),
       ),
     );
   }
