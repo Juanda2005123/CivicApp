@@ -58,6 +58,27 @@ abstract final class AppTextStyles {
   /// Fraunces numeral for rank seals.
   static TextStyle numeral(double size) => _fraunces(size, size, 700);
 
+  // City headlines in Anton (docs/design/04-city-identity.md): only for the
+  // city's own words (greeting, place names, celebrations), over photos or the
+  // veil. The line height leaves room for the accents.
+  static TextStyle _anton(double size) =>
+      TextStyle(fontFamily: 'Anton', fontSize: size, height: 1.12, letterSpacing: 0.01 * size);
+
+  /// Full-screen place name of the rank celebration.
+  static final TextStyle cityDisplay = _anton(36);
+
+  /// Greeting of the city header and cheer of the validation.
+  static final TextStyle cityHeadline = _anton(32);
+
+  /// "Vas por La Ermita" on the rank climb.
+  static final TextStyle cityTitle = _anton(26);
+
+  /// City name on its photo card.
+  static final TextStyle cityCard = _anton(22);
+
+  /// Small uppercase line in monospace over a photo ("CALI · TARDE").
+  static TextStyle get eyebrow => data(size: 11, line: 16).copyWith(letterSpacing: 0.9);
+
   /// Material text roles mapped to the system's styles (design document 4).
   static TextTheme get textTheme => TextTheme(
         displaySmall: display,
