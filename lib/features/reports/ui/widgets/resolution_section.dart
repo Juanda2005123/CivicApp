@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vigia_app/core/constants/app_routes.dart';
 import 'package:vigia_app/core/theme/app_spacing.dart';
 import 'package:vigia_app/core/widgets/app_notice.dart';
@@ -87,7 +88,7 @@ class _ResolutionSectionState extends State<ResolutionSection> {
             return const AppNotice(
               message: 'Reparación verificada: la comunidad confirmó que este daño ya fue reparado.',
               kind: NoticeKind.success,
-              icon: Icons.verified_outlined,
+              icon: LucideIcons.badgeCheck,
             );
           }
           if (state.status != ResolutionLoadStatus.success) return const SizedBox.shrink();
@@ -116,7 +117,7 @@ class _ResolutionSectionState extends State<ResolutionSection> {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: state.isGuest ? _askToSignIn : () => showResolutionProposalSheet(context),
-              icon: const Icon(Icons.build_circle_outlined, size: AppSizes.icon),
+              icon: const Icon(LucideIcons.wrench, size: AppSizes.icon),
               label: const Text('Reportar como reparado'),
             ),
           );

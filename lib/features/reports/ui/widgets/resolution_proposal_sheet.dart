@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vigia_app/core/theme/app_spacing.dart';
 import 'package:vigia_app/core/widgets/app_notice.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
@@ -86,7 +87,7 @@ class _ResolutionProposalSheetState extends State<ResolutionProposalSheet> {
                             height: 120,
                             alignment: Alignment.center,
                             color: theme.colorScheme.surfaceContainerHighest,
-                            child: Icon(Icons.image_outlined, color: theme.colorScheme.onSurfaceVariant),
+                            child: Icon(LucideIcons.image, color: theme.colorScheme.onSurfaceVariant),
                           ),
                         ),
                       ),
@@ -96,7 +97,7 @@ class _ResolutionProposalSheetState extends State<ResolutionProposalSheet> {
                         child: IconButton.filledTonal(
                           tooltip: 'Quitar la foto',
                           onPressed: busy ? null : () => bloc.add(const ResolutionPhotoRemoved()),
-                          icon: const Icon(Icons.close),
+                          icon: const Icon(LucideIcons.x),
                         ),
                       ),
                     ],
@@ -107,7 +108,7 @@ class _ResolutionProposalSheetState extends State<ResolutionProposalSheet> {
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: busy ? null : () => bloc.add(const ResolutionPhotoRequested(fromCamera: true)),
-                          icon: const Icon(Icons.photo_camera_outlined, size: AppSizes.icon),
+                          icon: const Icon(LucideIcons.camera, size: AppSizes.icon),
                           label: const Text('Tomar foto'),
                         ),
                       ),
@@ -115,7 +116,7 @@ class _ResolutionProposalSheetState extends State<ResolutionProposalSheet> {
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: busy ? null : () => bloc.add(const ResolutionPhotoRequested()),
-                          icon: const Icon(Icons.add_photo_alternate_outlined, size: AppSizes.icon),
+                          icon: const Icon(LucideIcons.imagePlus, size: AppSizes.icon),
                           label: const Text('Galería'),
                         ),
                       ),

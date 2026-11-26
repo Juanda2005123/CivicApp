@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vigia_app/core/theme/app_colors.dart';
 import 'package:vigia_app/core/theme/app_spacing.dart';
 import 'package:vigia_app/core/theme/app_text_styles.dart';
@@ -67,7 +68,7 @@ class ResolutionProposalCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.build_circle_outlined, size: 16, color: semantic.success),
+                    Icon(LucideIcons.wrench, size: 16, color: semantic.success),
                     const SizedBox(width: AppSpacing.xs),
                     Text(
                       'Reparación en verificación',
@@ -98,7 +99,7 @@ class ResolutionProposalCard extends StatelessWidget {
                 height: 120,
                 alignment: Alignment.center,
                 color: theme.colorScheme.surfaceContainerHighest,
-                child: Icon(Icons.broken_image_outlined, color: theme.colorScheme.onSurfaceVariant),
+                child: Icon(LucideIcons.imageOff, color: theme.colorScheme.onSurfaceVariant),
               ),
             ),
           ),
@@ -143,7 +144,7 @@ class ResolutionProposalCard extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: isBusy ? null : onReject,
-                    icon: const Icon(Icons.close, size: AppSizes.icon),
+                    icon: const Icon(LucideIcons.x, size: AppSizes.icon),
                     label: const Text('Rechazar'),
                   ),
                 ),
@@ -151,7 +152,7 @@ class ResolutionProposalCard extends StatelessWidget {
                 Expanded(
                   child: FilledButton.icon(
                     onPressed: isBusy ? null : onAccept,
-                    icon: const Icon(Icons.check, size: AppSizes.icon),
+                    icon: const Icon(LucideIcons.check, size: AppSizes.icon),
                     label: const Text('Aceptar'),
                   ),
                 ),
@@ -169,7 +170,7 @@ class ResolutionProposalCard extends StatelessWidget {
         if (hasVoted) {
           return Row(
             children: [
-              Icon(Icons.how_to_vote_outlined, size: AppSizes.icon, color: theme.colorScheme.onSurfaceVariant),
+              Icon(LucideIcons.vote, size: AppSizes.icon, color: theme.colorScheme.onSurfaceVariant),
               const SizedBox(width: AppSpacing.xs),
               Expanded(child: Text('Ya votaste esta propuesta. Gracias por verificar.', style: note)),
             ],
@@ -185,7 +186,7 @@ class ResolutionProposalCard extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: isBusy ? null : onObject,
-                    icon: const Icon(Icons.report_outlined, size: AppSizes.icon),
+                    icon: const Icon(LucideIcons.flag, size: AppSizes.icon),
                     label: const Text('Objetar'),
                   ),
                 ),
@@ -193,7 +194,7 @@ class ResolutionProposalCard extends StatelessWidget {
                 Expanded(
                   child: FilledButton.icon(
                     onPressed: isBusy ? null : onConfirm,
-                    icon: const Icon(Icons.verified_outlined, size: AppSizes.icon),
+                    icon: const Icon(LucideIcons.badgeCheck, size: AppSizes.icon),
                     label: const Text('Confirmar'),
                   ),
                 ),
