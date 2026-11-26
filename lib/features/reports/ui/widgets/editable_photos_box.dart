@@ -5,6 +5,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../domain/entities/incident_photo.dart';
 import '../../domain/entities/picked_photo.dart';
 import '../../domain/validators/report_validators.dart';
+import 'package:vigia_app/core/theme/city_theme.dart';
 
 /// The photos of a report being edited (HU-18): the ones it already has and the
 /// ones just picked, up to 3 together. Each one has a remove button; the next
@@ -143,7 +144,7 @@ class _AddSlot extends StatelessWidget {
               border: Border.all(color: scheme.outline),
               color: scheme.surfaceContainerLow,
             ),
-            child: Center(child: Icon(LucideIcons.imagePlus, size: AppSizes.iconLarge, color: scheme.primary)),
+            child: Center(child: Icon(LucideIcons.imagePlus, size: AppSizes.iconLarge, color: CityTheme.of(context).deep)),
           ),
         ),
       ),

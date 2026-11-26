@@ -4,6 +4,7 @@ import 'package:vigia_app/core/theme/app_spacing.dart';
 import 'package:vigia_app/core/theme/app_text_styles.dart';
 import 'package:vigia_app/core/widgets/app_notice.dart';
 import 'package:vigia_app/core/widgets/app_text_field.dart';
+import 'package:vigia_app/core/widgets/dotted_spinner.dart';
 import 'package:vigia_app/core/widgets/location_blocked_dialog.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
@@ -18,6 +19,7 @@ import '../widgets/photo_evidence_box.dart';
 import '../widgets/severity_chip_selector.dart';
 import '../widgets/wizard_progress_header.dart';
 import 'package:vigia_app/core/widgets/city/city_motion.dart';
+import 'package:vigia_app/core/theme/city_theme.dart';
 
 /// 5-Step guided wizard for reporting road infrastructure damage (HU-06 to HU-12).
 class ReportWizardScreen extends StatefulWidget {
@@ -280,7 +282,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
         if (state.status == WizardStatus.loading)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: DottedSpinner(size: AppSizes.iconLarge, semanticLabel: 'Cargando categorías')),
           )
         else
           GridView.builder(
@@ -298,7 +300,8 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
               final isSelected = (_selectedCategoryId ?? state.selectedCategoryId) == cat.id;
               final iconData = _getCategoryIcon(cat);
 
-              return InkWell(
+              return PressScale(
+                child: InkWell(
                 onTap: () {
                   setState(() => _selectedCategoryId = cat.id);
                 },
@@ -326,7 +329,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
                         decoration: BoxDecoration(
                           color: isSelected
                               ? theme.colorScheme.onPrimary.withValues(alpha: 0.22)
-                              : theme.colorScheme.primary.withValues(alpha: 0.08),
+                              : CityTheme.of(context).deep.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Icon(
@@ -334,7 +337,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
                           size: 15,
                           color: isSelected
                               ? theme.colorScheme.onPrimary
-                              : theme.colorScheme.primary,
+                              : CityTheme.of(context).deep,
                         ),
                       ),
                       const SizedBox(width: AppSpacing.xs + 2),
@@ -356,7 +359,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
                     ],
                   ),
                 ),
-              );
+              ));
             },
           ),
         const SizedBox(height: AppSpacing.md),
@@ -622,13 +625,13 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      color: CityTheme.of(context).deep.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       state.severity.labelSpanish,
                       style: TextStyle(
-                        color: theme.colorScheme.primary,
+                        color: CityTheme.of(context).deep,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -681,20 +684,20 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
         Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.08),
+            color: CityTheme.of(context).deep.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(AppRadii.md),
-            border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+            border: Border.all(color: CityTheme.of(context).deep.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
-              Icon(LucideIcons.award, color: theme.colorScheme.primary),
+              Icon(LucideIcons.award, color: CityTheme.of(context).deep),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   'Al publicar este reporte recibirás +100 XP en tu perfil cívico.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.primary,
+                    color: CityTheme.of(context).deep,
                   ),
                 ),
               ),
@@ -731,7 +734,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
               incident.trackingCode,
               style: AppTextStyles.data(size: 18).copyWith(
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
+                color: CityTheme.of(context).deep,
               ),
             ),
             const SizedBox(height: AppSpacing.md),

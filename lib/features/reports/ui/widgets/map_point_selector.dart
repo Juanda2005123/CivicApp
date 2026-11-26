@@ -7,6 +7,7 @@ import 'package:vigia_app/core/widgets/dotted_spinner.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:vigia_app/core/theme/city_theme.dart';
 
 /// Step 1 map (HU-27): the citizen pans the map under a fixed center pin and
 /// confirms the point. Stateful only to own the [MapController] and the
@@ -119,7 +120,7 @@ class _MapPointSelectorState extends State<MapPointSelector> {
                     padding: const EdgeInsets.only(bottom: AppSizes.mapPin),
                     child: Semantics(
                       label: 'Punto del daño',
-                      child: Icon(LucideIcons.mapPin, size: AppSizes.mapPin, color: scheme.primary),
+                      child: Icon(LucideIcons.mapPin, size: AppSizes.mapPin, color: CityTheme.of(context).deep),
                     ),
                   ),
                 ),

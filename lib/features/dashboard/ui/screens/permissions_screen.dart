@@ -10,6 +10,7 @@ import '../../domain/entities/device_permissions.dart';
 import '../bloc/permissions_bloc.dart';
 import '../bloc/permissions_event.dart';
 import '../bloc/permissions_state.dart';
+import 'package:vigia_app/core/theme/city_theme.dart';
 
 /// "Permisos" screen (HU-02): shows camera and location permissions in plain
 /// text and refreshes automatically when returning from OS settings.
@@ -132,7 +133,7 @@ class _PermissionCard extends StatelessWidget {
     return Card(
       child: ListTile(
         minTileHeight: AppSizes.touchTarget,
-        leading: Icon(icon, color: theme.colorScheme.primary),
+        leading: Icon(icon, color: CityTheme.of(context).deep),
         title: Text(title, style: theme.textTheme.bodyLarge),
         subtitle: Text(
           '$label · $hint',

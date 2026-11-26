@@ -418,7 +418,7 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
               children: [
                 Row(
                   children: [
-                    Icon(LucideIcons.mapPin, color: theme.colorScheme.primary, size: 28),
+                    Icon(LucideIcons.mapPin, color: CityTheme.of(context).deep, size: 28),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Column(
@@ -456,7 +456,7 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
                     widget.locationStatusMessage!,
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: widget.locationStatusMessage!.startsWith('GPS detectado')
-                          ? theme.colorScheme.primary
+                          ? CityTheme.of(context).deep
                           : theme.colorScheme.error,
                       fontWeight: FontWeight.w500,
                     ),
@@ -646,7 +646,7 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
               ),
               child: Row(
                 children: [
-                  Icon(LucideIcons.circleCheck, size: 16, color: theme.colorScheme.primary),
+                  Icon(LucideIcons.circleCheck, size: 16, color: CityTheme.of(context).deep),
                   const SizedBox(width: AppSpacing.xs),
                   Expanded(
                     child: Text(

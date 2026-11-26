@@ -17,6 +17,7 @@ import '../bloc/comments_bloc.dart';
 import '../bloc/comments_event.dart';
 import '../bloc/comments_state.dart';
 import 'package:vigia_app/core/widgets/city/city_motion.dart';
+import 'package:vigia_app/core/widgets/city/city_skeleton.dart';
 
 /// Discussion thread of a report and its composer (HU-17), shown at the end of
 /// the report detail. Comments read oldest first. A guest reads them and is
@@ -123,11 +124,10 @@ class _IncidentCommentsSectionState extends State<IncidentCommentsSection> {
     switch (state.status) {
       case CommentsStatus.initial:
       case CommentsStatus.loading:
-        return const Center(
-          child: Padding(
-            padding: EdgeInsets.all(AppSpacing.lg),
-            child: DottedSpinner(size: 28, semanticLabel: 'Cargando comentarios'),
-          ),
+        return const CitySkeleton(
+          shape: CitySkeletonShape.list,
+          semanticLabel: 'Cargando comentarios',
+          fill: false,
         );
       case CommentsStatus.failure:
         return Column(
@@ -228,7 +228,7 @@ class _IncidentCommentsSectionState extends State<IncidentCommentsSection> {
                 return PressScale(child: FilledButton.icon(
                   onPressed: canSend ? () => bloc.add(CommentSubmitted(_controller.text)) : null,
                   icon: state.isSending
-                      ? const DottedSpinner(size: 18, semanticLabel: 'Publicando')
+                      ? DottedSpinner(size: 18, color: theme.colorScheme.onPrimary, semanticLabel: 'Publicando')
                       : const Icon(LucideIcons.send, size: AppSizes.icon),
                   label: Text(state.isSending ? 'Publicando…' : 'Publicar'),
                 ));
