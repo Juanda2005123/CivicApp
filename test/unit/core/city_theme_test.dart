@@ -96,6 +96,8 @@ void main() {
         expect(theme.floatingActionButtonTheme.backgroundColor, today.primary);
         expect(theme.bottomNavigationBarTheme.selectedItemColor, today.primary);
         expect(theme.switchTheme, const SwitchThemeData());
+        expect(theme.chipTheme, const ChipThemeData());
+        expect(theme.inputDecorationTheme.floatingLabelStyle, isNull);
         expect(theme.extension<CityTheme>()!.hero, isNull);
         expect(theme.extension<CityTheme>()!.flag, isEmpty);
       });
@@ -143,6 +145,27 @@ void main() {
           expect(contrast(city.onDeep, city.deep), greaterThanOrEqualTo(4.5));
           // The accent is also used as text over the veil (celebrations).
           expect(contrast(city.accent, city.veil), greaterThanOrEqualTo(4.5));
+        });
+      }
+    }
+  });
+
+  group('Material defaults that use the primary color read in a city', () {
+    for (final city in ['Cali', 'Medellín']) {
+      for (final brightness in Brightness.values) {
+        test('$city ${brightness.name}: chip icons, focused labels and switches', () {
+          final theme = themeOf(city, brightness);
+          final scheme = theme.colorScheme;
+          final label = theme.inputDecorationTheme.floatingLabelStyle! as WidgetStateTextStyle;
+
+          expect(theme.chipTheme.iconTheme?.color, scheme.secondary);
+          expect(label.resolve({WidgetState.focused}).color, scheme.secondary);
+          expect(label.resolve({WidgetState.error}).color, scheme.error);
+          expect(theme.switchTheme.trackColor?.resolve({WidgetState.selected}), scheme.secondary);
+          expect(
+            contrast(theme.switchTheme.thumbColor!.resolve({WidgetState.selected})!, scheme.secondary),
+            greaterThanOrEqualTo(3),
+          );
         });
       }
     }

@@ -125,11 +125,12 @@ abstract final class AppTheme {
     final isLight = scheme.brightness == Brightness.light;
     final hasCity = city.level != CityIdentityLevel.fallback;
 
-    // Selected switches, radios and checkboxes: the tone that reads on the
-    // surface, because the warm accent does not on light paper.
-    final selectedControl = WidgetStateProperty.resolveWith<Color?>(
-      (states) => states.contains(WidgetState.selected) ? scheme.secondary : null,
-    );
+    // Material paints icons, floating labels and selected controls with the
+    // primary color. In a city that is the warm accent, which does not read on
+    // light paper, so those take the secondary tone instead.
+    WidgetStateProperty<Color?> whenSelected(Color color) => WidgetStateProperty.resolveWith<Color?>(
+          (states) => states.contains(WidgetState.selected) ? color : null,
+        );
 
     OutlineInputBorder border(Color color, double width) => OutlineInputBorder(
           borderRadius: AppRadii.small,
@@ -161,10 +162,23 @@ abstract final class AppTheme {
         backgroundColor: scheme.primary,
         foregroundColor: scheme.onPrimary,
       ),
-      switchTheme: !hasCity ? null : SwitchThemeData(trackColor: selectedControl),
-      radioTheme: !hasCity ? null : RadioThemeData(fillColor: selectedControl),
-      checkboxTheme: !hasCity ? null : CheckboxThemeData(fillColor: selectedControl),
+      switchTheme: !hasCity
+          ? null
+          : SwitchThemeData(
+              trackColor: whenSelected(scheme.secondary),
+              thumbColor: whenSelected(scheme.onSecondary),
+            ),
+      radioTheme: !hasCity ? null : RadioThemeData(fillColor: whenSelected(scheme.secondary)),
+      checkboxTheme: !hasCity
+          ? null
+          : CheckboxThemeData(
+              fillColor: whenSelected(scheme.secondary),
+              checkColor: whenSelected(scheme.onSecondary),
+            ),
       textSelectionTheme: !hasCity ? null : TextSelectionThemeData(cursorColor: scheme.secondary),
+      chipTheme: !hasCity
+          ? null
+          : ChipThemeData(iconTheme: IconThemeData(color: scheme.secondary, size: AppSizes.icon)),
       // Back and close buttons Flutter adds on its own use Lucide too.
       actionIconTheme: ActionIconThemeData(
         backButtonIconBuilder: (_) => const Icon(LucideIcons.arrowLeft),
@@ -224,6 +238,17 @@ abstract final class AppTheme {
         prefixIconColor: scheme.onSurfaceVariant,
         suffixIconColor: scheme.onSurfaceVariant,
         errorStyle: textTheme.bodySmall?.copyWith(color: scheme.error),
+        floatingLabelStyle: !hasCity
+            ? null
+            : WidgetStateTextStyle.resolveWith(
+                (states) => TextStyle(
+                  color: states.contains(WidgetState.error)
+                      ? scheme.error
+                      : states.contains(WidgetState.focused)
+                          ? scheme.secondary
+                          : scheme.onSurfaceVariant,
+                ),
+              ),
         border: border(scheme.outline, 1.5),
         enabledBorder: border(scheme.outline, 1.5),
         focusedBorder: border(semantic.accent, 2),
