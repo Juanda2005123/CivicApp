@@ -77,6 +77,17 @@ import '../../features/reports/domain/repositories/comment_repository.dart';
 import '../../features/reports/data/datasources/comment_remote_data_source.dart';
 import '../../features/reports/data/repositories/comment_repository_impl.dart';
 import '../../features/reports/ui/bloc/comments_bloc.dart';
+import '../../features/reports/data/datasources/resolution_remote_data_source.dart';
+import '../../features/reports/data/repositories/resolution_repository_impl.dart';
+import '../../features/reports/domain/repositories/resolution_repository.dart';
+import '../../features/reports/domain/usecases/accept_resolution_usecase.dart';
+import '../../features/reports/domain/usecases/confirm_resolution_usecase.dart';
+import '../../features/reports/domain/usecases/get_active_resolution_usecase.dart';
+import '../../features/reports/domain/usecases/object_resolution_usecase.dart';
+import '../../features/reports/domain/usecases/pick_resolution_photo_usecase.dart';
+import '../../features/reports/domain/usecases/propose_resolution_usecase.dart';
+import '../../features/reports/domain/usecases/reject_resolution_usecase.dart';
+import '../../features/reports/ui/bloc/resolution_bloc.dart';
 import '../../features/reports/domain/usecases/get_categories_usecase.dart';
 import '../../features/reports/domain/usecases/geocode_address_usecase.dart';
 import '../../features/reports/domain/usecases/get_city_center_usecase.dart';
@@ -114,6 +125,7 @@ Future<void> initDependencies({
   PhotoPickerRepository? photoPickerRepository,
   GeocodingRepository? geocodingRepository,
   CommentRepository? commentRepository,
+  ResolutionRepository? resolutionRepository,
   ImpactRepository? impactRepository,
 }) async {
   await sl.reset();
@@ -134,6 +146,7 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => PhotoStorageDataSource(sl()));
   sl.registerLazySingleton(() => IncidentRemoteDataSource(sl()));
   sl.registerLazySingleton(() => CommentRemoteDataSource(sl(), sl()));
+  sl.registerLazySingleton(() => ResolutionRemoteDataSource(sl(), sl()));
   sl.registerLazySingleton(() => PhotoPickerDataSource());
   sl.registerLazySingleton(() => NominatimDataSource(sl()));
   sl.registerLazySingleton(() => RecentCitiesLocalDataSource());
@@ -165,6 +178,9 @@ Future<void> initDependencies({
   );
   sl.registerLazySingleton<CommentRepository>(
     () => commentRepository ?? CommentRepositoryImpl(sl()),
+  );
+  sl.registerLazySingleton<ResolutionRepository>(
+    () => resolutionRepository ?? ResolutionRepositoryImpl(sl()),
   );
   sl.registerLazySingleton<PhotoPickerRepository>(
     () => photoPickerRepository ?? PhotoPickerRepositoryImpl(sl()),
@@ -207,6 +223,13 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => AddCommentUseCase(sl()));
   sl.registerLazySingleton(() => DeleteCommentUseCase(sl()));
   sl.registerLazySingleton(() => PickCommentPhotoUseCase(sl()));
+  sl.registerLazySingleton(() => GetActiveResolutionUseCase(sl()));
+  sl.registerLazySingleton(() => PickResolutionPhotoUseCase(sl()));
+  sl.registerLazySingleton(() => ProposeResolutionUseCase(sl()));
+  sl.registerLazySingleton(() => ConfirmResolutionUseCase(sl()));
+  sl.registerLazySingleton(() => ObjectResolutionUseCase(sl()));
+  sl.registerLazySingleton(() => AcceptResolutionUseCase(sl()));
+  sl.registerLazySingleton(() => RejectResolutionUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentLocationUseCase(sl()));
   sl.registerLazySingleton(() => SuggestAddressUseCase(sl()));
   sl.registerLazySingleton(() => PickPhotoUseCase(sl()));
@@ -245,4 +268,5 @@ Future<void> initDependencies({
   sl.registerFactory(() => IncidentDetailBloc(sl(), sl(), sl(), sl()));
   sl.registerFactory(() => EditReportBloc(sl(), sl(), sl(), sl()));
   sl.registerFactory(() => CommentsBloc(sl(), sl(), sl(), sl(), sl()));
+  sl.registerFactory(() => ResolutionBloc(sl(), sl(), sl(), sl(), sl(), sl(), sl(), sl()));
 }

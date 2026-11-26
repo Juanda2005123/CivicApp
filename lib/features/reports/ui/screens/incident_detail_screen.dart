@@ -14,6 +14,7 @@ import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_photo.dart';
 import '../widgets/author_actions_card.dart';
 import '../widgets/incident_comments_section.dart';
+import '../widgets/resolution_section.dart';
 import '../bloc/incident_detail_bloc.dart';
 import '../bloc/incident_detail_event.dart';
 import '../bloc/incident_detail_state.dart';
@@ -248,6 +249,16 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
 
           // Author Identity and Timestamp (Excluding email)
           _buildAuthorCard(context, incident, theme),
+          const SizedBox(height: AppSpacing.xl),
+
+          // Repair proposal pinned on top of the discussion (HU-25)
+          ResolutionSection(
+            incident: incident,
+            onReportChanged: () {
+              setState(() => _changed = true);
+              context.read<IncidentDetailBloc>().add(const IncidentReloaded());
+            },
+          ),
           const SizedBox(height: AppSpacing.xl),
 
           // Discussion thread and composer (HU-17)
