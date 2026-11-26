@@ -16,7 +16,7 @@ Fuentes, en este orden:
 
 ## 2. Objetivos (todo verificable)
 - [ ] **Arquitectura** como `04-city-identity.md` §2 y §3: feature `lib/features/city_identity/` (dominio puro, datos, `CityAmbienceBloc`), `CityTheme` como `ThemeExtension`, `AppTheme.build(Brightness, CityTheme)`, `CityAmbienceBloc` sobre `MaterialApp`, `ActiveCityChanged` desde el `HomeScreen` donde hoy se reenvía la ciudad al `FeedBloc`, y la subida del perfil con `reference_city`.
-- [ ] **Momento del día automático**: `DayPart.of` (05:00–11:59, 12:00–18:29, 18:30–04:59), recalculado al abrir y al volver a primer plano.
+- [ ] **Momento del día automático**: `DayPart.of` (05:00–11:59, 12:00–18:29, 18:30–04:59), recalculado al abrir y al volver a primer plano. **Sin ninguna opción para el usuario**: no se agrega ajuste ni botón para el momento. El usuario solo escoge claro u oscuro, con el botón de tema que ya existe.
 - [ ] **Regresión**: con el paquete por defecto, `AppTheme.build` produce los mismos `ColorScheme` y extensiones de hoy (prueba que lo compare).
 - [ ] **Paquetes de Cali y Medellín** con los valores de la maqueta y de `04` §3.3, incluido "Cerro de las Tres Cruces". Fotos convertidas a WebP (1080 px de ancho para cabeceras, 480 px cuadradas para rangos, < 200 KB) en `assets/cities/cali/` y `assets/cities/medellin/` desde `docs/design/ideas/city-identity/photos/`, y `assets/cities/CREDITS.md` generado desde `CREDITS.json` (solo las fotos usadas).
 - [ ] **Lucide** (`lucide_icons_flutter`) en toda la app según `04` §5. `grep -rn "Icons\." lib` solo puede devolver casos justificados y listados en el reporte final.

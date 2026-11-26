@@ -32,7 +32,7 @@ Cómo agregar otra ciudad: [`05-new-city-guide.md`](05-new-city-guide.md). Ideas
 
 Niveles de paquete:
 - **Completo** (4): Cali, Medellín, Bogotá, Cartagena.
-- **Regional** (las demás ciudades del catálogo DANE): foto de la ciudad o de su región, franja de la bandera municipal, paleta de la región (Caribe, Pacífico, Andina, Llanos, Amazonía, Insular) y los nombres de rango genéricos. Barranquilla entra aquí (Caribe). Responsable: por asignar.
+- **Ciudad genérica (paquete regional)**: todas las demás ciudades del catálogo DANE, Barranquilla incluida. Un paquete por región, no por ciudad (§3.4). **Es un frente de diseño propio que toma otra persona del equipo** (por asignar) con la misma guía y el mismo paso de maqueta primero ([`05-new-city-guide.md`](05-new-city-guide.md) §5).
 - **Por defecto**: si no hay paquete, la app se ve exactamente como hoy (Sello comunitario).
 
 ## 2. Dónde vive cada cosa (Clean Architecture, `AGENTS.md` §4)
@@ -82,7 +82,7 @@ Por qué así:
 2. `theme: AppTheme.build(Brightness.light, cityTheme)`, `darkTheme: AppTheme.build(Brightness.dark, cityTheme)`, con `cityTheme = CityTheme.from(state.identity, brightness, state.dayPart)`.
 3. **Qué ciudad manda:** la que se está explorando (`MapBloc.state.city`, la misma que el `HomeScreen` ya reenvía al `FeedBloc`); el shell agrega `ActiveCityChanged(city)` en ese mismo lugar. Antes de iniciar sesión: la ciudad detectada en el registro.
 4. **La subida del perfil** usa la ciudad de referencia del usuario (`reference_city`): tus rangos llevan los lugares de tu ciudad aunque mires otra.
-5. **Momento del día automático:** `DayPart.of(DateTime.now())` al abrir la app y cada vez que vuelve a primer plano (`AppLifecycleState.resumed`). Mañana 05:00–11:59, tarde 12:00–18:29, noche 18:30–04:59. Cambia la foto de cabecera y el saludo.
+5. **Momento del día automático:** `DayPart.of(DateTime.now())` al abrir la app y cada vez que vuelve a primer plano (`AppLifecycleState.resumed`). Mañana 05:00–11:59, tarde 12:00–18:29, noche 18:30–04:59. Cambia la foto de cabecera y el saludo. **El usuario no lo puede escoger**: no hay ajuste, botón ni opción para el momento. Lo único que el usuario escoge es **claro u oscuro**, con el botón de tema que ya existe (`ThemeCubit`). Son independientes: de noche se puede usar el tema claro y de día el oscuro.
 
 ### 3.1 Contrato de `CityTheme`
 ```dart
@@ -118,6 +118,27 @@ Cada `deep` debe pasar 4.5:1 con blanco y cada `accent` 4.5:1 con su `onAccent` 
 | saludo mañana / tarde / noche | "¡Buenos días, ve!" / "¡Qué más, ve!" / "¡Buenas noches, ve!" | "¡Buenos días, parce!" / "¡Quiubo, parce!" / "¡Buenas noches, parce!" |
 | eslogan | "Cali se cuida entre vecinos." | "Medellín se cuida entre vecinos." |
 | frase al validar | "¡Eso, ve!" | "¡Qué chimba, parce!" |
+
+### 3.4 Ciudad genérica (paquete regional)
+Para las ciudades sin paquete completo. Tiene el mismo molde, los mismos widgets y las mismas animaciones; solo cambian los datos, y van **por región**:
+
+| Región | Departamentos (ejemplos) |
+|---|---|
+| Caribe | Atlántico (Barranquilla), Magdalena, Bolívar fuera de Cartagena, Córdoba, Sucre, Cesar, La Guajira |
+| Pacífico | Chocó, Cauca, Nariño, Valle fuera de Cali |
+| Andina | Antioquia fuera de Medellín, Cundinamarca fuera de Bogotá, Boyacá, Santanderes, Eje Cafetero, Tolima, Huila |
+| Llanos | Meta, Casanare, Arauca, Vichada |
+| Amazonía | Caquetá, Putumayo, Amazonas, Guaviare, Vaupés, Guainía |
+| Insular | San Andrés y Providencia |
+
+Cada región trae:
+- **Paleta:** `deep`, `accent`, `onAccent` y `veil`, con las mismas reglas AA.
+- **Franja:** la bandera de Colombia (amarillo 2, azul 1, rojo 1), igual para todas las regiones; no se hacen 28 banderas municipales.
+- **Fotos:** 3 cabeceras (mañana, tarde, noche) de paisajes reconocibles de la región.
+- **Rangos:** se dejan los nombres genéricos de siempre (Observador Urbano, Vecino Activo, Guardián Vial, Veedor Mayor), cada uno con una foto de la región.
+- **Textos:** saludos de la región, en el habla de allá pero neutros. El eslogan usa el nombre de la ciudad del usuario ("{ciudad} se cuida entre vecinos.").
+
+Hasta que alguien lo diseñe, el código ya tiene la estructura (`regional_packs.dart` con el mapa departamento → región) y esas ciudades se ven con el paquete por defecto. Llenarlo es solo agregar datos y fotos.
 
 El nombre del rango de siempre (Observador Urbano, Vecino Activo, Guardián Vial, Veedor Mayor) se conserva como subtítulo.
 
@@ -205,5 +226,5 @@ Pruebas mínimas: `DayPart.of`, `GetCityIdentityUseCase` (completo → regional 
 ## 9. Reparto
 - **Juan:** arquitectura (pasos 1–4), paquetes de Cali y Medellín, todo en una rama propia y documentado.
 - **Cano y Juan David:** Bogotá y Cartagena, siguiendo [`05-new-city-guide.md`](05-new-city-guide.md) (maqueta primero).
-- **Paquete regional:** por asignar.
+- **Ciudad genérica (paquete regional, §3.4):** por asignar; sigue [`05-new-city-guide.md`](05-new-city-guide.md) §5.
 - **Julio:** HU-25 (migración 010) y HU-24 (011).

@@ -46,3 +46,14 @@ Mensaje listo para pegarle a Claude:
 4. Registra el paquete en `city_pack_local_data_source.dart` (una línea).
 5. `dart run tool/check.dart`. La prueba de contraste recorre todos los paquetes: si tu paleta no pasa AA, falla.
 6. Capturas de Comunidad, Detalle y Mi perfil en claro y oscuro, y PR a la rama de Ciudad Viva (no directo a `develop`).
+
+## 5. Ciudad genérica (paquete regional)
+Para quien tome este frente: cubre todas las ciudades que no son Cali, Medellín, Bogotá ni Cartagena (Barranquilla incluida). Se diseña **por región**, no por ciudad. Qué trae cada región está en [`04-city-identity.md`](04-city-identity.md) §3.4: paleta, franja de la bandera de Colombia, 3 fotos de cabecera, foto para cada uno de los 4 rangos (con sus nombres genéricos) y saludos regionales neutros.
+
+Mismas reglas de §1 y mismo orden:
+1. **Maqueta primero.** Pídele a Claude que agregue la opción **"Ciudad genérica"** al selector de la maqueta, con un segundo selector de región (Caribe, Pacífico, Andina, Llanos, Amazonía, Insular). Cada región va como una entrada en `PACKS`, con su banco de fotos en `POOL` (al menos 3 candidatas por espacio). Escoge en "Paquete de la ciudad", copia el paquete de cada región y muéstralo en el grupo.
+2. **Después, el código:** llena `lib/features/city_identity/data/datasources/packs/regional_packs.dart` (la estructura y el mapa departamento → región ya existen) y pon las fotos en `assets/cities/region-<nombre>/`. Se sigue el mismo paso 2 de §4.
+
+Mensaje listo para pegarle a Claude:
+
+> Lee `AGENTS.md`, `docs/design/04-city-identity.md` (§3.4) y `docs/design/05-new-city-guide.md` (§5). Quiero diseñar la **ciudad genérica** de VIGÍA, por regiones. Primero solo la maqueta: agrega "Ciudad genérica" al selector de `docs/design/mockups/city-identity.html` con un selector de región, y una entrada en `PACKS` y en `POOL` por cada región, sin tocar pantallas ni animaciones. Busca en Wikimedia Commons fotos reales con licencia libre de paisajes reconocibles de cada región (al menos 3 candidatas por espacio) y revísalas a ojo. Propón paletas que pasen AA y saludos regionales neutros. Muéstrame la maqueta publicada y espera mi aprobación antes de escribir Dart.
