@@ -43,3 +43,11 @@ Fuentes, en este orden:
 
 ## 5. Reporte final
 Qué se hizo, por objetivo de §2 (cumplido / pendiente y por qué), la salida real de `tool/check.dart`, la lista de commits, dónde están las capturas, los usos de `Icons.` que quedaron y lo que falta para que Cano y Juan David agreguen Bogotá y Cartagena.
+
+Al final del reporte, un **mensaje listo para que Juan lo mande al grupo de WhatsApp** (en español, tono de compañeros, corto y con emojis moderados). Debe decir:
+- que Juan terminó su parte: arquitectura + Cali y Medellín;
+- en qué rama está y qué falta para integrarla (push, revisión, merge a `develop`), sin decir que está subida si no lo está;
+- qué tienen que hacer Cano y Juan David para Bogotá y Cartagena, con la ruta de `05-new-city-guide.md` y el recordatorio de que la maqueta va primero;
+- lo mismo para quien tome la ciudad genérica (§5 de la guía);
+- para Julio, qué archivos tocó el rediseño que pueden chocar con HU-24 y HU-25 y cómo integrar;
+- el enlace de la maqueta: https://claude.ai/artifact/WpuBmVZkBUAyQZTsQ1of7V.
