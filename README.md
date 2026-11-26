@@ -204,6 +204,7 @@ Run once per Supabase project, in this order:
 3. **SQL Editor:** run `data model/migrations/002_spanish_rank_names.sql` (only if the project was created before the Spanish interface: it renames the four civic ranks).
 4. **Authentication > Sign In / Providers > User Signups:** turn **Confirm email** off. The profile insert needs the session that `signUp` returns.
 5. **Later migrations** (`003` onward, in order) can also be applied from a terminal by any member of the project's organization, without the database password: `supabase login`, then `supabase db query --linked --project-ref <ref> -f "<absolute path to the .sql file>"`. Run each migration's smoke test from `data model/tests/` the same way.
+6. **Push notifications (HU-24), only if you use your own Firebase/Supabase projects:** the shared project is already set up. Otherwise follow "Notificaciones push" in `docs/07-sprint-handoff-status.md` (Edge Function secrets, Vault secrets, migration 011). The Firebase service account key never goes in the app or the repo.
 
 ---
 
