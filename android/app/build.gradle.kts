@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "com.vigia.vigia_app"
-    compileSdk = flutter.compileSdkVersion
+    // permission_handler_android 14 (HU-02) compiles against SDK 37; targetSdk and minSdk stay as Flutter sets them.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
