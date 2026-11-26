@@ -243,7 +243,7 @@ void main() {
     test('featured cities are found by name for their thumbnails', () {
       final theme = themeOf('Cali', Brightness.light).extension<CityTheme>()!;
 
-      expect(theme.showcase.map((city) => city.name), ['Cali', 'Medellín']);
+      expect(theme.showcase.map((city) => city.name), containsAll(['Cali', 'Medellín']));
       expect(theme.showcaseFor('medellin')?.name, 'Medellín');
       expect(theme.showcaseFor('Pasto'), isNull);
     });

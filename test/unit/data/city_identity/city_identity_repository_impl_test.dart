@@ -35,12 +35,26 @@ void main() {
   });
 
   test('while the regions have no design, the other cities look like the default pack', () {
+    final packed = {for (final pack in repository.getFullPacks()) pack.name};
+
     for (final city in CityLocalDataSource().getCities()) {
       final identity = getIdentity(city.name, department: city.department);
-      final hasPack = city.name == 'Cali' || city.name == 'Medellín';
+      final hasPack = packed.contains(city.name);
 
       expect(identity.level, hasPack ? CityIdentityLevel.full : CityIdentityLevel.fallback, reason: city.name);
       expect(identity.name, city.name);
+    }
+  });
+
+  test('every full pack is a city of the coverage catalog, with the same name and department', () {
+    final catalog = CityLocalDataSource().getCities();
+
+    for (final pack in repository.getFullPacks()) {
+      expect(
+        catalog.any((city) => city.name == pack.name && city.department == pack.department),
+        isTrue,
+        reason: '${pack.name} (${pack.department}) must match the DANE catalog (RN-12)',
+      );
     }
   });
 
