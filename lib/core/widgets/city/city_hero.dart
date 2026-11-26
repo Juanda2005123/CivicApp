@@ -11,9 +11,9 @@ import 'flag_stripe.dart';
 ///
 /// There is one controller for the zoom. It rests with "reduce motion", when the
 /// header is scrolled out of view, and in hidden tabs or covered screens (their
-/// ticker is muted).
+/// ticker is muted). The short header is still.
 class CityHero extends StatefulWidget {
-  /// Shorter header without the greeting, for the login.
+  /// Shorter, still header without the greeting, for the login.
   final bool compact;
 
   const CityHero({super.key, this.compact = false});
@@ -58,7 +58,7 @@ class _CityHeroState extends State<CityHero> with SingleTickerProviderStateMixin
   void _updateZoom() {
     if (!mounted) return;
     final city = CityTheme.of(context);
-    final move = city.hero != null && !AppMotion.reduceOf(context) && !_scrolledOut;
+    final move = !widget.compact && city.hero != null && !AppMotion.reduceOf(context) && !_scrolledOut;
 
     if (!move) {
       _ambient.stop();

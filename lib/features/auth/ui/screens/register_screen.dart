@@ -12,12 +12,16 @@ import '../../../../core/widgets/dotted_spinner.dart';
 import '../../../../core/widgets/location_blocked_dialog.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/widgets/theme_toggle_button.dart';
+import '../../../city_identity/ui/bloc/city_ambience_bloc.dart';
+import '../../../city_identity/ui/bloc/city_ambience_event.dart';
 import '../../domain/validators/password_policy.dart';
 import '../../domain/validators/registration_rules.dart';
 import '../bloc/register_bloc.dart';
 import '../bloc/register_event.dart';
 import '../bloc/register_state.dart';
+import '../widgets/featured_city_cards.dart';
 import '../widgets/password_strength_chips.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// Registration form. It only draws the [RegisterState] and turns user input
 /// into events; the rules live in the domain.
@@ -87,22 +91,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // A blocked permission (HU-29) opens a modal once per GPS attempt.
-    return BlocListener<RegisterBloc, RegisterState>(
-      listenWhen: (previous, current) =>
-          previous.gpsStatus != GpsStatus.blocked && current.gpsStatus == GpsStatus.blocked,
-      listener: (context, state) {
-        final message = state.gpsMessage;
-        if (message == null) return;
-        final bloc = context.read<RegisterBloc>();
-        showLocationBlockedDialog(
-          context,
-          message: message,
-          onOpenSettings: () => bloc.add(LocationSettingsRequested()),
-        );
-      },
+    return MultiBlocListener(
+      listeners: [
+        // A blocked permission (HU-29) opens a modal once per GPS attempt.
+        BlocListener<RegisterBloc, RegisterState>(
+          listenWhen: (previous, current) =>
+              previous.gpsStatus != GpsStatus.blocked && current.gpsStatus == GpsStatus.blocked,
+          listener: (context, state) {
+            final message = state.gpsMessage;
+            if (message == null) return;
+            final bloc = context.read<RegisterBloc>();
+            showLocationBlockedDialog(
+              context,
+              message: message,
+              onOpenSettings: () => bloc.add(LocationSettingsRequested()),
+            );
+          },
+        ),
+        // The app wears the city being chosen, detected or picked.
+        BlocListener<RegisterBloc, RegisterState>(
+          listenWhen: (previous, current) => previous.selectedCityId != current.selectedCityId,
+          listener: (context, state) => _showCity(context, state),
+        ),
+      ],
       child: _buildForm(context),
     );
+  }
+
+  /// Absent only in tests that pump the screen without the app around it.
+  void _showCity(BuildContext context, RegisterState state) {
+    final selected = state.cities.where((city) => city.id == state.selectedCityId).firstOrNull;
+    if (selected == null) return;
+    context
+        .read<CityAmbienceBloc?>()
+        ?.add(ActiveCityChanged(name: selected.name, department: selected.department));
   }
 
   Widget _buildForm(BuildContext context) {
@@ -183,6 +205,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           validator: RegistrationRules.validateEmail,
                         ),
                         const SizedBox(height: AppSpacing.field),
+                        FeaturedCityCards(
+                          cities: state.cities,
+                          selectedCityId: state.selectedCityId,
+                          detectedCityId: gpsSuccess ? state.selectedCityId : null,
+                          onSelected: isLoading
+                              ? null
+                              : (id) => context.read<RegisterBloc>().add(CitySelected(id)),
+                        ),
                         AppDropdownField<int>(
                           label: 'Ciudad de residencia',
                           hint: 'Elige tu ciudad',
@@ -209,7 +239,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           validator: (value) => value == null ? 'Elige tu ciudad' : null,
                         ),
                         const SizedBox(height: AppSpacing.sm),
-                        OutlinedButton.icon(
+                        PressScale(child: OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size.fromHeight(AppSizes.buttonCompact),
                           ),
@@ -220,7 +250,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ? DottedSpinner(size: 18, semanticLabel: 'Detectando tu ubicación')
                               : const Icon(LucideIcons.locateFixed, size: 18),
                           label: Text(isDetectingGps ? 'Detectando tu ubicación…' : 'Detectar mi ciudad por GPS'),
-                        ),
+                        )),
                         // A blocked permission is explained in the modal instead.
                         if (state.gpsMessage != null && state.gpsStatus != GpsStatus.blocked) ...[
                           const SizedBox(height: AppSpacing.sm),
