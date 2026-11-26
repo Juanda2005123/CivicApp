@@ -17,6 +17,7 @@ import 'package:vigia_app/features/explore/ui/bloc/map_bloc.dart';
 import 'package:vigia_app/features/reports/data/repositories/resolution_repository_impl.dart';
 import 'package:vigia_app/features/reports/domain/repositories/resolution_repository.dart';
 import 'package:vigia_app/features/reports/ui/bloc/resolution_bloc.dart';
+import 'package:vigia_app/features/notifications/ui/bloc/push_bloc.dart';
 
 void main() {
   tearDown(() => sl.reset());
@@ -52,6 +53,7 @@ void main() {
       expect(sl<ResolutionBloc>(), isA<ResolutionBloc>());
       expect(identical(sl<ResolutionBloc>(), sl<ResolutionBloc>()), isFalse);
       expect(sl<ResolutionRepository>(), isA<ResolutionRepositoryImpl>());
+      expect(sl<PushBloc>(), isA<PushBloc>());
     });
 
     test('registers each implementation under its contract', () async {

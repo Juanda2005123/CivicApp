@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -14,6 +16,15 @@ import 'features/city_identity/ui/bloc/city_ambience_bloc.dart';
 import 'features/city_identity/ui/bloc/city_ambience_event.dart';
 import 'features/city_identity/ui/bloc/city_ambience_state.dart';
 import 'features/city_identity/ui/widgets/city_ambience_scope.dart';
+import 'firebase_options.dart';
+
+/// A push that arrives with the app closed or in the background (HU-24). Android
+/// shows it by itself; this only has to exist, outside any class (lesson K3).
+@pragma('vm:entry-point')
+Future<void> onBackgroundMessage(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  debugPrint('Push en segundo plano: ${message.notification?.title}');
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +39,11 @@ Future<void> main() async {
     url: AppEnv.supabaseUrl,
     publishableKey: AppEnv.supabaseAnonKey,
   );
+  // Push notifications (HU-24) exist only where Firebase is configured: Android.
+  if (DefaultFirebaseOptions.isSupported) {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    FirebaseMessaging.onBackgroundMessage(onBackgroundMessage);
+  }
   await initDependencies();
 
   runApp(const VigiaApp());
