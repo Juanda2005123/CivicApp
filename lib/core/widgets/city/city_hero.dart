@@ -18,12 +18,17 @@ class CityHero extends StatefulWidget {
 
   const CityHero({super.key, this.compact = false});
 
+  /// Least opacity of the veil behind any text: white passes AA even over a
+  /// white sky.
+  static const double textVeil = 0.72;
+
   @override
   State<CityHero> createState() => _CityHeroState();
 }
 
 class _CityHeroState extends State<CityHero> with SingleTickerProviderStateMixin {
   static const double _zoom = 1.1;
+  static const double textVeil = CityHero.textVeil;
 
   late final AnimationController _ambient = AnimationController(vsync: this, duration: AppMotion.ambient);
   ScrollPosition? _scroll;
@@ -98,35 +103,55 @@ class _CityHeroState extends State<CityHero> with SingleTickerProviderStateMixin
                 ),
               ),
             ),
-            // The veil: solid at the bottom, where the text is, so it passes AA.
+            // A light veil at the top of the photo.
             Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    stops: const [0, 0.32, 0.72, 1],
-                    colors: [
-                      city.veil.withValues(alpha: 0.55),
-                      city.veil.withValues(alpha: 0.1),
-                      city.veil.withValues(alpha: 0.78),
-                      city.veil.withValues(alpha: 0.94),
-                    ],
+                    end: Alignment.center,
+                    colors: [city.veil.withValues(alpha: 0.5), city.veil.withValues(alpha: 0)],
                   ),
                 ),
               ),
             ),
             // The text sizes the header when it is taller than the photo (200 %).
+            // Its veil travels with it, so it passes AA whatever its height.
             ConstrainedBox(
               constraints: BoxConstraints(minHeight: _height, minWidth: double.infinity),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.xxxl, AppSpacing.lg, AppSpacing.md),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: _texts(city),
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // From clear to the veil under the first line.
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [city.veil.withValues(alpha: 0), city.veil.withValues(alpha: textVeil)],
+                      ),
+                    ),
+                    child: const SizedBox(height: AppSpacing.xxxl),
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [city.veil.withValues(alpha: textVeil), city.veil.withValues(alpha: 0.94)],
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.md),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: _texts(city),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

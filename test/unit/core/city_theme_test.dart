@@ -4,6 +4,7 @@ import 'package:vigia_app/core/theme/app_colors.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
 import 'package:vigia_app/core/theme/city_theme.dart';
 import 'package:vigia_app/core/theme/severity_colors.dart';
+import 'package:vigia_app/core/widgets/city/city_hero.dart';
 import 'package:vigia_app/features/city_identity/data/datasources/city_pack_local_data_source.dart';
 import 'package:vigia_app/features/city_identity/domain/entities/day_part.dart';
 
@@ -147,6 +148,17 @@ void main() {
           expect(contrast(city.accent, city.veil), greaterThanOrEqualTo(4.5));
         });
       }
+    }
+  });
+
+  test('white text passes AA over the veil of the header, even on a white photo', () {
+    for (final pack in packs.getFullPacks()) {
+      final behind = Color.alphaBlend(
+        Color(pack.palette.veil).withValues(alpha: CityHero.textVeil),
+        Colors.white,
+      );
+
+      expect(contrast(Colors.white, behind), greaterThanOrEqualTo(4.5), reason: pack.slug);
     }
   });
 
