@@ -60,6 +60,24 @@ void main() {
     expect(incidents.lastCity, 'Pasto');
   });
 
+  test('resolved reports are left off the map (HU-25)', () async {
+    const repaired = IncidentMarker(
+      id: 'inc-2',
+      trackingCode: '#VIG-1002',
+      title: 'Hueco ya tapado',
+      categoryName: 'Hueco o bache en calzada',
+      categoryIcon: 'warning',
+      severity: IncidentSeverity.medium,
+      coordinates: Coordinates(latitude: 3.43, longitude: -76.53),
+      status: IncidentStatus.resolved,
+    );
+    incidents.cityMarkers = [_pothole, repaired];
+
+    final (_, markers) = await useCase()();
+
+    expect(markers, [_pothole]);
+  });
+
   test('a guest sees the city nearest to the GPS (HU-22)', () async {
     auth = FakeAuthRepository();
 

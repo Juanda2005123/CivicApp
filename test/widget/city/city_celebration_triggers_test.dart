@@ -10,12 +10,14 @@ import 'package:vigia_app/features/dashboard/ui/pages/profile_page.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/ui/bloc/comments_bloc.dart';
 import 'package:vigia_app/features/reports/ui/bloc/incident_detail_bloc.dart';
+import 'package:vigia_app/features/reports/ui/bloc/resolution_bloc.dart';
 import 'package:vigia_app/features/reports/ui/screens/incident_detail_screen.dart';
 
 import '../../support/city_theme_host.dart';
 import '../../support/detail_bloc_factory.dart';
 import '../../support/fake_comment_repository.dart';
 import '../../support/fake_impact_repository.dart';
+import '../../support/fake_resolution_repository.dart';
 import '../../support/fakes.dart';
 import '../../support/incident_samples.dart';
 import '../../support/profile_bloc_factory.dart';
@@ -36,12 +38,15 @@ void main() {
       addTearDown(bloc.close);
       final comments = buildCommentsBloc(FakeCommentRepository());
       addTearDown(comments.close);
+      final resolution = buildResolutionBloc(FakeResolutionRepository());
+      addTearDown(resolution.close);
 
       await tester.pumpWidget(cityHost(
         MultiBlocProvider(
           providers: [
             BlocProvider<IncidentDetailBloc>.value(value: bloc),
             BlocProvider<CommentsBloc>.value(value: comments),
+            BlocProvider<ResolutionBloc>.value(value: resolution),
           ],
           child: const IncidentDetailScreen(incidentIdOrCode: '#VIG-1001'),
         ),

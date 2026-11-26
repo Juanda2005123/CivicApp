@@ -1,7 +1,7 @@
 # Document 6: Sprint Backlog 3 — Community Interaction, Lifecycle, Gamification, and Notifications
 
 **Branch:** `develop` (documented in `docs/sprint-2-3-backlogs`)  
-**Status:** In progress. HU-01, HU-02, HU-04, HU-05, HU-15, HU-16, HU-17, HU-18, HU-20 and HU-23 are implemented on `develop` (details in `docs/07-sprint-handoff-status.md`, section 4); HU-24 and HU-25 are pending.  
+**Status:** In progress. HU-01, HU-02, HU-04, HU-05, HU-15, HU-16, HU-17, HU-18, HU-20 and HU-23 are implemented on `develop`, and HU-25 on `feat/hu-25-community-resolution` (details in `docs/07-sprint-handoff-status.md`, section 4); HU-24 is pending.  
 **Sprint Goal:** Activate VIGÍA's participatory community loop: enable citizen endorsement (*upvotes*), collective validation upon reaching 10 votes (+500 XP), neighborhood discussion threads with photographic evidence, strict time-window moderation for reports and comments, live impact dashboard with gamified rank progression, complete profile/privacy settings, and academic-requirement **push notifications**.
 
 ---
@@ -217,6 +217,13 @@
 3. **Given that** the original author submits repair evidence, **when** confirmed, **then** the report transitions directly to `RESOLVED`.
 4. **Given that** a non-author citizen submits the repair proposal, **when** it accumulates **3 community confirmation votes**, **then** the report transitions to `RESOLVED` and the proponent receives **+50 XP**.
 5. **Given that** neighbors detect fraudulent or invalid repair evidence, **when** the proposal receives **3 community objections**, **then** it transitions to `REJECTED_BY_COMMUNITY`, unlocking the report for future valid proposals.
+
+#### Implementation decisions (2026-11-25)
+The whole of RN-11 is implemented, not only the five criteria: the report author can **accept** a neighbor's proposal or **reject** it with a mandatory reason (`REJECTED_BY_AUTHOR`), a pending proposal **expires after 7 days**, and the report shows `UNDER_REVIEW` while a neighbor's proposal is pending (it goes back to `REPORTED` or `COMMUNITY_VALIDATED` when the proposal is rejected or expires). Server rules: `data model/migrations/010_community_resolution.sql`.
+- The author's own proposal closes the report **without XP** (nobody rewards themselves); the +50 XP goes to a neighbor whose proposal is accepted by the author or by 3 confirmations.
+- The proponent and the report author cannot vote; each neighbor votes once and cannot both confirm and object; votes are final.
+- Expiry is lazy (no cron): an expired proposal takes no votes or decisions, and it is marked `EXPIRED` when somebody proposes again.
+- Deleting a report also takes back the +50 XP of an accepted neighbor's resolution (extends migration 007).
 
 ---
 

@@ -27,6 +27,7 @@ import '../../features/explore/ui/bloc/map_bloc.dart';
 import '../../features/explore/ui/bloc/map_event.dart';
 import '../../features/explore/ui/screens/home_screen.dart';
 import '../../features/reports/ui/bloc/comments_bloc.dart';
+import '../../features/reports/ui/bloc/resolution_bloc.dart';
 import '../../features/reports/ui/bloc/edit_report_bloc.dart';
 import '../../features/reports/ui/bloc/incident_detail_bloc.dart';
 import '../../features/reports/ui/bloc/report_wizard_bloc.dart';
@@ -84,6 +85,7 @@ class AppRoutes {
               providers: [
                 BlocProvider(create: (_) => sl<IncidentDetailBloc>()),
                 BlocProvider(create: (_) => sl<CommentsBloc>()),
+                BlocProvider(create: (_) => sl<ResolutionBloc>()),
               ],
               child: const IncidentDetailScreen(),
             ),

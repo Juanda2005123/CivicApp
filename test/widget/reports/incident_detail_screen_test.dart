@@ -13,10 +13,12 @@ import 'package:vigia_app/features/reports/ui/bloc/incident_detail_bloc.dart';
 import 'package:vigia_app/features/reports/ui/screens/incident_detail_screen.dart';
 
 import 'package:vigia_app/features/reports/ui/bloc/comments_bloc.dart';
+import 'package:vigia_app/features/reports/ui/bloc/resolution_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../support/detail_bloc_factory.dart';
 import '../../support/fake_comment_repository.dart';
+import '../../support/fake_resolution_repository.dart';
 import '../../support/fakes.dart';
 
 void main() {
@@ -65,6 +67,8 @@ void main() {
 
     Widget createWidgetUnderTest(IncidentDetailBloc bloc, {String? incidentIdOrCode}) {
       final commentsBloc = buildCommentsBloc(FakeCommentRepository());
+      final resolutionBloc = buildResolutionBloc(FakeResolutionRepository());
+      addTearDown(resolutionBloc.close);
       addTearDown(commentsBloc.close);
       return MaterialApp(
         theme: AppTheme.light,
@@ -72,6 +76,7 @@ void main() {
           providers: [
             BlocProvider<IncidentDetailBloc>.value(value: bloc),
             BlocProvider<CommentsBloc>.value(value: commentsBloc),
+            BlocProvider<ResolutionBloc>.value(value: resolutionBloc),
           ],
           child: IncidentDetailScreen(incidentIdOrCode: incidentIdOrCode),
         ),
@@ -92,6 +97,40 @@ void main() {
       // Successfully loaded
       expect(find.text('#VIG-1001'), findsOneWidget);
       expect(find.text('Hueco profundo en carril rápido'), findsOneWidget);
+    });
+
+    // The test font is much wider than the real one: at 600 dp the old header
+    // row overflowed just like it did on a 412 dp phone with the real font.
+    testWidgets('a long status and a long category fit a phone screen', (tester) async {
+      tester.view.physicalSize = const Size(600, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final validated = Incident(
+        id: 'inc-1001',
+        trackingCode: '#VIG-1001',
+        reporterId: 'user-99',
+        categoryId: 5,
+        categoryName: 'Fuga de agua o alcantarillado',
+        title: 'Tapa de alcantarilla rota',
+        description: 'La tapa está partida en dos.',
+        severity: IncidentSeverity.high,
+        status: IncidentStatus.communityValidated,
+        coordinates: const Coordinates(latitude: 3.3864, longitude: -76.5286),
+        formattedAddress: 'Carrera 66 # 10-25',
+        neighborhood: 'El Ingenio',
+        city: 'Cali',
+        upvotesCount: 10,
+        createdAt: DateTime(2026, 11, 14),
+        validatedAt: DateTime(2026, 11, 20),
+      );
+      repository.stored['#VIG-1001'] = validated;
+
+      await tester.pumpWidget(createWidgetUnderTest(newBloc(), incidentIdOrCode: '#VIG-1001'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Validado por la comunidad'), findsOneWidget);
+      expect(find.text('· Fuga de agua o alcantarillado'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('while the report loads it shows the spinner, never the error view', (tester) async {

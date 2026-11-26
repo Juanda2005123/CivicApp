@@ -20,6 +20,7 @@ import 'package:vigia_app/features/reports/domain/entities/incident_photo.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../widgets/author_actions_card.dart';
 import '../widgets/incident_comments_section.dart';
+import '../widgets/resolution_section.dart';
 import '../bloc/incident_detail_bloc.dart';
 import '../bloc/incident_detail_event.dart';
 import '../bloc/incident_detail_state.dart';
@@ -283,6 +284,16 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
           _buildAuthorCard(context, incident, theme),
           const SizedBox(height: AppSpacing.xl),
 
+          // Repair proposal pinned on top of the discussion (HU-25)
+          ResolutionSection(
+            incident: incident,
+            onReportChanged: () {
+              setState(() => _changed = true);
+              context.read<IncidentDetailBloc>().add(const IncidentReloaded());
+            },
+          ),
+          const SizedBox(height: AppSpacing.xl),
+
           // Discussion thread and composer (HU-17)
           IncidentCommentsSection(incidentId: incident.id),
           const SizedBox(height: AppSpacing.xl),
@@ -318,7 +329,12 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
-          Row(
+          // A long status and a long category ("Validado por la comunidad · Fuga
+          // de agua o alcantarillado") do not fit one line on a phone.
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.xs,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -341,8 +357,7 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
                   ],
                 ),
               ),
-              if (incident.categoryName != null) ...[
-                const SizedBox(width: AppSpacing.sm),
+              if (incident.categoryName != null)
                 Text(
                   '· ${incident.categoryName}',
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -350,7 +365,6 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-              ],
             ],
           ),
         ],

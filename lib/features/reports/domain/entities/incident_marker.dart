@@ -22,6 +22,9 @@ class IncidentMarker extends Equatable {
   final IncidentSeverity severity;
   final Coordinates coordinates;
 
+  /// Lifecycle status; the map leaves resolved reports out (HU-25).
+  final IncidentStatus status;
+
   const IncidentMarker({
     required this.id,
     required this.trackingCode,
@@ -33,6 +36,7 @@ class IncidentMarker extends Equatable {
     required this.categoryIcon,
     required this.severity,
     required this.coordinates,
+    this.status = IncidentStatus.reported,
   });
 
   @override
@@ -47,5 +51,6 @@ class IncidentMarker extends Equatable {
         categoryIcon,
         severity,
         coordinates,
+        status,
       ];
 }

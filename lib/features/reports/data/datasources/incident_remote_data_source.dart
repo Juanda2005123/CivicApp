@@ -234,7 +234,7 @@ class IncidentRemoteDataSource {
     try {
       final rows = await _client
           .from('road_incident')
-          .select('id_incident, tracking_code, title, description, formatted_address, neighborhood, severity, latitude, longitude, incident_category(name, icon)')
+          .select('id_incident, tracking_code, title, description, formatted_address, neighborhood, severity, current_status, latitude, longitude, incident_category(name, icon)')
           .eq('city', city)
           .order('created_at', ascending: false)
           .limit(_mapLimit);
@@ -256,6 +256,7 @@ class IncidentRemoteDataSource {
             latitude: (row['latitude'] as num).toDouble(),
             longitude: (row['longitude'] as num).toDouble(),
           ),
+          status: IncidentStatus.fromDbValue((row['current_status'] as String?) ?? 'REPORTED'),
         );
       }).toList();
     } on PostgrestException catch (e) {

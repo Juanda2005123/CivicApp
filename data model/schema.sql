@@ -487,3 +487,42 @@ CREATE POLICY "Users can read own notifications"
 DROP POLICY IF EXISTS "Users can update own notifications" ON public.notification;
 CREATE POLICY "Users can update own notifications"
   ON public.notification FOR UPDATE TO authenticated USING (auth.uid() = id_user);
+-- Resolution Policies (HU-25, RN-11). The rules (quorum, XP, status of the
+-- report, 7-day expiry) are the triggers of migrations/010_community_resolution.sql.
+ALTER TABLE public.incident_resolution ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read access on incident_resolution" ON public.incident_resolution;
+CREATE POLICY "Public read access on incident_resolution"
+  ON public.incident_resolution FOR SELECT TO anon, authenticated USING (true);
+
+DROP POLICY IF EXISTS "Citizens can propose a resolution" ON public.incident_resolution;
+CREATE POLICY "Citizens can propose a resolution"
+  ON public.incident_resolution FOR INSERT TO authenticated WITH CHECK (auth.uid() = id_proponent_user);
+
+DROP POLICY IF EXISTS "Report authors can decide on a resolution" ON public.incident_resolution;
+CREATE POLICY "Report authors can decide on a resolution"
+  ON public.incident_resolution FOR UPDATE TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.road_incident i
+     WHERE i.id_incident = incident_resolution.id_incident AND i.id_reporter_user = auth.uid()
+  ));
+
+ALTER TABLE public.resolution_confirmation ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read access on resolution_confirmation" ON public.resolution_confirmation;
+CREATE POLICY "Public read access on resolution_confirmation"
+  ON public.resolution_confirmation FOR SELECT TO anon, authenticated USING (true);
+
+DROP POLICY IF EXISTS "Citizens can confirm a resolution" ON public.resolution_confirmation;
+CREATE POLICY "Citizens can confirm a resolution"
+  ON public.resolution_confirmation FOR INSERT TO authenticated WITH CHECK (auth.uid() = id_user);
+
+ALTER TABLE public.resolution_objection ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read access on resolution_objection" ON public.resolution_objection;
+CREATE POLICY "Public read access on resolution_objection"
+  ON public.resolution_objection FOR SELECT TO anon, authenticated USING (true);
+
+DROP POLICY IF EXISTS "Citizens can object to a resolution" ON public.resolution_objection;
+CREATE POLICY "Citizens can object to a resolution"
+  ON public.resolution_objection FOR INSERT TO authenticated WITH CHECK (auth.uid() = id_user);

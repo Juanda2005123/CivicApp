@@ -5,11 +5,13 @@ import 'package:vigia_app/core/theme/app_theme.dart';
 import 'package:vigia_app/core/widgets/validation_seal.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/ui/bloc/comments_bloc.dart';
+import 'package:vigia_app/features/reports/ui/bloc/resolution_bloc.dart';
 import 'package:vigia_app/features/reports/ui/bloc/incident_detail_bloc.dart';
 import 'package:vigia_app/features/reports/ui/screens/incident_detail_screen.dart';
 
 import '../../support/detail_bloc_factory.dart';
 import '../../support/fake_comment_repository.dart';
+import '../../support/fake_resolution_repository.dart';
 import '../../support/fakes.dart';
 import '../../support/incident_samples.dart';
 
@@ -37,6 +39,8 @@ void main() {
       addTearDown(bloc.close);
 
       final commentsBloc = buildCommentsBloc(FakeCommentRepository(), guest: guest);
+      final resolutionBloc = buildResolutionBloc(FakeResolutionRepository(), guest: guest);
+      addTearDown(resolutionBloc.close);
       addTearDown(commentsBloc.close);
 
       await tester.pumpWidget(MaterialApp(
@@ -45,6 +49,7 @@ void main() {
           providers: [
             BlocProvider<IncidentDetailBloc>.value(value: bloc),
             BlocProvider<CommentsBloc>.value(value: commentsBloc),
+            BlocProvider<ResolutionBloc>.value(value: resolutionBloc),
           ],
           child: const IncidentDetailScreen(incidentIdOrCode: '#VIG-1001'),
         ),
