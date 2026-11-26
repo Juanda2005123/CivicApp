@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_notice.dart';
+import '../../../../core/widgets/city/city_motion.dart';
 import '../../../../core/widgets/dotted_spinner.dart';
 import '../../../../core/widgets/theme_toggle_button.dart';
 import '../../domain/entities/device_permissions.dart';
@@ -130,17 +131,19 @@ class _PermissionCard extends StatelessWidget {
         ? 'Toca para solicitar permiso'
         : 'Toca para abrir ajustes del dispositivo';
 
-    return Card(
-      child: ListTile(
-        minTileHeight: AppSizes.touchTarget,
-        leading: Icon(icon, color: CityTheme.of(context).deep),
-        title: Text(title, style: theme.textTheme.bodyLarge),
-        subtitle: Text(
-          '$label · $hint',
-          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+    return PressScale(
+      child: Card(
+        child: ListTile(
+          minTileHeight: AppSizes.touchTarget,
+          leading: Icon(icon, color: CityTheme.of(context).deep),
+          title: Text(title, style: theme.textTheme.bodyLarge),
+          subtitle: Text(
+            '$label · $hint',
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+          trailing: const Icon(LucideIcons.chevronRight),
+          onTap: onTap,
         ),
-        trailing: const Icon(LucideIcons.chevronRight),
-        onTap: onTap,
       ),
     );
   }

@@ -24,6 +24,6 @@ class GetRankProgressUseCase {
         break;
       }
     }
-    return RankProgress(current: current, next: next, experiencePoints: experiencePoints);
+    return RankProgress(current: current, next: next, experiencePoints: experiencePoints, ladder: ranks);
   }
 }

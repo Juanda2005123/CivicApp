@@ -241,7 +241,7 @@ class _Stop extends StatelessWidget {
     final hasPhoto = place?.medal != null;
     final name = hasPhoto ? place!.title : rank.name;
     final detail = [
-      if (rank.minXp != null) '${rank.minXp} pts',
+      if (rank.minXp != null) '${rank.minXp} XP',
       if (hasPhoto) rank.name,
     ].join(' · ');
     final tag = switch (state) {
