@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -19,12 +20,12 @@ class ImpactCounters extends StatelessWidget {
       children: [
         _row(
           _CounterTile(
-            icon: Icons.add_location_alt_outlined,
+            icon: LucideIcons.mapPinPlus,
             value: impact.reportsCreated,
             label: 'Reportes creados',
           ),
           _CounterTile(
-            icon: Icons.thumb_up_alt_outlined,
+            icon: LucideIcons.thumbsUp,
             value: impact.endorsementsReceived,
             label: 'Apoyos recibidos',
           ),
@@ -32,12 +33,12 @@ class ImpactCounters extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
         _row(
           _CounterTile(
-            icon: Icons.volunteer_activism_outlined,
+            icon: LucideIcons.handHeart,
             value: impact.endorsementsGiven,
             label: 'Apoyos otorgados',
           ),
           _CounterTile(
-            icon: Icons.chat_bubble_outline,
+            icon: LucideIcons.messageCircle,
             value: impact.commentsPublished,
             label: 'Comentarios publicados',
           ),

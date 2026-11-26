@@ -4,6 +4,7 @@ import 'package:vigia_app/core/theme/app_theme.dart';
 import 'package:vigia_app/core/widgets/severity_chip.dart';
 import 'package:vigia_app/features/reports/domain/entities/nearby_incident.dart';
 import 'package:vigia_app/features/reports/ui/widgets/nearby_incidents_modal.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 NearbyIncident _nearby({String severity = 'HIGH', int upvotes = 0, String? photo}) => NearbyIncident(
       id: 'inc-1',
@@ -49,7 +50,7 @@ void main() {
     testWidgets('a report without photo shows the hazard icon', (tester) async {
       await tester.pumpWidget(_host([_nearby()]));
 
-      expect(find.byIcon(Icons.report_problem), findsOneWidget);
+      expect(find.byIcon(LucideIcons.triangleAlert), findsOneWidget);
       expect(find.byType(Image), findsNothing);
     });
 

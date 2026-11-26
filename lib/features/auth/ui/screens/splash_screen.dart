@@ -5,11 +5,14 @@ import '../../../../core/constants/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/brand_mark.dart';
+import '../../../../core/widgets/city/city_motion.dart';
+import '../../../../core/widgets/city/flag_stripe.dart';
 import '../bloc/startup_bloc.dart';
 import '../bloc/startup_state.dart';
 
 /// First screen: checks the persisted session and routes the citizen. It is
-/// always on ink, in light and dark: it is the brand moment.
+/// always on ink, in light and dark: it is the brand moment. Under the seal, the
+/// flag of the last city the app dressed for.
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
@@ -41,17 +44,21 @@ class SplashScreen extends StatelessWidget {
                   onInk: true,
                 ),
               ),
-              const SizedBox(height: AppSpacing.xxl),
+              const SizedBox(height: AppSpacing.lg),
+              const FlagStripe(width: AppSizes.flagWide),
+              const SizedBox(height: AppSpacing.xl),
               Semantics(
                 label: 'Cargando',
-                child: SizedBox(
-                  width: 120,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(2),
-                    child: const LinearProgressIndicator(
-                      minHeight: 3,
-                      color: AppColors.mustard,
-                      backgroundColor: AppColors.inkLine,
+                child: DelayedReveal(
+                  child: SizedBox(
+                    width: 120,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: const LinearProgressIndicator(
+                        minHeight: 3,
+                        color: AppColors.mustard,
+                        backgroundColor: AppColors.inkLine,
+                      ),
                     ),
                   ),
                 ),

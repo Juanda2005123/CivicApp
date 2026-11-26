@@ -29,6 +29,7 @@ import 'package:vigia_app/features/reports/domain/entities/incident_marker.dart'
 import 'package:vigia_app/features/explore/domain/usecases/switch_city_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/get_city_map_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/get_current_location_usecase.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../support/fakes.dart';
 import '../../support/profile_bloc_factory.dart';
@@ -142,7 +143,7 @@ void main() {
     expect(find.byTooltip('Centrar en mi ubicación'), findsOneWidget);
     expect(find.text('Reportar daño'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.person_outline));
+    await tester.tap(find.byIcon(LucideIcons.circleUserRound));
     await tester.pumpAndSettle();
 
     expect(find.text('Mi perfil'), findsNWidgets(2));
@@ -268,7 +269,7 @@ void main() {
       await tester.pumpWidget(createShell());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.person_outline));
+      await tester.tap(find.byIcon(LucideIcons.circleUserRound));
       await tester.pumpAndSettle();
 
       expect(find.text('Inicia sesión para ver tu perfil'), findsOneWidget);
@@ -387,7 +388,7 @@ void main() {
     );
 
     Future<void> openFeed(WidgetTester tester) async {
-      await tester.tap(find.byIcon(Icons.groups_outlined));
+      await tester.tap(find.byIcon(LucideIcons.usersRound));
       await tester.pumpAndSettle();
     }
 
@@ -525,12 +526,12 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(IncidentMapMarker), findsNWidgets(2));
 
-      await tester.tap(find.byIcon(Icons.groups_outlined));
+      await tester.tap(find.byIcon(LucideIcons.usersRound));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'semaforo');
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.map_outlined));
+      await tester.tap(find.byIcon(LucideIcons.map));
       await tester.pumpAndSettle();
 
       expect(find.byType(IncidentMapMarker), findsOneWidget);
@@ -544,7 +545,7 @@ void main() {
       expect(find.textContaining('filtro activo'), findsNothing);
 
       // Back in Comunidad the search is empty too: it is the same filter.
-      await tester.tap(find.byIcon(Icons.groups_outlined));
+      await tester.tap(find.byIcon(LucideIcons.usersRound));
       await tester.pumpAndSettle();
       expect(tester.widget<TextField>(find.byType(TextField)).controller?.text, isEmpty);
     });
@@ -555,14 +556,14 @@ void main() {
       await tester.pumpWidget(createShell());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.groups_outlined));
+      await tester.tap(find.byIcon(LucideIcons.usersRound));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Barrio'));
       await tester.pumpAndSettle();
       await tester.tap(find.descendant(of: find.byType(ListTile), matching: find.text('Granada')));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.map_outlined));
+      await tester.tap(find.byIcon(LucideIcons.map));
       await tester.pumpAndSettle();
 
       expect(find.byType(IncidentMapMarker), findsOneWidget);
@@ -575,7 +576,7 @@ void main() {
       await tester.pumpWidget(createShell());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.groups_outlined));
+      await tester.tap(find.byIcon(LucideIcons.usersRound));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Más recientes'));
       await tester.pumpAndSettle();
@@ -599,7 +600,7 @@ void main() {
       await tester.pumpWidget(createShell());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.groups_outlined));
+      await tester.tap(find.byIcon(LucideIcons.usersRound));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Más recientes'));
       await tester.pumpAndSettle();

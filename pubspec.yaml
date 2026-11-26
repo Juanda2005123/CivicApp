@@ -46,6 +46,7 @@ dependencies:
   http: ^1.6.0
   shared_preferences: ^2.5.6
   permission_handler: ^13.0.2
+  lucide_icons_flutter: ^4.0.3
 
 dev_dependencies:
   flutter_test:
@@ -69,6 +70,9 @@ flutter:
 
   assets:
     - .env
+    # City packs (docs/design/04-city-identity.md). One line per city folder.
+    - assets/cities/cali/
+    - assets/cities/medellin/
 
   # Brand typography (open licenses in assets/fonts/licenses). Fraunces and
   # IBM Plex Sans are variable fonts: the weight is chosen with
@@ -83,3 +87,7 @@ flutter:
     - family: IBMPlexMono
       fonts:
         - asset: assets/fonts/IBMPlexMono-Medium.ttf
+    # Only for the city headlines (docs/design/04-city-identity.md).
+    - family: Anton
+      fonts:
+        - asset: assets/fonts/Anton-Regular.ttf

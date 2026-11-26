@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/app_spacing.dart';
 import '../theme/app_text_styles.dart';
@@ -39,7 +40,7 @@ class ValidationSeal extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: color, width: 2),
                 ),
-                child: Icon(Icons.check, color: color, size: AppSizes.iconLarge),
+                child: Icon(LucideIcons.badgeCheck, color: color, size: AppSizes.iconLarge),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(

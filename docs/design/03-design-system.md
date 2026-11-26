@@ -8,6 +8,8 @@ Maquetas navegables (se abren en cualquier navegador, son archivos autónomos):
 - [`mockups/tokens.css`](mockups/tokens.css): los tokens en CSS. `node mockups/build.mjs` regenera los HTML autónomos tras editarlo.
 - [`assets/logo/`](assets/logo/): sello y variantes en SVG.
 
+> **Actualización 2026-11-25: identidad por ciudad (implementada).** Sobre este sistema se monta la capa "Ciudad Viva" ([`04-city-identity.md`](04-city-identity.md)): fotos reales de cada ciudad, la franja de su bandera, colores de ciudad (recolorean `primary` y `secondary`) y un catálogo de animaciones único. Donde este documento dice "sin fotos" o "sin texto sobre fotos" (§6, §9, §11), manda ahora el 04: fotos solo a través de los widgets de `core/widgets/city/` y siempre con velo para contraste AA. La marca (sello, anillo punteado, datos en monoespaciada, superficies papel/tinta, colores de gravedad y de error) no cambia. Los créditos de las fotos están en `assets/cities/CREDITS.md`; la app no los muestra.
+
 Antecedentes: `01-identity-directions.md` y `02-blend-b-c-directions.md` (cómo se llegó a la dirección E). Reglas de arquitectura que este sistema respeta: `AGENTS.md` (§4 capas, §6 UI, §6b diseño).
 
 ---
@@ -127,6 +129,24 @@ Calculados con la fórmula de luminancia relativa del estándar (script reproduc
 
 Los divisores y las superficies decorativas (1,25 a 1,35:1) no transmiten información por sí solos, así que no se exige contraste.
 
+### 3.6 Color de ciudad
+
+Con un paquete de ciudad, `AppTheme.build(brightness, cityTheme)` cambia solo estos roles. Sin paquete (look por defecto) el esquema es el de §3.2, sin cambios.
+
+| Rol | Claro | Oscuro | Dónde |
+|---|---|---|---|
+| `primary` / `onPrimary` (y sus `Container`) | acento de la ciudad / su texto | igual | botones principales, "Reportar daño", barra de apoyos, "TÚ", confeti |
+| `secondary` / `onSecondary` (y sus `Container`), acento semántico | tono profundo / blanco | acento / su texto | enlaces, chips activos, foco, sellos, controles seleccionados |
+| `CityTheme.deep` | tono profundo | acento | íconos y textos destacados sobre el fondo (en el look por defecto es `primary`) |
+| `CityTheme.veil` / `onVeil` | velo oscuro / blanco | igual | texto sobre fotos, celebraciones |
+
+Superficies, texto, errores y gravedad son iguales en todas las ciudades. Cada paquete pasa 4,5:1 en blanco sobre `deep`, `onAccent` sobre `accent` y blanco sobre el velo (`test/unit/core/city_theme_test.dart` recorre todos). El acento **no se usa como texto ni ícono sobre papel claro** (el sol de Cali da 2,2:1 sobre crema y la silleta de Medellín menos): ahí va `deep`.
+
+| Ciudad | `deep` | `accent` / `onAccent` | `veil` | Bandera (peso) |
+|---|---|---|---|---|
+| Cali | `#1B4B5F` | `#F08A24` / `#1B1205` | `#0B2433` | `#1D3E9E` 3, `#C8202F` 1, blanco 3, `#C8202F` 1, `#1C7C43` 3 |
+| Medellín | `#0E6B3F` | `#F4B400` / `#1A1400` | `#0B2A1E` | blanco 1, `#0E6B3F` 1 |
+
 ## 4. Tipografía
 
 | Rol | Familia | Peso | Tamaño / interlineado | Mapeo `TextTheme` |
@@ -140,7 +160,9 @@ Los divisores y las superficies decorativas (1,25 a 1,35:1) no transmiten inform
 | Caption | IBM Plex Sans | 400 | 12 / 16 | `bodySmall` / `labelSmall` |
 | Dato | IBM Plex Mono | 500 | 14 / 20 | `ThemeExtension` (`AppTextStyles.data`) |
 
-Las tres familias son de licencia abierta (OFL), traen tildes y ñ, y se **empaquetan en la app** (`assets/fonts/`) en lugar de descargarse en ejecución: la app se usa con conexión mala y no debe parpadear con otra fuente. Pesos incluidos: Fraunces 600 y 700; Plex Sans 400, 500 y 600; Plex Mono 500 (unos 6 archivos). Todo el texto respeta el factor de escala del sistema; los diseños deben envolver en lugar de truncar hasta 200 %.
+**Titulares de ciudad (Anton, OFL):** solo para las palabras de una ciudad sobre foto o velo, con interlineado 1,12: `cityDisplay` 36 (lugar del nuevo rango), `cityHeadline` 32 (saludo y frase al validar), `cityTitle` 26 ("Vas por La Ermita") y `cityCard` 22 (nombre en la tarjeta). Además `landmark` (Fraunces 700, 16) para los lugares de la subida y `eyebrow` (mono 11, mayúsculas) para el rótulo sobre fotos.
+
+Las familias son de licencia abierta (OFL), traen tildes y ñ, y se **empaquetan en la app** (`assets/fonts/`) en lugar de descargarse en ejecución: la app se usa con conexión mala y no debe parpadear con otra fuente. Pesos incluidos: Fraunces 600 y 700; Plex Sans 400, 500 y 600; Plex Mono 500 (unos 6 archivos). Todo el texto respeta el factor de escala del sistema; los diseños deben envolver en lugar de truncar hasta 200 %.
 
 ## 5. Forma, espaciado, elevación y movimiento
 
@@ -149,10 +171,36 @@ Las tres familias son de licencia abierta (OFL), traen tildes y ñ, y se **empaq
 - **Alturas:** botón y campo 52; botón compacto 40; chips 28; objetivos táctiles ≥ 48.
 - **Elevación:** por defecto **plano con borde de 1 px** (`divider`). Dos niveles: tarjeta destacada (sombra mínima, solo en claro) y superposiciones (hoja, snackbar, tarjeta flotante del mapa). En oscuro la profundidad la da la superficie, no la sombra. **Sin vidrio ni desenfoque**; si el mapa lo necesitara, será una sola capa.
 - **Movimiento:** 120 ms (microinteracciones), 200 ms (cambios de estado), 320 ms (énfasis). Curva `cubic-bezier(.2, 0, 0, 1)` (`Curves.easeOutCubic` es la aproximación en Flutter). Momentos de marca: el sello se **estampa** (escala 1,18 → 1 con fundido, 320 ms) en el splash y al validar un reporte; el indicador de carga es un anillo punteado que gira. Con "reducir movimiento" activo: sin escalas ni giros, solo fundidos de 100 ms y el anillo fijo.
+- **Movimiento de Ciudad Viva** (igual en todas las ciudades; un helper por patrón en `core/widgets/city/city_motion.dart`). Tokens en `AppMotion`: `reveal` 600 ms, `celebration` 1.400 ms, `ambient` 20 s, `curveStamp` `cubic-bezier(.3, 1.4, .5, 1)`, `thumbJump` 380, `floatUp` 750, `ringBeat` 420, `stampDrop` 520, `shockwave` 700 (tras `shockwaveDelay` 380), `confettiDelay` 360, `validationHold` 2.500, `rankHold` 2.600, `curtainIn` 300 + `curtainHold` 40 + `curtainOut` 380, `loadingDelay` 300 y `shimmer` 1.100.
+
+| Momento | Qué pasa | Con "reducir movimiento" |
+|---|---|---|
+| 1A Tocar botones y tarjetas | escala 0,96 y vuelve (`PressScale`; un botón deshabilitado no responde) | fundido |
+| 2D Apoyar | el pulgar salta, sube "+1", el anillo avanza una décima y late, la barra crece | solo cambian los datos |
+| 3A Reporte validado | sello que cae girando, onda y confeti con la bandera; se cierra al tocar o a los 2,5 s | aparece con fundido, sin confeti |
+| 4C Nuevo rango | la foto del lugar se abre en círculo desde su medalla; 2,6 s | fundido |
+| 5A Cambio de pantalla | sale 24 dp a la izquierda, entra desde 30 dp a la derecha | fundido |
+| 6A Cabecera | zoom 1 → 1,1 en 20 s, ida y vuelta; se detiene fuera de pantalla | quieta |
+| 7A Cambio de ciudad | las franjas de la bandera nueva barren la pantalla | sin cortina; el tema cambia en 100 ms |
+| 8D Cargando | esqueleto con brillo la primera vez de una lista o pantalla; anillo dentro del botón en acciones cortas; nada en recargas ni antes de 300 ms | esqueleto quieto, anillo fijo |
 
 ## 6. Iconografía, imágenes y patrón
 
-- **Iconos:** los de Material en versión *outlined/rounded* a 24 dp (ya incluidos, sin paquetes nuevos), trazo uniforme. Color: `onSurfaceVariant` por defecto, `accent` para iconos que ordenan información (resumen del perfil). Los de gravedad son propios (forma por nivel); en Flutter equivalen a `Icons.circle_outlined`, `Icons.change_history_outlined`, `Icons.diamond_outlined` y `Icons.dangerous_outlined`.
+- **Iconos:** [Lucide](https://lucide.dev) (`lucide_icons_flutter`) a 24 dp en toda la app, también en los botones de volver y cerrar que pone Flutter (`ActionIconTheme`). Color: `onSurfaceVariant` por defecto, acento semántico para iconos que ordenan información. Los de gravedad son propios (forma por nivel) y son los únicos que siguen siendo de Material: `Icons.circle_outlined`, `Icons.change_history_outlined`, `Icons.diamond_outlined` y `Icons.dangerous_outlined` (`SeverityChip.shapeOf`).
+
+| Uso | Lucide |
+|---|---|
+| Pestañas Mapa, Comunidad, Mi perfil | `map`, `usersRound`, `circleUserRound` (la activa, en una pastilla del acento al 38 %) |
+| Reportar | `mapPinPlus` |
+| Apoyar, comentarios | `thumbsUp`, `messageCircle` |
+| Dirección, GPS | `mapPin`, `locateFixed` (`locateOff` bloqueada) |
+| Volver, ir, cerrar | `arrowLeft`, `chevronRight`, `x` |
+| Fotos | `image`, `images`, `camera`, `imagePlus`, `imageOff` |
+| Validado, correcto, error, información | `badgeCheck`, `circleCheck`, `circleAlert`, `info` |
+| Ajustes, permisos, salir, privacidad | `settings`, `shieldCheck`, `logOut`, `lock` |
+| Buscar, filtrar, ordenar, barrio, ciudad | `search`, `slidersHorizontal`, `arrowUpDown`, `mapPinned`, `building2` |
+| Editar, eliminar | `pencil`, `trash2` |
+| Categorías de daño | `road`, `trafficCone`, `construction`, `footprints`, `droplet`, `signpost`, `triangleAlert` |
 - **Patrón de marca:** anillos punteados concéntricos recortados en una esquina, al 7-8 % de opacidad (`rings` en las maquetas). Sustituye a la foto de ciudad difuminada, que se elimina (y con ella `assets/images/civic_road_hero.jpg`).
 - **Estados vacíos y errores:** círculo punteado con una marca (un signo de exclamación, una V) y un texto corto; sin ilustraciones complejas.
 - **Fotos de evidencia (futuro):** relación 4:3, radio 8, con la etiqueta del código (`#VIG-8492`) en mono sobre fondo tinta en la esquina inferior izquierda.
@@ -175,12 +223,19 @@ Todos están en `mockups/components.html` con sus estados (normal, foco, presion
 | Snackbar | Fondo tinta, texto crema, acción en mostaza, flotante | `SnackBarTheme` |
 | Tarjeta | Papel, borde 1 px, radio 12; "destacada" suma sombra mínima (solo claro) | `CardTheme` |
 | Barra superior | Fondo = pantalla, título Fraunces 20/600, sin elevación | `AppBarTheme` |
-| Indicador de carga | Anillo punteado que gira; barra de progreso de 6 dp para avance conocido | `core/widgets/dotted_spinner.dart` + `ProgressIndicatorTheme` |
+| Indicador de carga | Anillo punteado que gira, visible solo después de 300 ms; en una ciudad toma `deep` sobre el fondo y el color del texto dentro de un botón; barra de progreso de 6 dp para avance conocido | `core/widgets/dotted_spinner.dart` + `ProgressIndicatorTheme` |
+| Cabecera de ciudad | Foto del momento del día (240 dp; 168 y quieta en el login) con velo, franja, "CIUDAD, DEPARTAMENTO · tarde", saludo en Anton y eslogan; zoom 6A. Sin paquete no dibuja nada. La foto lleva su descripción como texto alternativo | `core/widgets/city/city_hero.dart` |
+| Franja de la bandera | 32 × 8 dp (160 de ancho en el splash), un segmento por franja con su peso; decorativa | `core/widgets/city/flag_stripe.dart` |
+| Tarjeta de ciudad | Registro: foto de 88 dp con velo lateral, nombre en Anton, departamento, franja y etiqueta "Detectada por GPS"; la elegida lleva borde del acento, check y estado hablado | `core/widgets/city/city_photo_card.dart` (la usa `features/auth/ui/widgets/featured_city_cards.dart`) |
+| La subida (rangos) | "Mi perfil": encabezado sobre el velo ("TU SUBIDA AL …", "Vas por La Ermita", "Nivel actual: N"), barra, "1750 / 2500 pts" y la frase de lo que falta, y los cuatro rangos de arriba abajo con medalla de 56 dp, camino punteado, "TÚ", etiquetas "Logrado" y "Siguiente", y "1000 XP · Vecino Activo". Lo no logrado va en gris. Sin fotos, usa los `RankSeal` y los nombres de rango | `core/widgets/city/landmark_trail.dart` (datos desde `features/dashboard/ui/widgets/rank_climb.dart`) |
+| Celebraciones | 3A (sello con foto, frase de la ciudad, confeti con la bandera, "+500 XP para quien lo reportó") y 4C (foto del lugar a pantalla completa, "NUEVO RANGO · …"). Se cierran al tocar o solas; una sola etiqueta hablada | `core/widgets/city/celebration_overlay.dart` |
+| Esqueleto de carga | Formas de las tarjetas reales (feed, perfil, impacto, detalle, lista) con brillo; etiqueta hablada inmediata, visible tras 300 ms | `core/widgets/city/city_skeleton.dart` |
+| Movimiento compartido | `PressScale` (1A), `SharedAxisPageTransitionsBuilder` (5A), `DelayedReveal` (8D), `EndorseThumb` (2D), `FlagCurtain` (7A) | `core/widgets/city/city_motion.dart` |
 | Botón de tema | Botón de icono de 48 dp; el icono muestra el tema al que se pasa (luna → oscuro, sol → claro) y el tooltip lo dice en texto. Esquina superior derecha del login; en `actions` de la barra superior en las demás pantallas | `core/widgets/theme_toggle_button.dart` + `core/theme/theme_cubit.dart` |
 | Marca (encabezado) | Sello + palabra + lema, centrado | `core/widgets/brand_mark.dart` (reemplaza `CivicBrandHeader`) |
 | Sello de rango | Círculo con numeral, 4 variantes (§3.4) | `core/widgets/rank_seal.dart` |
 | Chip de gravedad | Mínimo 28 dp (crece con el tamaño del texto), radio 14. Forma + color + texto: círculo `Baja`, triángulo `Media`, rombo `Alta`, octágono `Crítica` (iconos Material `circle_outlined`, `change_history_outlined`, `diamond_outlined`, `dangerous_outlined`). Colores de §3.3 por `AppSeverityColors.fillOf`/`onFillOf`; etiqueta semántica "Gravedad Alta". Recibe un `SeverityLevel` (enum del tema), no el de dominio: cada función lo traduce | `core/widgets/severity_chip.dart` |
-| Barra de navegación inferior | Fondo = pantalla, plana con borde superior de 1 px (`divider`); seleccionado: color `primary` y etiqueta 600; siempre icono + texto | `BottomNavigationBarTheme` + `features/explore/ui/screens/home_screen.dart` |
+| Barra de navegación inferior | Fondo = pantalla, plana con borde superior de 1 px (`divider`); seleccionado: etiqueta 600 en `CityTheme.navSelected` y, en una ciudad, el icono dentro de una pastilla del acento al 38 % (sin paquete: `primary`, sin pastilla); siempre icono + texto | `BottomNavigationBarTheme` + `features/explore/ui/screens/home_screen.dart` |
 | Botón de mi ubicación | Botón de icono circular de 48 dp sobre el mapa (arriba a la derecha): superficie sólida con borde de 1 px, tooltip "Centrar en mi ubicación", anillo punteado mientras busca. La posición se dibuja como un punto `info` con aro de superficie, etiqueta semántica "Tu ubicación". Si el permiso está bloqueado abre el diálogo de ubicación bloqueada; los demás errores van en un aviso | `features/explore/ui/pages/map_page.dart` |
 | Selector de punto en el mapa | Paso 1 del asistente (HU-27): el botón con contorno "Seleccionar ubicación" (icono de mapa) cambia el formulario por el mapa dentro del mismo paso, así el encabezado "Paso 1 de 5" se mantiene. Título "Selecciona el punto en el mapa", ayuda "Mueve el mapa hasta que el pin quede sobre el daño.", mapa que llena el alto libre del paso para que no quede espacio vacío bajo los botones (en pantallas bajas, como en horizontal, conserva `AppSizes.mapPicker`, 360 dp, y el paso se desplaza), con radio `md` y borde de 1 px, pin fijo `location_on` en `primary` de `AppSizes.mapPin` (44 dp) con la punta en el centro (etiqueta semántica "Punto del daño"), el botón de mi ubicación arriba a la derecha, las coordenadas en monoespaciada debajo, "Confirmar punto" (primario) y "Volver" (texto). El crédito del mapa es el de `flutter_map` con la fuente "OpenStreetMap" (el widget ya agrega el "©") | `features/reports/ui/widgets/map_point_selector.dart` |
 | Diálogo de ubicación bloqueada | Modal con icono de ubicación desactivada, título "Ubicación bloqueada", el mensaje de HU-29 y dos acciones: "Ahora no" (texto) y "Abrir ajustes" (primario con icono). Se abre una vez por intento desde los tres botones de GPS: "Detectar mi ciudad por GPS" (registro), "Centrar en mi ubicación" (mapa) y "Centrar en mi ubicación" (mapa del paso 1 del asistente) | `core/widgets/location_blocked_dialog.dart` (`showLocationBlockedDialog`) |
@@ -192,7 +247,7 @@ Todos están en `mockups/components.html` con sus estados (normal, foco, presion
 | Aviso de filtros en el mapa | HU-20, criterio 5. Con un filtro de Comunidad encendido, bajo el botón de ciudad del mapa: superficie sólida con borde de 1 px, icono de filtro, "N filtros activos: X de Y reportes" y el botón "Limpiar". Los pines que no coinciden desaparecen | `features/explore/ui/pages/map_page.dart` |
 | Sello "Reporte validado" | HU-16. Tarjeta de papel con borde de 2 px en `secondary` (arcilla 700 en claro, arcilla 300 en oscuro), un anillo con check a la izquierda y el texto "Reporte validado por la comunidad" con el número de apoyos en monoespaciada. Forma (anillo y check), color y texto dicen lo mismo. Aparece cuando el reporte llegó a 10 apoyos y **se queda** aunque después baje de 10 (el bono ya está consolidado). Una sola etiqueta semántica | `core/widgets/validation_seal.dart` |
 | Comentarios del reporte | HU-17. Al final del detalle: título "Comentarios (N)" y los comentarios de más antiguo a más nuevo, cada uno en una tarjeta de papel con borde de 1 px: `RankSeal` de 36 dp, "Nombre" (o "Ciudadano anónimo"), "Rango · dd/mm/aaaa hh:mm" en monoespaciada, el texto y, si hay, la foto 180 dp de alto. "Eliminar" solo en el comentario propio de los últimos 5 minutos, con confirmación. Debajo, el campo "Tu comentario" (500 caracteres), cámara, galería, vista previa de la foto con "Quitar la foto" y "Publicar" (con "Publicando…" mientras envía). Un invitado lee el hilo y ve "Inicia sesión para comentar", que abre el modal de invitado. Un fallo conserva el texto y la foto y avisa con un SnackBar | `features/reports/ui/widgets/incident_comments_section.dart` |
-| Avance de rango | HU-23. Tarjeta de papel en "Mi perfil": `RankSeal` de 40 dp con "Tu avance" y "Nivel actual: N", barra de progreso de 6 dp con radio `small` (la del `ProgressIndicatorTheme`), los puntos en monoespaciada ("1750 / 2500 pts") y una frase: "Te faltan N pts para el Nivel X · Nombre." En el nivel más alto la barra va llena y dice "Llegaste al nivel más alto. Gracias por vigilar tu ciudad." La barra se lee como "Progreso hacia el siguiente nivel, N por ciento" | `features/dashboard/ui/widgets/rank_progress_card.dart` |
+| Avance de rango | HU-23. Es la tarjeta "La subida": barra de progreso de 6 dp con radio `small`, los puntos en monoespaciada ("1750 / 2500 pts") y "Te faltan N pts para el Nivel X · Nombre." En el nivel más alto la barra va llena y dice "Llegaste al nivel más alto. Gracias por vigilar tu ciudad." La barra se lee como "Progreso hacia el siguiente nivel, N por ciento". Al subir de rango se abre la celebración 4C | `features/dashboard/ui/widgets/rank_climb.dart` y `rank_up_celebrator.dart` |
 | Contadores de impacto | HU-23. Cuadrícula de 2 × 2 tarjetas de papel con borde de 1 px: icono de acento, el número en monoespaciada de 24 y la etiqueta ("Reportes creados", "Apoyos recibidos", "Apoyos otorgados", "Comentarios publicados"). Cada par comparte altura aunque una etiqueta se parta; cada tarjeta se lee como una frase ("12 apoyos recibidos") | `features/dashboard/ui/widgets/impact_counters.dart` |
 | Mis reportes | HU-23. Título "Mis reportes" y los reportes del ciudadano, del más nuevo al más antiguo, con la misma tarjeta del feed; tocar uno abre su detalle. Sin reportes: tarjeta de papel "Aún no has publicado reportes." con el botón "Reportar mi primer daño" | `features/dashboard/ui/widgets/my_reports_section.dart` |
 | Acciones del autor | HU-18. En el detalle, solo para quien escribió el reporte, bajo el botón de apoyo: tarjeta de papel "Tu reporte" con "Puedes editarlo o eliminarlo durante N min más, mientras tenga menos de 5 apoyos" y dos botones de contorno, "Editar" y "Eliminar" (icono + texto, 48 dp). Pasados los 30 minutos o con 5 apoyos, la tarjeta cambia a "Reporte congelado" con un candado y la razón, sin botones; un temporizador revisa el reloj cada 15 s para quitarlos solos. "Eliminar" pide confirmación ("¿Eliminar este reporte?", pierdes los 100 XP, no se puede deshacer) | `features/reports/ui/widgets/author_actions_card.dart` |
@@ -267,7 +322,7 @@ El aviso desaparece en cuanto se edita la dirección. Al confirmar un punto en e
 - `Semantics` con etiqueta en iconos sin texto (cerrar sesión, mostrar/ocultar contraseña), y los avisos de error como regiones "en vivo".
 - Texto escalable hasta 200 % sin truncar; probar con la fuente más grande del sistema.
 - "Reducir movimiento": ver §5.
-- Se usa en la calle y al sol: texto base 16 sp, contrastes altos en tinta sobre crema, sin texto sobre fotos.
+- Se usa en la calle y al sol: texto base 16 sp y contrastes altos en tinta sobre crema. El texto sobre una foto solo existe en los widgets de ciudad y siempre con un velo que garantiza AA incluso sobre blanco.
 
 ## 10. Mapeo a Flutter (sin escribir código todavía)
 

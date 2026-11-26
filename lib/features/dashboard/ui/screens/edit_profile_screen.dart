@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_dropdown_field.dart';
@@ -173,7 +174,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 controller: _nameController,
                 label: 'Nombre completo',
                 hint: 'Ej. Juan David Quintero',
-                prefixIcon: Icons.person_outline,
+                prefixIcon: LucideIcons.user,
                 validator: RegistrationRules.validateFullName,
               ),
               const SizedBox(height: AppSpacing.field),
@@ -189,7 +190,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   onPressed: state.locationStatus == EditProfileLocationStatus.detecting
                       ? null
                       : () => context.read<EditProfileBloc>().add(EditProfileCityDetectRequested()),
-                  icon: const Icon(Icons.my_location_outlined, size: AppSizes.icon),
+                  icon: const Icon(LucideIcons.locateFixed, size: AppSizes.icon),
                   label: Text(
                     state.locationStatus == EditProfileLocationStatus.detecting
                         ? 'Detectando tu ubicación…'
@@ -207,7 +208,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 controller: _emailController,
                 label: 'Correo electrónico',
                 hint: 'nombre@correo.com',
-                prefixIcon: Icons.email_outlined,
+                prefixIcon: LucideIcons.mail,
                 keyboardType: TextInputType.emailAddress,
                 validator: RegistrationRules.validateEmail,
               ),
@@ -255,11 +256,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 controller: _currentPasswordController,
                 label: 'Contraseña actual',
                 hint: 'Escribe tu contraseña actual',
-                prefixIcon: Icons.lock_outline,
+                prefixIcon: LucideIcons.lock,
                 obscureText: _obscureCurrent,
                 suffix: IconButton(
                   tooltip: _obscureCurrent ? 'Mostrar contraseña' : 'Ocultar contraseña',
-                  icon: Icon(_obscureCurrent ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                  icon: Icon(_obscureCurrent ? LucideIcons.eye : LucideIcons.eyeOff),
                   onPressed: () => setState(() => _obscureCurrent = !_obscureCurrent),
                 ),
                 validator: (value) =>
@@ -270,12 +271,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 controller: _newPasswordController,
                 label: 'Nueva contraseña',
                 hint: 'Mínimo 6 caracteres',
-                prefixIcon: Icons.lock_reset_outlined,
+                prefixIcon: LucideIcons.keyRound,
                 obscureText: _obscureNew,
                 onChanged: (_) => setState(() {}),
                 suffix: IconButton(
                   tooltip: _obscureNew ? 'Mostrar contraseña' : 'Ocultar contraseña',
-                  icon: Icon(_obscureNew ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                  icon: Icon(_obscureNew ? LucideIcons.eye : LucideIcons.eyeOff),
                   onPressed: () => setState(() => _obscureNew = !_obscureNew),
                 ),
                 validator: PasswordPolicy.validate,
@@ -317,7 +318,7 @@ class _CitySelector extends StatelessWidget {
     return AppDropdownField<City>(
       label: 'Ciudad de residencia',
       hint: 'Elige tu ciudad',
-      prefixIcon: Icons.location_city_outlined,
+      prefixIcon: LucideIcons.building2,
       value: matchingCity,
       entries: [
         for (final city in cities)

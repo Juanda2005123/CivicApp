@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/city_theme.dart';
+import '../../../../core/widgets/city/city_hero.dart';
+import '../../../../core/widgets/city/city_skeleton.dart';
 import '../../../../core/widgets/app_notice.dart';
 import '../../../../core/widgets/dotted_spinner.dart';
 import '../../../auth/domain/entities/coordinates.dart';
@@ -15,6 +19,7 @@ import '../bloc/feed_state.dart';
 import '../widgets/choice_sheet.dart';
 import '../widgets/feed_filter_bar.dart';
 import '../widgets/feed_incident_card.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// "Comunidad" tab of the shell (HU-19): the reports of the active city, newest
 /// first, 20 at a time as the citizen scrolls, with pull-to-refresh. A Page, so
@@ -26,6 +31,10 @@ import '../widgets/feed_incident_card.dart';
 ///
 /// The city arrives through the [FeedBloc] (the shell forwards it from the
 /// map); [myLocation] only adds the distance to each card.
+///
+/// A city with photos opens with its [CityHero]: it scrolls away with the list
+/// and the search bar stays pinned under it. Without photos the page keeps the
+/// city name above the filters.
 class FeedPage extends StatefulWidget {
   /// The citizen's position, or null when it is unknown: cards hide the distance.
   final Coordinates? myLocation;
@@ -107,30 +116,36 @@ class _FeedPageState extends State<FeedPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cityTheme = CityTheme.of(context);
+    final hasHero = cityTheme.hero != null;
+
     return BlocBuilder<FeedBloc, FeedState>(
       builder: (context, state) {
         final city = state.city;
 
         // The map has not resolved the city yet, or the first page is on its way.
         if (city == null || (state.status == FeedStatus.loading && state.items.isEmpty)) {
-          return const Center(child: DottedSpinner(size: 40, semanticLabel: 'Cargando los reportes'));
+          const skeleton = CitySkeleton(shape: CitySkeletonShape.feed, semanticLabel: 'Cargando los reportes');
+          return hasHero ? const Column(children: [CityHero(), Expanded(child: skeleton)]) : skeleton;
         }
 
         final filter = state.filter;
         final visible = filter.applyToFeed(state.items, myLocation: widget.myLocation);
 
-        final Widget body;
+        // Either a message that fills the page or the list of reports.
+        _Message? message;
+        var searching = false;
         if (state.items.isEmpty) {
-          body = state.status == FeedStatus.failure
+          message = state.status == FeedStatus.failure
               ? _Message(
-                  icon: Icons.cloud_off_outlined,
+                  icon: LucideIcons.cloudOff,
                   title: 'No pudimos cargar los reportes',
                   message: state.errorMessage ?? 'Revisa tu conexión e inténtalo de nuevo.',
                   actionLabel: 'Reintentar',
                   onAction: () => context.read<FeedBloc>().add(FeedRefreshed()),
                 )
               : _Message(
-                  icon: Icons.add_location_alt_outlined,
+                  icon: LucideIcons.mapPinPlus,
                   title: 'Aún no hay reportes en ${city.name}',
                   message: 'Sé la primera persona en reportar un daño en tu ciudad.',
                   actionLabel: 'Reportar daño',
@@ -138,34 +153,30 @@ class _FeedPageState extends State<FeedPage> {
                 );
         } else if (visible.isEmpty && state.isLoadingMore) {
           // The rest of the city is still arriving: it may hold a match.
-          body = const Center(child: DottedSpinner(size: 32, semanticLabel: 'Buscando en los reportes'));
+          searching = true;
         } else if (visible.isEmpty && state.loadMoreFailed) {
-          body = _Message(
-            icon: Icons.cloud_off_outlined,
+          message = _Message(
+            icon: LucideIcons.cloudOff,
             title: 'No pudimos buscar en todos los reportes',
             message: state.errorMessage ?? 'Revisa tu conexión e inténtalo de nuevo.',
             actionLabel: 'Reintentar',
             onAction: () => context.read<FeedBloc>().add(FeedAllPagesRequested()),
           );
         } else if (visible.isEmpty) {
-          body = _Message(
-            icon: Icons.search_off_outlined,
+          message = _Message(
+            icon: LucideIcons.searchX,
             title: 'Ningún reporte coincide',
             message: 'Prueba con otras palabras o quita algún filtro para ver los reportes de ${city.name}.',
             actionLabel: 'Limpiar filtros',
             onAction: () => context.read<FeedBloc>().add(FeedFiltersCleared()),
           );
-        } else {
-          body = _buildList(context, state, visible);
         }
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _CityHeader(cityName: '${city.name}, ${city.department}'),
-            // A city with no reports at all has nothing to search.
-            if (state.items.isNotEmpty)
-              FeedFilterBar(
+        const searchingBody = Center(child: DottedSpinner(size: 32, semanticLabel: 'Buscando en los reportes'));
+        // A city with no reports at all has nothing to search.
+        final filterBar = state.items.isEmpty
+            ? null
+            : FeedFilterBar(
                 filter: filter,
                 resultCount: filter.isActive ? visible.length : null,
                 onQueryChanged: (query) => context.read<FeedBloc>().add(FeedSearchChanged(query)),
@@ -173,9 +184,52 @@ class _FeedPageState extends State<FeedPage> {
                 onNeighborhoodPressed: _openNeighborhoodSheet,
                 onSortPressed: _openSortSheet,
                 onClearFilters: () => context.read<FeedBloc>().add(FeedFiltersCleared()),
+              );
+
+        if (!hasHero) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _CityHeader(cityName: '${city.name}, ${city.department}'),
+              ?filterBar,
+              Expanded(
+                child: RefreshIndicator(
+                  color: cityTheme.deep,
+                  onRefresh: _refresh,
+                  child: searching ? searchingBody : message ?? _buildList(context, state, visible),
+                ),
               ),
-            Expanded(child: RefreshIndicator(onRefresh: _refresh, child: body)),
-          ],
+            ],
+          );
+        }
+
+        return RefreshIndicator(
+          color: cityTheme.deep,
+          onRefresh: _refresh,
+          child: CustomScrollView(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              const SliverToBoxAdapter(child: CityHero()),
+              if (filterBar != null)
+                PinnedHeaderSliver(
+                  child: ColoredBox(color: Theme.of(context).colorScheme.surface, child: filterBar),
+                ),
+              if (searching)
+                const SliverFillRemaining(hasScrollBody: false, child: searchingBody)
+              else if (message != null)
+                SliverFillRemaining(hasScrollBody: false, child: message.content(context))
+              else
+                SliverPadding(
+                  padding: _listPadding,
+                  sliver: SliverList.separated(
+                    itemCount: _itemCount(state, visible),
+                    separatorBuilder: _separator,
+                    itemBuilder: (context, index) => _buildItem(context, state, visible, index),
+                  ),
+                ),
+            ],
+          ),
         );
       },
     );
@@ -251,48 +305,57 @@ class _FeedPageState extends State<FeedPage> {
     bloc.add(FeedSortSelected(sort));
   }
 
-  Widget _buildList(BuildContext context, FeedState state, List<FeedIncident> visible) {
-    final failedRefresh = state.status == FeedStatus.failure;
-    final hasFooter = state.isLoadingMore || state.loadMoreFailed;
-    final location = widget.myLocation;
+  static const EdgeInsets _listPadding =
+      EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, _bottomClearance);
 
+  Widget _buildList(BuildContext context, FeedState state, List<FeedIncident> visible) {
     return ListView.separated(
       controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, _bottomClearance),
-      // A failed refresh keeps the list and puts the notice on top (criterion 5).
-      itemCount: (failedRefresh ? 1 : 0) + visible.length + (hasFooter ? 1 : 0),
-      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
-      itemBuilder: (context, index) {
-        if (failedRefresh) {
-          if (index == 0) {
-            return _RetryNotice(
-              message: state.errorMessage ?? 'No pudimos actualizar los reportes.',
-              onRetry: () => context.read<FeedBloc>().add(FeedRefreshed()),
-            );
-          }
-          index -= 1;
-        }
+      padding: _listPadding,
+      itemCount: _itemCount(state, visible),
+      separatorBuilder: _separator,
+      itemBuilder: (context, index) => _buildItem(context, state, visible, index),
+    );
+  }
 
-        if (index == visible.length) {
-          return state.loadMoreFailed
-              ? _RetryNotice(
-                  message: state.errorMessage ?? 'No pudimos cargar más reportes.',
-                  onRetry: () => context.read<FeedBloc>().add(FeedNextPageRequested()),
-                )
-              : const Padding(
-                  padding: EdgeInsets.all(AppSpacing.lg),
-                  child: Center(child: DottedSpinner(size: 32, semanticLabel: 'Cargando más reportes')),
-                );
-        }
+  // A failed refresh keeps the list and puts the notice on top (criterion 5).
+  int _itemCount(FeedState state, List<FeedIncident> visible) =>
+      (state.status == FeedStatus.failure ? 1 : 0) +
+      visible.length +
+      (state.isLoadingMore || state.loadMoreFailed ? 1 : 0);
 
-        final incident = visible[index];
-        return FeedIncidentCard(
-          incident: incident,
-          distanceMeters: location == null ? null : incident.coordinates.distanceInMetersTo(location),
-          onTap: () => _openReport(incident.id),
+  Widget _separator(BuildContext context, int index) => const SizedBox(height: AppSpacing.md);
+
+  Widget _buildItem(BuildContext context, FeedState state, List<FeedIncident> visible, int index) {
+    if (state.status == FeedStatus.failure) {
+      if (index == 0) {
+        return _RetryNotice(
+          message: state.errorMessage ?? 'No pudimos actualizar los reportes.',
+          onRetry: () => context.read<FeedBloc>().add(FeedRefreshed()),
         );
-      },
+      }
+      index -= 1;
+    }
+
+    if (index == visible.length) {
+      return state.loadMoreFailed
+          ? _RetryNotice(
+              message: state.errorMessage ?? 'No pudimos cargar más reportes.',
+              onRetry: () => context.read<FeedBloc>().add(FeedNextPageRequested()),
+            )
+          : const Padding(
+              padding: EdgeInsets.all(AppSpacing.lg),
+              child: Center(child: DottedSpinner(size: 32, semanticLabel: 'Cargando más reportes')),
+            );
+    }
+
+    final incident = visible[index];
+    final location = widget.myLocation;
+    return FeedIncidentCard(
+      incident: incident,
+      distanceMeters: location == null ? null : incident.coordinates.distanceInMetersTo(location),
+      onTap: () => _openReport(incident.id),
     );
   }
 }
@@ -311,7 +374,7 @@ class _CityHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.xs),
       child: Row(
         children: [
-          Icon(Icons.location_city_outlined, size: AppSizes.icon, color: theme.colorScheme.onSurfaceVariant),
+          Icon(LucideIcons.building2, size: AppSizes.icon, color: theme.colorScheme.onSurfaceVariant),
           const SizedBox(width: AppSpacing.sm),
           Expanded(child: Text(cityName, style: theme.textTheme.titleSmall)),
         ],
@@ -339,34 +402,39 @@ class _Message extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: ConstrainedBox(
           constraints: BoxConstraints(minHeight: constraints.maxHeight),
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xl),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon, size: AppSpacing.xxxl, color: theme.colorScheme.onSurfaceVariant),
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(title, style: theme.textTheme.titleMedium, textAlign: TextAlign.center),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    message,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  OutlinedButton(onPressed: onAction, child: Text(actionLabel)),
-                ],
-              ),
+          child: content(context),
+        ),
+      ),
+    );
+  }
+
+  /// The message alone, for a scroll view that already exists (under the header).
+  Widget content(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: AppSpacing.xxxl, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(height: AppSpacing.lg),
+            Text(title, style: theme.textTheme.titleMedium, textAlign: TextAlign.center),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
-          ),
+            const SizedBox(height: AppSpacing.lg),
+            PressScale(child: OutlinedButton(onPressed: onAction, child: Text(actionLabel))),
+          ],
         ),
       ),
     );

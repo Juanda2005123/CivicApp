@@ -7,6 +7,7 @@ import 'package:vigia_app/core/theme/theme_cubit.dart';
 import 'package:vigia_app/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:vigia_app/features/auth/ui/bloc/login_bloc.dart';
 import 'package:vigia_app/features/auth/ui/screens/login_screen.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../support/fakes.dart';
 
@@ -89,13 +90,13 @@ void main() {
       await tester.pumpWidget(createLoginTestWidget(newBloc()));
       await tester.pumpAndSettle();
 
-      final eyeIcon = find.byIcon(Icons.visibility_outlined);
+      final eyeIcon = find.byIcon(LucideIcons.eye);
       expect(eyeIcon, findsOneWidget);
 
       await tester.tap(eyeIcon);
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.visibility_off_outlined), findsOneWidget);
+      expect(find.byIcon(LucideIcons.eyeOff), findsOneWidget);
     });
 
     testWidgets('clicking Register here navigates to register route', (tester) async {

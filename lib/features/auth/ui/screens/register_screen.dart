@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -11,12 +12,16 @@ import '../../../../core/widgets/dotted_spinner.dart';
 import '../../../../core/widgets/location_blocked_dialog.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/widgets/theme_toggle_button.dart';
+import '../../../city_identity/ui/bloc/city_ambience_bloc.dart';
+import '../../../city_identity/ui/bloc/city_ambience_event.dart';
 import '../../domain/validators/password_policy.dart';
 import '../../domain/validators/registration_rules.dart';
 import '../bloc/register_bloc.dart';
 import '../bloc/register_event.dart';
 import '../bloc/register_state.dart';
+import '../widgets/featured_city_cards.dart';
 import '../widgets/password_strength_chips.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// Registration form. It only draws the [RegisterState] and turns user input
 /// into events; the rules live in the domain.
@@ -79,29 +84,47 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _visibilityToggle({required bool obscured, required VoidCallback onPressed}) {
     return IconButton(
       tooltip: obscured ? 'Mostrar contraseña' : 'Ocultar contraseña',
-      icon: Icon(obscured ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+      icon: Icon(obscured ? LucideIcons.eye : LucideIcons.eyeOff),
       onPressed: onPressed,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // A blocked permission (HU-29) opens a modal once per GPS attempt.
-    return BlocListener<RegisterBloc, RegisterState>(
-      listenWhen: (previous, current) =>
-          previous.gpsStatus != GpsStatus.blocked && current.gpsStatus == GpsStatus.blocked,
-      listener: (context, state) {
-        final message = state.gpsMessage;
-        if (message == null) return;
-        final bloc = context.read<RegisterBloc>();
-        showLocationBlockedDialog(
-          context,
-          message: message,
-          onOpenSettings: () => bloc.add(LocationSettingsRequested()),
-        );
-      },
+    return MultiBlocListener(
+      listeners: [
+        // A blocked permission (HU-29) opens a modal once per GPS attempt.
+        BlocListener<RegisterBloc, RegisterState>(
+          listenWhen: (previous, current) =>
+              previous.gpsStatus != GpsStatus.blocked && current.gpsStatus == GpsStatus.blocked,
+          listener: (context, state) {
+            final message = state.gpsMessage;
+            if (message == null) return;
+            final bloc = context.read<RegisterBloc>();
+            showLocationBlockedDialog(
+              context,
+              message: message,
+              onOpenSettings: () => bloc.add(LocationSettingsRequested()),
+            );
+          },
+        ),
+        // The app wears the city being chosen, detected or picked.
+        BlocListener<RegisterBloc, RegisterState>(
+          listenWhen: (previous, current) => previous.selectedCityId != current.selectedCityId,
+          listener: (context, state) => _showCity(context, state),
+        ),
+      ],
       child: _buildForm(context),
     );
+  }
+
+  /// Absent only in tests that pump the screen without the app around it.
+  void _showCity(BuildContext context, RegisterState state) {
+    final selected = state.cities.where((city) => city.id == state.selectedCityId).firstOrNull;
+    if (selected == null) return;
+    context
+        .read<CityAmbienceBloc?>()
+        ?.add(ActiveCityChanged(name: selected.name, department: selected.department));
   }
 
   Widget _buildForm(BuildContext context) {
@@ -124,7 +147,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             title: const Text('Crear cuenta'),
             leading: IconButton(
               tooltip: 'Volver',
-              icon: const Icon(Icons.arrow_back_ios_new, size: AppSizes.icon),
+              icon: const Icon(LucideIcons.arrowLeft, size: AppSizes.icon),
               onPressed: isLoading ? null : () => Navigator.pop(context),
             ),
             actions: const [ThemeToggleButton()],
@@ -161,7 +184,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           label: 'Nombre completo',
                           hint: 'Ej. Juan David Quintero',
                           controller: _fullNameController,
-                          prefixIcon: Icons.person_outline,
+                          prefixIcon: LucideIcons.user,
                           keyboardType: TextInputType.name,
                           textCapitalization: TextCapitalization.words,
                           textInputAction: TextInputAction.next,
@@ -174,7 +197,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           label: 'Correo electrónico',
                           hint: 'nombre@correo.com',
                           controller: _emailController,
-                          prefixIcon: Icons.mail_outline,
+                          prefixIcon: LucideIcons.mail,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.email],
@@ -182,10 +205,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           validator: RegistrationRules.validateEmail,
                         ),
                         const SizedBox(height: AppSpacing.field),
+                        FeaturedCityCards(
+                          cities: state.cities,
+                          selectedCityId: state.selectedCityId,
+                          detectedCityId: gpsSuccess ? state.selectedCityId : null,
+                          onSelected: isLoading
+                              ? null
+                              : (id) => context.read<RegisterBloc>().add(CitySelected(id)),
+                        ),
                         AppDropdownField<int>(
                           label: 'Ciudad de residencia',
                           hint: 'Elige tu ciudad',
-                          prefixIcon: Icons.location_city_outlined,
+                          prefixIcon: LucideIcons.building2,
                           value: state.selectedCityId,
                           entries: state.cities.map((city) {
                             return DropdownMenuEntry<int>(
@@ -208,7 +239,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           validator: (value) => value == null ? 'Elige tu ciudad' : null,
                         ),
                         const SizedBox(height: AppSpacing.sm),
-                        OutlinedButton.icon(
+                        PressScale(child: OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size.fromHeight(AppSizes.buttonCompact),
                           ),
@@ -217,9 +248,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               : () => context.read<RegisterBloc>().add(NearestCityRequested()),
                           icon: isDetectingGps
                               ? DottedSpinner(size: 18, semanticLabel: 'Detectando tu ubicación')
-                              : const Icon(Icons.my_location, size: 18),
+                              : const Icon(LucideIcons.locateFixed, size: 18),
                           label: Text(isDetectingGps ? 'Detectando tu ubicación…' : 'Detectar mi ciudad por GPS'),
-                        ),
+                        )),
                         // A blocked permission is explained in the modal instead.
                         if (state.gpsMessage != null && state.gpsStatus != GpsStatus.blocked) ...[
                           const SizedBox(height: AppSpacing.sm),
@@ -233,7 +264,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           label: 'Contraseña',
                           hint: 'Mínimo ${PasswordPolicy.minLength} caracteres',
                           controller: _passwordController,
-                          prefixIcon: Icons.lock_outline,
+                          prefixIcon: LucideIcons.lock,
                           obscureText: _obscurePassword,
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.newPassword],
@@ -251,7 +282,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           label: 'Confirmar contraseña',
                           hint: 'Repite tu contraseña',
                           controller: _confirmPasswordController,
-                          prefixIcon: Icons.lock_reset_outlined,
+                          prefixIcon: LucideIcons.keyRound,
                           obscureText: _obscureConfirmPassword,
                           textInputAction: TextInputAction.done,
                           enabled: !isLoading,

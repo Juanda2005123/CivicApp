@@ -11,7 +11,16 @@ class RankProgress extends Equatable {
   final RankLevel? next;
   final int experiencePoints;
 
-  const RankProgress({required this.current, required this.next, required this.experiencePoints});
+  /// The whole ladder, lowest rank first, to draw every step. It is not part of
+  /// equality: two citizens stand in the same place whatever the list holds.
+  final List<RankLevel> ladder;
+
+  const RankProgress({
+    required this.current,
+    required this.next,
+    required this.experiencePoints,
+    this.ladder = const [],
+  });
 
   /// The citizen reached the highest oversight milestone.
   bool get isMaxRank => next == null;

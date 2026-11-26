@@ -14,13 +14,13 @@ ON CONFLICT (name) DO NOTHING;
 
 -- 2. ROAD INCIDENT CATEGORIES (Urban Infrastructure Taxonomy)
 INSERT INTO incident_category (name, icon, description) VALUES
-    ('Pothole or Road Hazard', 'warning', 'Potholes, cracks, craters, or pavement depressions.'),
-    ('Traffic Light', 'traffic', 'Damaged, unlit, or desynchronized traffic signals.'),
-    ('Abandoned Public Work', 'construction', 'Halted, abandoned, or delayed public road construction.'),
-    ('Damaged Sidewalk', 'directions_walk', 'Deteriorated, broken, or obstructed pedestrian walkways.'),
-    ('Water Leak', 'water_drop', 'Potable water main breaks or wastewater leaks on the road.'),
-    ('Road Signage', 'signpost', 'Missing, damaged, obstructed, or illegible traffic signs.'),
-    ('Other', 'more_horiz', 'Other unclassified public infrastructure hazards.')
+    ('Hueco o bache en calzada', 'warning', 'Huecos, grietas, cráteres o hundimientos en el pavimento.'),
+    ('Semáforo dañado o apagado', 'traffic', 'Semáforos apagados, intermitentes o dañados.'),
+    ('Obra pública abandonada', 'construction', 'Obras viales paralizadas, sin señalización o abandonadas.'),
+    ('Andén o paso peatonal roto', 'directions_walk', 'Andenes destruidos, baldosas sueltas o pasos peatonales bloqueados.'),
+    ('Fuga de agua o alcantarillado', 'water_drop', 'Fugas de acueducto, tapas de alcantarilla rotas o desbordamientos.'),
+    ('Señalización vial dañada', 'signpost', 'Señales de tránsito caídas, grafiteadas, invisibles o ausentes.'),
+    ('Otro daño vial', 'more_horiz', 'Otros peligros o deterioros de la infraestructura vial urbana.')
 ON CONFLICT (name) DO NOTHING;
 
 -- 3. CIVIC BADGES (RN-10)

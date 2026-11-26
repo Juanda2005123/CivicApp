@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
-import 'package:vigia_app/core/widgets/dotted_spinner.dart';
+import 'package:vigia_app/core/widgets/city/city_skeleton.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_photo.dart';
@@ -14,6 +14,7 @@ import 'package:vigia_app/features/reports/ui/screens/incident_detail_screen.dar
 
 import 'package:vigia_app/features/reports/ui/bloc/comments_bloc.dart';
 import 'package:vigia_app/features/reports/ui/bloc/resolution_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../support/detail_bloc_factory.dart';
 import '../../support/fake_comment_repository.dart';
@@ -140,7 +141,7 @@ void main() {
       await tester.pumpWidget(createWidgetUnderTest(bloc, incidentIdOrCode: '#VIG-1001'));
       await tester.pump();
 
-      expect(find.byType(DottedSpinner), findsOneWidget);
+      expect(find.byType(CitySkeleton), findsOneWidget);
       expect(find.text('No fue posible cargar el reporte vial.'), findsNothing);
       expect(find.text('Reintentar'), findsNothing);
 
@@ -207,7 +208,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Sin fotografías adjuntas'), findsOneWidget);
-      expect(find.byIcon(Icons.photo_library_outlined), findsOneWidget);
+      expect(find.byIcon(LucideIcons.images), findsOneWidget);
     });
 
     testWidgets('renders error notice and retry button when report does not exist', (tester) async {
