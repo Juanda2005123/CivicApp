@@ -8,6 +8,8 @@ Maquetas navegables (se abren en cualquier navegador, son archivos autónomos):
 - [`mockups/tokens.css`](mockups/tokens.css): los tokens en CSS. `node mockups/build.mjs` regenera los HTML autónomos tras editarlo.
 - [`assets/logo/`](assets/logo/): sello y variantes en SVG.
 
+> **Actualización 2026-11-25: identidad por ciudad.** Sobre este sistema se monta la capa "Ciudad Viva" ([`04-city-identity.md`](04-city-identity.md)): fotos reales de cada ciudad con su crédito, la franja de su bandera, colores de ciudad (recolorean `primary` y `tertiary`) y un catálogo de animaciones único. Donde este documento dice "sin fotos" o "sin texto sobre fotos" (§6, §9, §11), manda ahora el 04: fotos solo a través de los widgets de `core/widgets/city/` y siempre con velo para contraste AA. La marca (sello, anillo punteado, datos en monoespaciada, superficies papel/tinta, colores de gravedad y de error) no cambia.
+
 Antecedentes: `01-identity-directions.md` y `02-blend-b-c-directions.md` (cómo se llegó a la dirección E). Reglas de arquitectura que este sistema respeta: `AGENTS.md` (§4 capas, §6 UI, §6b diseño).
 
 ---

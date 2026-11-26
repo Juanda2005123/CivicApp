@@ -62,6 +62,8 @@ instructions to navigate the flows. Never create tags, push, or open PRs unless 
 `flutter_bloc` (Bloc/Cubit, `BlocProvider`, `BlocBuilder`, `BlocListener`), `supabase_flutter` (Auth, PostgREST,
 Storage, Realtime), `get_it` (dependency injection), `http` (REST APIs), `image_picker`, `geolocator`,
 `flutter_dotenv`, `equatable` (already in `pubspec.yaml`; optional — the course does not use it).
+UI icons: `lucide_icons_flutter` (approved by the team on 2026-11-25 for the city identity redesign; replaces Material
+`Icons.*` everywhere except the custom severity shapes — `docs/design/04-city-identity.md` §5b).
 Navigation: **`Navigator` + named routes** (`routes` table). No `go_router`, no Riverpod/Provider/GetX, no code generation.
 Anything else: ask first.
 
@@ -136,6 +138,8 @@ that Bloc events/states may share the Bloc's file or live in `<name>_event.dart`
 The professor teaches `Cubit` first as a stepping stone, and uses **`Bloc` with events** in every Clean Architecture lab.
 New feature work uses `Bloc`. The one accepted `Cubit` is `ThemeCubit` (`core/theme/`): a trivial, app-wide, event-less
 setting, provided once above `MaterialApp`. App-wide state of that kind lives in `core/`; feature state lives in the feature's `ui/bloc/`.
+The second app-wide piece is `CityAmbienceBloc` (`features/city_identity/ui/bloc/`): a normal Bloc with events, provided above
+`MaterialApp` next to `ThemeCubit` because the theme is built from its state (`docs/design/04-city-identity.md` §3).
 
 **Mental model (lesson "Introducción a Bloc"):** the view *throws events* (what happened) and the Bloc *emits states* (what to
 draw). Exactly two directions, nothing else crosses. The view never changes state; the Bloc never touches a widget.
@@ -216,12 +220,13 @@ Non-negotiable rules (details, values and contrast tables are in the document):
 1. **Tokens only.** Colors come from `AppColors`/the `ColorScheme`, text from `AppTextStyles`/`TextTheme`, spacing/radii/durations from `AppSpacing`. **No hex literals, ad-hoc `TextStyle` colors or magic numbers in widgets.** A new value is added to the system first (and to the design document), then used.
 2. **Light and dark.** Every screen and component must work in both themes through `ThemeData`; never read `Brightness` to pick a hex.
 3. **Reuse before creating.** Use the shared widgets in `lib/core/widgets/` (`BrandMark`, `PrimaryButton`, `AppNotice`, `DottedSpinner`, `RankSeal`, …) and the component themes (buttons, inputs, cards, chips, snackbars, app bar). A new shared widget needs: a place in `core/widgets/`, tokens only, a widget test, and an entry in the design document's component table and `components.html`.
-4. **Identity.** Flat paper surfaces with a 1 px border, no glass, no gradients, no photo backgrounds. The seal, the dotted ring and monospace data (codes, coordinates, dates, points) are the brand's signature; do not add other decorative motifs.
+4. **Identity.** Flat paper surfaces with a 1 px border, no glass. The seal, the dotted ring and monospace data (codes, coordinates, dates, points) are the brand's signature. **City identity** ("Ciudad Viva", [`docs/design/04-city-identity.md`](docs/design/04-city-identity.md)) is the one approved layer on top: real city photos (with their credit), the city flag stripe and city colors, delivered only through the shared widgets in `lib/core/widgets/city/` and read from `CityTheme`. A photo always carries a solid-to-transparent veil so its text passes AA; no other gradients. **Screens never branch on the city** (`if (city == 'Cali')` is a bug): anything that differs between cities is data in its city pack.
 5. **Color is never the only signal.** Severity = shape + color + text; errors = icon + text + thick border; states always have a text label. Contrast AA at minimum (the calculated pairs in §3.5 of the document are the only approved text/background combinations; mustard and clay-500 have restrictions).
 6. **Accessibility.** Touch targets ≥ 48 dp, visible focus, `Semantics` labels on icon-only controls, text that scales to 200 % without truncating, and `MediaQuery.disableAnimations` honored (no scale/rotation, fades only).
 7. **Language.** The whole interface is in Spanish (tú, short direct sentences). The copy deck in §8 of the document is the reference for existing strings; new strings follow its voice. Identifiers, comments, commits and docs stay in English.
 8. **Brand assets are never redrawn by hand.** The seal in code is the `BrandMark`/`RankSeal` painters, equal to `docs/design/assets/logo/*.svg`. If the logo changes, change both and the document.
 9. **Keep the system documented.** Any change to tokens, components or rules updates `docs/design/03-design-system.md` (and the mockups, via `node docs/design/mockups/build.mjs`) in the same change.
+10. **City identity is design only, and fixed.** The "Ciudad Viva" redesign (`docs/design/04-city-identity.md`) adds no features: no album, seasons or missions (those are ideas in `docs/design/ideas/city-identity/future-album-and-seasons.md`). Screens, icons (Lucide) and the animation set (1A, 2D, 3A, 4C, 5A, 6A, 7A, 8D) are the same for every city. **To add a city, follow `docs/design/05-new-city-guide.md`: first add it to the mockup `docs/design/mockups/city-identity.html` and wait for its owner's approval, then write its pack.** Never write a city pack before that mockup exists.
 
 Pre-flight before presenting UI: tokens only · works in light and dark · shared widgets reused · contrast pairs from the document · focus, semantics and 48 dp targets · Spanish copy in the system's voice · screenshots of the changed screens in both themes.
 

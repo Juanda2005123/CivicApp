@@ -1,0 +1,48 @@
+# Cómo agregar una ciudad completa (Bogotá, Cartagena…)
+
+Para: Cano, Juan David y cualquiera que arme un paquete de ciudad. Antes lee [`04-city-identity.md`](04-city-identity.md) §0 a §3.
+
+## 1. Lo que NO se cambia (ya está decidido por Juan)
+- Las pantallas, su estructura y sus funciones. Es una refactorización de **diseño**: nada nuevo, nada quitado.
+- Los widgets compartidos (`core/widgets/city/`), la tipografía, los íconos Lucide y la barra de 3 pestañas.
+- **Todas las animaciones**: 1A, 2D, 3A, 4C, 5A, 6A, 7A y 8D (`04-city-identity.md` §6). No se escoge otra por ciudad.
+- Las reglas de XP, validación y rangos.
+- Nunca un `if (city == 'Bogotá')` en un widget o pantalla. Si tu ciudad necesita algo que el paquete no tiene, se habla con Juan y se agrega al paquete para todas.
+
+## 2. Lo que escoges tú (el paquete de tu ciudad)
+| Campo | Regla |
+|---|---|
+| `deep` (tono profundo) | Chips y enlaces. 4.5:1 o más con blanco |
+| `accent` + `onAccent` (botones) | Cálido o vivo, que llame la atención sin chillar. 4.5:1 o más entre los dos |
+| `veil` | Muy oscuro, para que el texto blanco se lea sobre la foto |
+| Bandera | Colores y peso de cada franja, de arriba a abajo, de la bandera **oficial** del municipio |
+| 3 fotos de cabecera | Mañana, tarde y noche. Horizontales, mínimo 1080 px de ancho, lugares reconocibles |
+| 4 lugares para los rangos | En orden de subida (0, 1.000, 2.500 y 4.000 XP); el último es el más icónico. Foto que se pueda recortar en cuadrado |
+| Saludos | Mañana, tarde y noche, en el habla de la ciudad, con tuteo y respeto |
+| Eslogan y frase al validar | Cortos. Ej.: "Cali se cuida entre vecinos." / "¡Eso, ve!" |
+
+Fotos: solo de [Wikimedia Commons](https://commons.wikimedia.org) con licencia CC0, dominio público, CC BY o CC BY-SA. Guarda autor, licencia y enlace (van a `assets/cities/CREDITS.md`, no a la app).
+
+## 3. Paso 1, obligatorio: maqueta antes de programar
+Nadie escribe el paquete en Dart sin que antes exista la maqueta de su ciudad y la apruebe su dueño.
+
+1. Pídele a Claude (o al agente que uses) que **agregue tu ciudad a la misma maqueta** `docs/design/mockups/city-identity.html`: una entrada nueva en `PACKS` con los mismos campos que Cali y Medellín, su lista de fotos en `POOL` y un botón nuevo en el selector "Ciudad". No se hace una maqueta aparte ni se tocan las pantallas ni las animaciones (en la maqueta solo se reproducen, no se escogen).
+2. Que busque y descargue un **banco de fotos** de tu ciudad: unas 15, con al menos 3 candidatas buenas para cada espacio (mañana, tarde, noche y los 4 lugares). Las originales van a `docs/design/ideas/city-identity/photos/` con su crédito en `CREDITS.json`, y las livianas a `docs/design/mockups/city-img/`. Que revise cada foto a ojo antes de proponerla: nada borroso, oscuro, en blanco y negro o que no se reconozca.
+3. Abre tu ciudad en la maqueta y usa la sección **"Paquete de la ciudad"**:
+   - **Fotos:** toca las miniaturas hasta que cada espacio tenga la mejor foto. Revisa mañana, tarde y noche, en claro y en oscuro.
+   - **Textos:** los 4 lugares de los rangos, los saludos, el eslogan y la frase al validar.
+   - **Colores:** con el chequeo AA en verde.
+   - Al final, **"Copiar paquete"** y pégaselo a Claude: ese JSON es el que se pasa a Dart.
+4. Muéstrala en el grupo. Cuando estés conforme, sigue con el paso 2.
+
+Mensaje listo para pegarle a Claude:
+
+> Lee `AGENTS.md`, `docs/design/04-city-identity.md` y `docs/design/05-new-city-guide.md`. Quiero agregar **[CIUDAD]** como ciudad completa de VIGÍA. Primero solo la maqueta: agrega [CIUDAD] a `docs/design/mockups/city-identity.html` (nueva entrada en `PACKS` y botón en el selector), sin tocar pantallas ni animaciones. Busca en Wikimedia Commons un banco de unas 15 fotos reales con licencia libre, con al menos 3 candidatas por espacio (cabeceras de mañana, tarde y noche, y 4 lugares icónicos para los rangos en orden de subida). Revísalas a ojo y agrégalas a `POOL` para que yo escoja en el editor. Propón la paleta (`deep`, `accent`, `onAccent`, `veil`) que pase AA, la bandera oficial y los saludos en el habla local. Guarda las fotos y sus créditos como dice la guía. Muéstrame la maqueta publicada y espera mi aprobación antes de escribir Dart.
+
+## 4. Paso 2: el paquete en la app
+1. Rama desde la rama de Ciudad Viva de Juan: `feat/city-<slug>`.
+2. Copia `lib/features/city_identity/data/datasources/packs/cali_pack.dart` a `<slug>_pack.dart` y cambia solo los datos.
+3. Fotos en WebP en `assets/cities/<slug>/` con los nombres de `04-city-identity.md` §4; agrega sus créditos a `assets/cities/CREDITS.md`.
+4. Registra el paquete en `city_pack_local_data_source.dart` (una línea).
+5. `dart run tool/check.dart`. La prueba de contraste recorre todos los paquetes: si tu paleta no pasa AA, falla.
+6. Capturas de Comunidad, Detalle y Mi perfil en claro y oscuro, y PR a la rama de Ciudad Viva (no directo a `develop`).
