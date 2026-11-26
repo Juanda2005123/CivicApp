@@ -24,8 +24,9 @@ class RankClimb extends StatelessWidget {
     final caption = next == null
         ? 'Llegaste al nivel más alto. Gracias por vigilar tu ciudad.'
         : 'Te faltan ${progress.xpMissing} pts para el Nivel ${next.id} · ${next.name}.';
-    final points =
-        next == null ? '${progress.experiencePoints} pts' : '${progress.experiencePoints} / ${next.minXp} pts';
+    final points = next == null
+        ? '${progress.experiencePoints} pts'
+        : '${progress.experiencePoints} / ${next.minXp} pts';
     final ladder = progress.ladder.isEmpty ? [progress.current, ?next] : progress.ladder;
 
     return LandmarkTrail(
@@ -35,6 +36,7 @@ class RankClimb extends StatelessWidget {
       progress: progress.fraction,
       points: points,
       caption: caption,
+      xpMissing: next == null ? null : progress.xpMissing,
       currentMedalKey: currentMedalKey,
     );
   }

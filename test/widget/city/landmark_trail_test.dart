@@ -13,15 +13,16 @@ const _ranks = [
 ];
 
 Widget _trail({int level = 2, List<TrailRank> ranks = _ranks}) => SingleChildScrollView(
-      child: LandmarkTrail(
-        ranks: ranks,
-        currentLevel: level,
-        title: 'Tu avance',
-        progress: 0.28,
-        points: '1420 / 2500 pts',
-        caption: 'Te faltan 1080 pts para el Nivel 3 · Guardián Vial.',
-      ),
-    );
+  child: LandmarkTrail(
+    ranks: ranks,
+    currentLevel: level,
+    title: 'Tu avance',
+    progress: 0.28,
+    points: '1420 / 2500 pts',
+    caption: 'Te faltan 1080 pts para el Nivel 3 · Guardián Vial.',
+    xpMissing: 1080,
+  ),
+);
 
 void main() {
   const places = {
@@ -31,8 +32,9 @@ void main() {
 
   for (final city in places.keys) {
     for (final brightness in Brightness.values) {
-      testWidgets('$city ${brightness.name}: the four places, summit first, with "TÚ" on the current one',
-          (tester) async {
+      testWidgets('$city ${brightness.name}: the four places, summit first, with "TÚ" on the current one', (
+        tester,
+      ) async {
         tester.view.physicalSize = const Size(400, 1200);
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.reset);
@@ -42,9 +44,10 @@ void main() {
 
         final names = places[city]!;
         expect(find.text('Vas por ${names[1]}'), findsOneWidget);
-        expect(find.text('Tu avance'), findsOneWidget);
+        expect(find.text('Tu avance'), findsNothing);
         expect(find.text('1420 / 2500 pts'), findsOneWidget);
-        expect(find.text('Nivel actual: 2'), findsOneWidget);
+        expect(find.text('Nivel 2 de 4'), findsOneWidget);
+        expect(find.text('Te faltan 1080 pts para llegar a ${names[2]} (Nivel 3).'), findsOneWidget);
         for (final name in names) {
           expect(find.text(name), findsOneWidget);
         }
@@ -71,6 +74,7 @@ void main() {
       expect(find.text('Vecino Activo'), findsOneWidget);
       expect(find.text('1000 XP'), findsOneWidget);
       expect(find.textContaining('Vas por'), findsNothing);
+      expect(find.text('Te faltan 1080 pts para el Nivel 3 · Guardián Vial.'), findsOneWidget);
       expect(find.byType(Image), findsNothing);
       // The heading seal and the four steps.
       expect(find.byType(RankSeal), findsNWidgets(5));

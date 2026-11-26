@@ -45,6 +45,10 @@ class LandmarkTrail extends StatelessWidget {
   final String points;
   final String caption;
 
+  /// Points missing for the next rank. With city photos the caption then names
+  /// the next place ("para llegar a Cristo Rey") instead of [caption].
+  final int? xpMissing;
+
   /// Put on the medal of the current rank, where the rank celebration opens.
   final Key? currentMedalKey;
 
@@ -56,6 +60,7 @@ class LandmarkTrail extends StatelessWidget {
     required this.progress,
     required this.points,
     required this.caption,
+    this.xpMissing,
     this.currentMedalKey,
   });
 
@@ -69,6 +74,11 @@ class LandmarkTrail extends StatelessWidget {
     final currentPlace = current?.landmarkIn(city.landmarks);
     final hasPhotos = currentPlace?.medal != null;
     final highest = ranks.isNotEmpty && ranks.last.level == currentLevel;
+    final next = ranks.where((rank) => rank.level == currentLevel + 1).firstOrNull;
+    final nextPlace = next?.landmarkIn(city.landmarks);
+    final shownCaption = hasPhotos && next != null && nextPlace != null && xpMissing != null
+        ? 'Te faltan $xpMissing pts para llegar a ${nextPlace.title} (Nivel ${next.level}).'
+        : caption;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -77,10 +87,9 @@ class LandmarkTrail extends StatelessWidget {
         children: [
           if (hasPhotos)
             _CityHeading(
-              title: title,
               climbTitle: city.copy.climbTitle,
               headline: highest ? 'Llegaste a ${currentPlace!.title}' : 'Vas por ${currentPlace!.title}',
-              level: 'Nivel actual: $currentLevel',
+              level: 'Nivel $currentLevel de ${ranks.length}',
             )
           else
             Padding(
@@ -123,7 +132,7 @@ class LandmarkTrail extends StatelessWidget {
                 const SizedBox(height: AppSpacing.sm),
                 Text(points, style: AppTextStyles.data(size: 14, line: 20)),
                 const SizedBox(height: AppSpacing.xs),
-                Text(caption, style: theme.textTheme.bodySmall?.copyWith(color: muted)),
+                Text(shownCaption, style: theme.textTheme.bodySmall?.copyWith(color: muted)),
               ],
             ),
           ),
@@ -140,10 +149,10 @@ class LandmarkTrail extends StatelessWidget {
                     state: rank.level < currentLevel
                         ? _StopState.passed
                         : rank.level == currentLevel
-                            ? _StopState.current
-                            : rank.level == currentLevel + 1
-                                ? _StopState.next
-                                : _StopState.ahead,
+                        ? _StopState.current
+                        : rank.level == currentLevel + 1
+                        ? _StopState.next
+                        : _StopState.ahead,
                     isTop: rank == ranks.last,
                     isBottom: rank == ranks.first,
                     medalKey: rank.level == currentLevel ? currentMedalKey : null,
@@ -159,12 +168,11 @@ class LandmarkTrail extends StatelessWidget {
 
 /// Header on the city's veil: where the climb goes and where the citizen is.
 class _CityHeading extends StatelessWidget {
-  final String title;
   final String climbTitle;
   final String headline;
   final String level;
 
-  const _CityHeading({required this.title, required this.climbTitle, required this.headline, required this.level});
+  const _CityHeading({required this.climbTitle, required this.headline, required this.level});
 
   @override
   Widget build(BuildContext context) {
@@ -197,13 +205,7 @@ class _CityHeading extends StatelessWidget {
               child: Text(headline, style: AppTextStyles.cityTitle.copyWith(color: CityTheme.onVeil)),
             ),
             const SizedBox(height: AppSpacing.xs),
-            Row(
-              children: [
-                Text(title, style: small?.copyWith(fontWeight: FontWeight.w600)),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(child: Text(level, style: small)),
-              ],
-            ),
+            Text(level, style: small),
           ],
         ),
       ),
@@ -240,10 +242,7 @@ class _Stop extends StatelessWidget {
     // A place with a photo is named after the place; otherwise after the rank.
     final hasPhoto = place?.medal != null;
     final name = hasPhoto ? place!.title : rank.name;
-    final detail = [
-      if (rank.minXp != null) '${rank.minXp} XP',
-      if (hasPhoto) rank.name,
-    ].join(' · ');
+    final detail = [if (rank.minXp != null) '${rank.minXp} XP', if (hasPhoto) rank.name].join(' · ');
     final tag = switch (state) {
       _StopState.current => 'Logrado',
       _StopState.next => 'Siguiente',
@@ -261,11 +260,7 @@ class _Stop extends StatelessWidget {
       label: spoken,
       excludeSemantics: true,
       child: CustomPaint(
-        painter: _PathPainter(
-          color: scheme.onSurface.withValues(alpha: 0.35),
-          above: !isTop,
-          below: !isBottom,
-        ),
+        painter: _PathPainter(color: scheme.onSurface.withValues(alpha: 0.35), above: !isTop, below: !isBottom),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
           child: Row(
@@ -359,15 +354,15 @@ class _Stop extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: scheme.surfaceContainerLow,
-        border: Border.all(
-          color: _earned ? city.accent : scheme.outlineVariant,
-          width: _earned ? 3 : 2,
-        ),
+        border: Border.all(color: _earned ? city.accent : scheme.outlineVariant, width: _earned ? 3 : 2),
       ),
       // A rank not reached yet is grey and faded; the tag and the order say it too.
       child: _earned
           ? picture
-          : Opacity(opacity: 0.6, child: ColorFiltered(colorFilter: _greyscale, child: picture)),
+          : Opacity(
+              opacity: 0.6,
+              child: ColorFiltered(colorFilter: _greyscale, child: picture),
+            ),
     );
   }
 
