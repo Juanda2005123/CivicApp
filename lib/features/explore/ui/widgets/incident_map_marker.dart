@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/severity_colors.dart';
@@ -70,13 +71,13 @@ class IncidentMapMarker extends StatelessWidget {
 
 /// Icon of a category from the key stored in `incident_category.icon`.
 IconData categoryIconData(String key) => switch (key) {
-      'warning' => Icons.remove_road_outlined,
-      'traffic' => Icons.traffic_outlined,
-      'construction' => Icons.construction_outlined,
-      'directions_walk' => Icons.directions_walk_outlined,
-      'water_drop' => Icons.water_drop_outlined,
-      'signpost' => Icons.signpost_outlined,
-      _ => Icons.report_problem_outlined,
+      'warning' => LucideIcons.road,
+      'traffic' => LucideIcons.trafficCone,
+      'construction' => LucideIcons.construction,
+      'directions_walk' => LucideIcons.footprints,
+      'water_drop' => LucideIcons.droplet,
+      'signpost' => LucideIcons.signpost,
+      _ => LucideIcons.triangleAlert,
     };
 
 /// Draws the severity shape: circle (low), triangle (medium), diamond (high),

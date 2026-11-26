@@ -31,11 +31,9 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     this._getImpact,
     this._getRankProgress,
     this._getMyReports, {
-    PickPhotoUseCase? pickPhoto,
-    UpdateAvatarUseCase? updateAvatar,
-  })  : _pickPhoto = pickPhoto,
-        _updateAvatar = updateAvatar,
-        super(const ProfileState()) {
+    this._pickPhoto,
+    this._updateAvatar,
+  }) : super(const ProfileState()) {
     on<ProfileStarted>(_onStarted);
     on<ProfileRefreshed>(_onRefreshed);
     on<SignOutRequested>(_onSignOutRequested);

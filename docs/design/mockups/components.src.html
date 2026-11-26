@@ -6,7 +6,7 @@
 <title>VIGÍA · Componentes (dirección E, Sello comunitario)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=Anton&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css">
 <style>
   .panel { background: var(--bg); color: var(--text); border-radius: 16px; padding: 24px; flex: 1 1 380px; min-width: 320px; border: 1px solid #D9CFBB; }
@@ -29,6 +29,36 @@
   .spinner { width: 36px; height: 36px; }
   .bar { height: 6px; border-radius: 3px; background: var(--divider); overflow: hidden; }
   .bar > i { display: block; height: 100%; background: var(--accent); }
+  .cv { --deep: #1B4B5F; --accent-city: #F08A24; --on-accent: #1B1205; --veil: #0B2433; }
+  .cv.med { --deep: #0E6B3F; --accent-city: #F4B400; --on-accent: #1A1400; --veil: #0B2A1E; }
+  .flag { display: flex; width: 32px; height: 8px; border-radius: 2px; overflow: hidden; }
+  .flag i { display: block; height: 100%; }
+  .hero { position: relative; border-radius: 12px; overflow: hidden; height: 200px; color: #fff; }
+  .hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--veil) 55%, transparent), transparent 32%, color-mix(in srgb, var(--veil) 94%, transparent)); }
+  .hero > div { position: absolute; z-index: 1; left: 16px; right: 16px; bottom: 12px; }
+  .anton { font-family: Anton, "Arial Narrow", sans-serif; font-size: 30px; line-height: 1.12; }
+  .eyebrow { display: flex; gap: 8px; align-items: center; font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+  .citycard { position: relative; height: 88px; border-radius: 12px; overflow: hidden; color: #fff; background: var(--veil); }
+  .citycard img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .citycard::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--veil) 94%, transparent), color-mix(in srgb, var(--veil) 15%, transparent)); }
+  .citycard.on { outline: 3px solid var(--accent-city); outline-offset: -3px; }
+  .citycard > div { position: absolute; z-index: 1; left: 12px; top: 8px; }
+  .gps { background: var(--accent-city); color: var(--on-accent); border-radius: 8px; padding: 1px 8px; font-family: var(--font-mono); font-size: 10px; }
+  .stop { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center; margin-bottom: 14px; }
+  .medal { position: relative; width: 56px; height: 56px; border-radius: 50%; border: 3px solid var(--accent-city); padding: 1px; }
+  .medal img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+  .stop.lock .medal { border: 2px solid var(--divider); }
+  .stop.lock img { filter: grayscale(1); opacity: .6; }
+  .you { position: absolute; left: 12px; bottom: -9px; background: var(--accent-city); color: var(--on-accent); border: 2px solid var(--surface, #FFFBF2); border-radius: 12px; padding: 0 7px; font-family: var(--font-mono); font-size: 10px; }
+  .tag { background: var(--deep); color: #fff; border-radius: 8px; padding: 0 6px; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; }
+  .stop b { font-family: Fraunces, Georgia, serif; font-size: 16px; }
+  .btn-city { display: flex; justify-content: center; align-items: center; height: 52px; border-radius: 8px; background: var(--accent-city); color: var(--on-accent); font-weight: 600; }
+  .pill { display: inline-block; width: 56px; height: 30px; line-height: 30px; text-align: center; border-radius: 15px; background: color-mix(in srgb, var(--accent-city) 38%, transparent); }
+  .bone { height: 14px; border-radius: 8px; background: color-mix(in srgb, var(--text) 10%, transparent); margin-top: 8px; }
+  .cele { background: var(--veil); color: #fff; border-radius: 12px; padding: 20px; text-align: center; }
+  .ring { width: 120px; height: 120px; margin: 0 auto 14px; border-radius: 50%; border: 4px dashed var(--accent-city); padding: 6px; }
+  .ring img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 </style>
 </head>
 <body>
@@ -264,6 +294,37 @@
         <text font-family="IBM Plex Mono,monospace" font-weight="500" font-size="10.5" letter-spacing="2.2" fill="#F6EFE0"><textPath href="#arc" startOffset="0">VALIDADO POR LA COMUNIDAD · +10 VOTOS ·</textPath></text>
         <path d="M58 76l12 12 22-26" fill="none" stroke="#F6EFE0" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <p class="caption" style="margin-top:10px;text-align:center">Se "estampa" al alcanzar 10 votos. Mismo lenguaje que los sellos de rango.</p>
+    </div>
+  </div>
+  <div class="group-title">Ciudad Viva: identidad por ciudad (04-city-identity.md)</div>
+  <div class="row">
+    <div class="panel cv " data-theme="light" style="max-width:400px">
+      <h3>Cali</h3>
+      <div class="stack">
+        <div class="hero"><img src="city-img/cali-tres-cruces-lejos.jpg" alt=""><div><div class="eyebrow"><span class="flag" aria-hidden="true"><i style="background:#1D3E9E;flex:3"></i><i style="background:#C8202F;flex:1"></i><i style="background:#FFFFFF;flex:3"></i><i style="background:#C8202F;flex:1"></i><i style="background:#1C7C43;flex:3"></i></span>Cali, Valle del Cauca · tarde</div><div class="anton">¡Qué más, ve!</div><div class="small">Cali se cuida entre vecinos.</div></div></div>
+        <div class="citycard on"><img src="city-img/cali-tres-cruces-lejos.jpg" alt=""><div><div class="anton" style="font-size:22px">Cali</div><div class="eyebrow" style="text-transform:none">Valle del Cauca</div><div class="inline"><span class="flag" aria-hidden="true"><i style="background:#1D3E9E;flex:3"></i><i style="background:#C8202F;flex:1"></i><i style="background:#FFFFFF;flex:3"></i><i style="background:#C8202F;flex:1"></i><i style="background:#1C7C43;flex:3"></i></span><span class="gps">Detectada por GPS</span></div></div></div>
+        <div class="btn-city">Apoyar este reporte</div>
+        <div class="inline"><span class="chip" style="background:var(--deep);color:#fff">Chip activo</span><a style="color:var(--deep)">Enlace</a><span class="pill">●</span><span class="caption">pastilla de la pestaña activa</span></div>
+        <div class="card" style="padding:12px;padding-bottom:0"><div class="eyebrow" style="background:var(--veil);color:#fff;margin:-12px -12px 14px;padding:12px"><span class="flag" aria-hidden="true"><i style="background:#1D3E9E;flex:3"></i><i style="background:#C8202F;flex:1"></i><i style="background:#FFFFFF;flex:3"></i><i style="background:#C8202F;flex:1"></i><i style="background:#1C7C43;flex:3"></i></span>Tu subida al Cerro de las Tres Cruces</div><div class="stop lock"><div class="medal"><img src="city-img/cali-cristo-rey-sq.jpg" alt=""></div><div><b>Cristo Rey</b> <span class="tag">Siguiente</span><div class="caption mono">2500 XP · Guardián Vial</div></div></div><div class="stop"><div class="medal"><img src="city-img/cali-ermita-sq.jpg" alt=""><span class="you">TÚ</span></div><div><b>La Ermita</b> <span class="tag">Logrado</span><div class="caption mono">1000 XP · Vecino Activo</div></div></div><div class="stop"><div class="medal"><img src="city-img/cali-gato-sq.jpg" alt=""></div><div><b>Gato del Río</b><div class="caption mono">0 XP · Observador Urbano</div></div></div></div>
+        <div class="cele"><div class="ring"><img src="city-img/cali-ermita-sq.jpg" alt=""></div><div class="anton">¡Eso, ve!</div><div class="mono" style="color:var(--accent-city)">+500 XP para quien lo reportó</div></div>
+      </div>
+    </div>
+    <div class="panel cv med" data-theme="light" style="max-width:400px">
+      <h3>Medellín</h3>
+      <div class="stack">
+        <div class="hero"><img src="city-img/med-metrocable.jpg" alt=""><div><div class="eyebrow"><span class="flag" aria-hidden="true"><i style="background:#FFFFFF;flex:1"></i><i style="background:#0E6B3F;flex:1"></i></span>Medellín, Antioquia · tarde</div><div class="anton">¡Quiubo, parce!</div><div class="small">Medellín se cuida entre vecinos.</div></div></div>
+        <div class="citycard on"><img src="city-img/med-metrocable.jpg" alt=""><div><div class="anton" style="font-size:22px">Medellín</div><div class="eyebrow" style="text-transform:none">Antioquia</div><div class="inline"><span class="flag" aria-hidden="true"><i style="background:#FFFFFF;flex:1"></i><i style="background:#0E6B3F;flex:1"></i></span><span class="gps">Detectada por GPS</span></div></div></div>
+        <div class="btn-city">Apoyar este reporte</div>
+        <div class="inline"><span class="chip" style="background:var(--deep);color:#fff">Chip activo</span><a style="color:var(--deep)">Enlace</a><span class="pill">●</span><span class="caption">pastilla de la pestaña activa</span></div>
+        <div class="card" style="padding:12px;padding-bottom:0"><div class="eyebrow" style="background:var(--veil);color:#fff;margin:-12px -12px 14px;padding:12px"><span class="flag" aria-hidden="true"><i style="background:#FFFFFF;flex:1"></i><i style="background:#0E6B3F;flex:1"></i></span>Tu subida al Pueblito Paisa</div><div class="stop lock"><div class="medal"><img src="city-img/med-metrocable-sq.jpg" alt=""></div><div><b>Metrocable</b> <span class="tag">Siguiente</span><div class="caption mono">2500 XP · Guardián Vial</div></div></div><div class="stop"><div class="medal"><img src="city-img/med-botero-sq.jpg" alt=""><span class="you">TÚ</span></div><div><b>Plaza Botero</b> <span class="tag">Logrado</span><div class="caption mono">1000 XP · Vecino Activo</div></div></div><div class="stop"><div class="medal"><img src="city-img/med-comuna13-sq.jpg" alt=""></div><div><b>Comuna 13</b><div class="caption mono">0 XP · Observador Urbano</div></div></div></div>
+        <div class="cele"><div class="ring"><img src="city-img/med-botero-sq.jpg" alt=""></div><div class="anton">¡Qué chimba, parce!</div><div class="mono" style="color:var(--accent-city)">+500 XP para quien lo reportó</div></div>
+      </div>
+    </div>
+    <div class="panel" data-theme="light" style="max-width:300px">
+      <h3>Carga (8D) y movimiento</h3>
+      <div class="card" style="padding:12px"><div class="bone" style="height:64px;width:64px;margin:0"></div><div class="bone" style="width:90%"></div><div class="bone" style="width:55%"></div></div>
+      <p class="caption" style="margin-top:10px">Esqueleto con brillo solo la primera vez de una lista o pantalla (feed, perfil, detalle, comentarios, Mis reportes). Anillo punteado dentro del botón en acciones cortas. Nada si tarda menos de 300 ms.</p>
+      <p class="caption" style="margin-top:10px">1A presión 96 % · 2D pulgar, "+1" y anillo · 3A sello y confeti · 4C foto en círculo · 5A eje compartido · 6A zoom de 20 s · 7A cortina con la bandera. Con "reducir movimiento": fundido de 100 ms.</p>
     </div>
   </div>
 </div>

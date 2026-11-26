@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/app_spacing.dart';
 import '../utils/search_text.dart';
@@ -37,6 +38,8 @@ class AppDropdownField<T> extends FormField<T> {
                 expandedInsets: EdgeInsets.zero,
                 menuHeight: AppSizes.dropdownMenuHeight,
                 initialSelection: state.value,
+                trailingIcon: const Icon(LucideIcons.chevronDown, size: AppSizes.icon),
+                selectedTrailingIcon: const Icon(LucideIcons.chevronUp, size: AppSizes.icon),
                 dropdownMenuEntries: entries,
                 enableFilter: true,
                 requestFocusOnTap: true,

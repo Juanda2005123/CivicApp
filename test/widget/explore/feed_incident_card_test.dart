@@ -7,6 +7,7 @@ import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import 'package:vigia_app/features/explore/ui/widgets/feed_incident_card.dart';
 import 'package:vigia_app/features/reports/domain/entities/feed_incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 FeedIncident _incident({
   String? primaryPhotoUrl,
@@ -96,7 +97,7 @@ void main() {
       await tester.pumpWidget(_host(_incident()));
 
       expect(find.byType(Image), findsNothing);
-      expect(find.byIcon(Icons.remove_road_outlined), findsOneWidget);
+      expect(find.byIcon(LucideIcons.road), findsOneWidget);
     });
 
     testWidgets('with a photo it draws it, and falls back to the icon if it cannot load', (tester) async {
@@ -108,7 +109,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.byIcon(Icons.remove_road_outlined), findsOneWidget);
+      expect(find.byIcon(LucideIcons.road), findsOneWidget);
     });
 
     testWidgets('the distance shows only when it is known', (tester) async {
@@ -130,11 +131,11 @@ void main() {
     testWidgets('a validated or resolved report gets the check, a pending one does not', (tester) async {
       await tester.pumpWidget(_host(_incident(status: IncidentStatus.communityValidated)));
       expect(find.text('Validado por la comunidad'), findsOneWidget);
-      expect(find.byIcon(Icons.check_circle_outline), findsOneWidget);
+      expect(find.byIcon(LucideIcons.circleCheck), findsOneWidget);
 
       await tester.pumpWidget(_host(_incident(status: IncidentStatus.underReview)));
       expect(find.text('En revisión'), findsOneWidget);
-      expect(find.byIcon(Icons.check_circle_outline), findsNothing);
+      expect(find.byIcon(LucideIcons.circleCheck), findsNothing);
     });
 
     testWidgets('the whole card is one button that speaks the report', (tester) async {

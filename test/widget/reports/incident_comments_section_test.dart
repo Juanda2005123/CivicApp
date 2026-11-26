@@ -9,6 +9,7 @@ import 'package:vigia_app/features/reports/domain/entities/incident_comment.dart
 import 'package:vigia_app/features/reports/domain/entities/picked_photo.dart';
 import 'package:vigia_app/features/reports/ui/bloc/comments_bloc.dart';
 import 'package:vigia_app/features/reports/ui/widgets/incident_comments_section.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../support/comment_samples.dart';
 import '../../support/detail_bloc_factory.dart';
@@ -93,7 +94,7 @@ void main() {
         ]);
 
         // The network is not available in tests: the placeholder stands in for the photo.
-        expect(find.byIcon(Icons.broken_image_outlined), findsOneWidget);
+        expect(find.byIcon(LucideIcons.imageOff), findsOneWidget);
         expect(tester.takeException(), isNull);
       });
 

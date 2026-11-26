@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 
@@ -60,7 +61,7 @@ Future<void> showChoiceSheet<T>(
                                   ? theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)
                                   : theme.textTheme.bodyLarge,
                             ),
-                            trailing: option.value == current ? const Icon(Icons.check) : null,
+                            trailing: option.value == current ? const Icon(LucideIcons.check) : null,
                             onTap: () {
                               Navigator.of(sheetContext).pop();
                               onSelected(option.value);

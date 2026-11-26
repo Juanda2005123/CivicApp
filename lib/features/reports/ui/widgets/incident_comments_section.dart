@@ -11,10 +11,13 @@ import 'package:vigia_app/core/widgets/dotted_spinner.dart';
 import 'package:vigia_app/core/widgets/sign_in_required_dialog.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_comment.dart';
 import 'package:vigia_app/features/reports/domain/entities/picked_photo.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../bloc/comments_bloc.dart';
 import '../bloc/comments_event.dart';
 import '../bloc/comments_state.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
+import 'package:vigia_app/core/widgets/city/city_skeleton.dart';
 
 /// Discussion thread of a report and its composer (HU-17), shown at the end of
 /// the report detail. Comments read oldest first. A guest reads them and is
@@ -67,7 +70,7 @@ class _IncidentCommentsSectionState extends State<IncidentCommentsSection> {
         content: const Text('Se borrarán el texto y la foto, y perderás los 15 XP que ganaste.'),
         actions: [
           TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Eliminar')),
+          PressScale(child: FilledButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Eliminar'))),
         ],
       ),
     );
@@ -121,11 +124,10 @@ class _IncidentCommentsSectionState extends State<IncidentCommentsSection> {
     switch (state.status) {
       case CommentsStatus.initial:
       case CommentsStatus.loading:
-        return const Center(
-          child: Padding(
-            padding: EdgeInsets.all(AppSpacing.lg),
-            child: DottedSpinner(size: 28, semanticLabel: 'Cargando comentarios'),
-          ),
+        return const CitySkeleton(
+          shape: CitySkeletonShape.list,
+          semanticLabel: 'Cargando comentarios',
+          fill: false,
         );
       case CommentsStatus.failure:
         return Column(
@@ -136,10 +138,10 @@ class _IncidentCommentsSectionState extends State<IncidentCommentsSection> {
               kind: NoticeKind.error,
             ),
             const SizedBox(height: AppSpacing.sm),
-            OutlinedButton(
+            PressScale(child: OutlinedButton(
               onPressed: () => context.read<CommentsBloc>().add(CommentsStarted(widget.incidentId)),
               child: const Text('Reintentar'),
-            ),
+            )),
           ],
         );
       case CommentsStatus.success:
@@ -173,11 +175,11 @@ class _IncidentCommentsSectionState extends State<IncidentCommentsSection> {
     if (state.isGuest) {
       return SizedBox(
         width: double.infinity,
-        child: OutlinedButton.icon(
+        child: PressScale(child: OutlinedButton.icon(
           onPressed: _askToSignIn,
-          icon: const Icon(Icons.lock_outline, size: AppSizes.icon),
+          icon: const Icon(LucideIcons.lock, size: AppSizes.icon),
           label: const Text('Inicia sesión para comentar'),
-        ),
+        )),
       );
     }
 
@@ -211,25 +213,25 @@ class _IncidentCommentsSectionState extends State<IncidentCommentsSection> {
             IconButton(
               tooltip: 'Tomar una foto',
               onPressed: state.isSending ? null : () => bloc.add(const CommentPhotoRequested(fromCamera: true)),
-              icon: const Icon(Icons.photo_camera_outlined),
+              icon: const Icon(LucideIcons.camera),
             ),
             IconButton(
               tooltip: 'Elegir una foto de la galería',
               onPressed: state.isSending ? null : () => bloc.add(const CommentPhotoRequested()),
-              icon: const Icon(Icons.add_photo_alternate_outlined),
+              icon: const Icon(LucideIcons.imagePlus),
             ),
             const Spacer(),
             ValueListenableBuilder<TextEditingValue>(
               valueListenable: _controller,
               builder: (context, value, _) {
                 final canSend = (value.text.trim().isNotEmpty || state.draftPhoto != null) && !state.isSending;
-                return FilledButton.icon(
+                return PressScale(child: FilledButton.icon(
                   onPressed: canSend ? () => bloc.add(CommentSubmitted(_controller.text)) : null,
                   icon: state.isSending
-                      ? const DottedSpinner(size: 18, semanticLabel: 'Publicando')
-                      : const Icon(Icons.send_outlined, size: AppSizes.icon),
+                      ? DottedSpinner(size: 18, color: theme.colorScheme.onPrimary, semanticLabel: 'Publicando')
+                      : const Icon(LucideIcons.send, size: AppSizes.icon),
                   label: Text(state.isSending ? 'Publicando…' : 'Publicar'),
-                );
+                ));
               },
             ),
           ],
@@ -314,7 +316,7 @@ class _CommentTile extends StatelessWidget {
                   height: 120,
                   alignment: Alignment.center,
                   color: theme.colorScheme.surfaceContainerHighest,
-                  child: Icon(Icons.broken_image_outlined, color: theme.colorScheme.onSurfaceVariant),
+                  child: Icon(LucideIcons.imageOff, color: theme.colorScheme.onSurfaceVariant),
                 ),
               ),
             ),
@@ -325,7 +327,7 @@ class _CommentTile extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: TextButton.icon(
                 onPressed: isDeleting ? null : onDelete,
-                icon: const Icon(Icons.delete_outline, size: AppSizes.icon),
+                icon: const Icon(LucideIcons.trash2, size: AppSizes.icon),
                 label: Text(isDeleting ? 'Eliminando…' : 'Eliminar'),
               ),
             ),
@@ -368,7 +370,7 @@ class _DraftPhoto extends StatelessWidget {
               height: 72,
               alignment: Alignment.center,
               color: theme.colorScheme.surfaceContainerHighest,
-              child: Icon(Icons.image_outlined, color: theme.colorScheme.onSurfaceVariant),
+              child: Icon(LucideIcons.image, color: theme.colorScheme.onSurfaceVariant),
             ),
           ),
         ),
@@ -379,7 +381,7 @@ class _DraftPhoto extends StatelessWidget {
         IconButton(
           tooltip: 'Quitar la foto',
           onPressed: onRemove,
-          icon: const Icon(Icons.close),
+          icon: const Icon(LucideIcons.x),
         ),
       ],
     );

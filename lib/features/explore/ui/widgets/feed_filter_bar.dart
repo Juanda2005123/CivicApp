@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../domain/entities/report_filter.dart';
@@ -82,12 +83,12 @@ class _FeedFilterBarState extends State<FeedFilterBar> {
             decoration: InputDecoration(
               // Short on purpose: a longer hint is cut off on a 375 dp phone.
               hintText: 'Buscar reportes',
-              prefixIcon: const Icon(Icons.search, size: AppSizes.icon),
+              prefixIcon: const Icon(LucideIcons.search, size: AppSizes.icon),
               suffixIcon: _controller.text.isEmpty
                   ? null
                   : IconButton(
                       tooltip: 'Borrar búsqueda',
-                      icon: const Icon(Icons.close, size: AppSizes.icon),
+                      icon: const Icon(LucideIcons.x, size: AppSizes.icon),
                       onPressed: () {
                         _controller.clear();
                         widget.onQueryChanged('');
@@ -104,19 +105,19 @@ class _FeedFilterBarState extends State<FeedFilterBar> {
             runSpacing: AppSpacing.xs,
             children: [
               _FilterChip(
-                icon: Icons.category_outlined,
+                icon: LucideIcons.slidersHorizontal,
                 label: filter.categoryName ?? 'Categoría',
                 selected: filter.categoryName != null,
                 onPressed: widget.onCategoryPressed,
               ),
               _FilterChip(
-                icon: Icons.holiday_village_outlined,
+                icon: LucideIcons.mapPinned,
                 label: filter.neighborhood ?? 'Barrio',
                 selected: filter.neighborhood != null,
                 onPressed: widget.onNeighborhoodPressed,
               ),
               _FilterChip(
-                icon: Icons.sort,
+                icon: LucideIcons.arrowUpDown,
                 label: filter.sort.labelSpanish,
                 selected: false,
                 onPressed: widget.onSortPressed,

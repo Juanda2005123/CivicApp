@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -7,6 +8,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_notice.dart';
 import '../../../../core/widgets/app_status_chip.dart';
+import '../../../../core/widgets/city/city_skeleton.dart';
 import '../../../../core/widgets/civic_avatar.dart';
 import '../../../../core/widgets/dotted_spinner.dart';
 import '../../../../core/widgets/primary_button.dart';
@@ -17,13 +19,16 @@ import '../bloc/profile_event.dart';
 import '../bloc/profile_state.dart';
 import '../widgets/impact_counters.dart';
 import '../widgets/my_reports_section.dart';
-import '../widgets/rank_progress_card.dart';
+import '../widgets/rank_climb.dart';
+import '../widgets/rank_up_celebrator.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// "Mi perfil" tab of the shell: the citizen's civic impact dashboard (HU-23),
 /// built on the profile summary of Sprint 1, with secure logout. A Page, so it
 /// has no Scaffold; it only draws the [ProfileState]. A guest (HU-22) sees an
-/// invitation to sign in instead.
-class ProfilePage extends StatelessWidget {
+/// invitation to sign in instead. Stateful only to keep the key of the current
+/// rank's medal, where the rank celebration opens.
+class ProfilePage extends StatefulWidget {
   /// Opens the report wizard. The shell owns it because it also reloads the map and the feed.
   final VoidCallback onReportPressed;
 
@@ -34,15 +39,25 @@ class ProfilePage extends StatelessWidget {
   static const double bottomClearance = AppSpacing.xxxl + AppSizes.button + AppSpacing.lg;
 
   @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final _medalKey = GlobalKey();
+
+  @override
   Widget build(BuildContext context) {
-    return BlocConsumer<ProfileBloc, ProfileState>(
-      listenWhen: (previous, current) => previous.status != current.status,
-      listener: (context, state) {
-        if (state.status == ProfileStatus.signedOut) {
-          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (route) => false);
-        }
-      },
-      builder: (context, state) => _buildBody(context, state),
+    return RankUpCelebrator(
+      medalKey: _medalKey,
+      child: BlocConsumer<ProfileBloc, ProfileState>(
+        listenWhen: (previous, current) => previous.status != current.status,
+        listener: (context, state) {
+          if (state.status == ProfileStatus.signedOut) {
+            Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (route) => false);
+          }
+        },
+        builder: (context, state) => _buildBody(context, state),
+      ),
     );
   }
 
@@ -59,7 +74,7 @@ class ProfilePage extends StatelessWidget {
     }
 
     if (profile == null) {
-      return const Center(child: DottedSpinner(size: 40, semanticLabel: 'Cargando tu perfil'));
+      return const CitySkeleton(shape: CitySkeletonShape.profile, semanticLabel: 'Cargando tu perfil');
     }
 
     return Center(
@@ -68,7 +83,7 @@ class ProfilePage extends StatelessWidget {
           AppSpacing.screen,
           AppSpacing.screen,
           AppSpacing.screen,
-          AppSpacing.screen + bottomClearance,
+          AppSpacing.screen + ProfilePage.bottomClearance,
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: AppSpacing.maxContentWidth),
@@ -86,41 +101,41 @@ class ProfilePage extends StatelessWidget {
                 AppNotice(kind: NoticeKind.error, message: state.avatarErrorMessage!),
               ],
               const SizedBox(height: AppSpacing.lg),
-              _ImpactPanel(state: state),
+              _ImpactPanel(state: state, medalKey: _medalKey),
               if (state.impactStatus == ImpactStatus.success) ...[
                 const SizedBox(height: AppSpacing.xl),
                 MyReportsSection(
                   reports: state.myReports,
                   onOpen: (report) => _openReport(context, report),
-                  onReportFirst: onReportPressed,
+                  onReportFirst: widget.onReportPressed,
                 ),
               ],
               const SizedBox(height: AppSpacing.lg),
               _DetailsCard(profile: profile),
               const SizedBox(height: AppSpacing.xl),
-              OutlinedButton.icon(
+              PressScale(child: OutlinedButton.icon(
                 onPressed: () => _openSettings(context, profile),
-                icon: const Icon(Icons.settings_outlined, size: AppSizes.icon),
+                icon: const Icon(LucideIcons.settings, size: AppSizes.icon),
                 label: const Text('Configuración'),
-              ),
+              )),
               const SizedBox(height: AppSpacing.sm),
-              OutlinedButton.icon(
+              PressScale(child: OutlinedButton.icon(
                 onPressed: () => _openEditProfile(context, profile),
-                icon: const Icon(Icons.edit_outlined, size: AppSizes.icon),
+                icon: const Icon(LucideIcons.pencil, size: AppSizes.icon),
                 label: const Text('Datos personales'),
-              ),
+              )),
               const SizedBox(height: AppSpacing.sm),
-              OutlinedButton.icon(
+              PressScale(child: OutlinedButton.icon(
                 onPressed: () => Navigator.pushNamed(context, AppRoutes.permissions),
-                icon: const Icon(Icons.security_outlined, size: AppSizes.icon),
+                icon: const Icon(LucideIcons.shieldCheck, size: AppSizes.icon),
                 label: const Text('Permisos'),
-              ),
+              )),
               const SizedBox(height: AppSpacing.sm),
-              OutlinedButton.icon(
+              PressScale(child: OutlinedButton.icon(
                 onPressed: () => context.read<ProfileBloc>().add(SignOutRequested()),
-                icon: const Icon(Icons.logout, size: AppSizes.icon),
+                icon: const Icon(LucideIcons.logOut, size: AppSizes.icon),
                 label: const Text('Cerrar sesión'),
-              ),
+              )),
             ],
           ),
         ),
@@ -154,7 +169,7 @@ class ProfilePage extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.camera_alt_outlined),
+                leading: const Icon(LucideIcons.camera),
                 title: const Text('Tomar foto'),
                 onTap: () {
                   Navigator.pop(sheetContext);
@@ -162,7 +177,7 @@ class ProfilePage extends StatelessWidget {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library_outlined),
+                leading: const Icon(LucideIcons.images),
                 title: const Text('Elegir de la galería'),
                 onTap: () {
                   Navigator.pop(sheetContext);
@@ -186,12 +201,13 @@ class ProfilePage extends StatelessWidget {
 }
 
 /// Progress to the next rank and the four counters (HU-23). While they load a
-/// spinner holds the place; if they cannot load, the message and a retry show
+/// skeleton holds the place; if they cannot load, the message and a retry show
 /// and the rest of the profile stays usable.
 class _ImpactPanel extends StatelessWidget {
   final ProfileState state;
+  final Key medalKey;
 
-  const _ImpactPanel({required this.state});
+  const _ImpactPanel({required this.state, required this.medalKey});
 
   @override
   Widget build(BuildContext context) {
@@ -202,7 +218,7 @@ class _ImpactPanel extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          RankProgressCard(progress: progress),
+          RankClimb(progress: progress, currentMedalKey: medalKey),
           const SizedBox(height: AppSpacing.md),
           ImpactCounters(impact: impact),
         ],
@@ -218,17 +234,18 @@ class _ImpactPanel extends StatelessWidget {
             message: state.impactErrorMessage ?? 'No pudimos cargar tu impacto.',
           ),
           const SizedBox(height: AppSpacing.sm),
-          OutlinedButton(
+          PressScale(child: OutlinedButton(
             onPressed: () => context.read<ProfileBloc>().add(ProfileStarted()),
             child: const Text('Reintentar'),
-          ),
+          )),
         ],
       );
     }
 
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
-      child: Center(child: DottedSpinner(size: 32, semanticLabel: 'Cargando tu impacto')),
+    return const CitySkeleton(
+      shape: CitySkeletonShape.impact,
+      semanticLabel: 'Cargando tu impacto',
+      fill: false,
     );
   }
 }
@@ -252,7 +269,7 @@ class _GuestInvitation extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(Icons.person_outline, size: AppSpacing.xxxl, color: context.semantic.accent),
+                  Icon(LucideIcons.user, size: AppSpacing.xxxl, color: context.semantic.accent),
                   const SizedBox(height: AppSpacing.md),
                   Text(
                     'Inicia sesión para ver tu perfil',
@@ -271,10 +288,10 @@ class _GuestInvitation extends StatelessWidget {
                     onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  OutlinedButton(
+                  PressScale(child: OutlinedButton(
                     onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
                     child: const Text('Crear cuenta'),
-                  ),
+                  )),
                 ],
               ),
             ),
@@ -368,15 +385,15 @@ class _DetailsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final rows = [
       _InfoRow(
-        icon: Icons.star_outline,
+        icon: LucideIcons.star,
         label: 'Puntos de reputación',
         value: '${profile.experiencePoints} pts',
         mono: true,
       ),
-      _InfoRow(icon: Icons.mail_outline, label: 'Correo electrónico', value: profile.email),
-      _InfoRow(icon: Icons.location_on_outlined, label: 'Ciudad de residencia', value: profile.cityName),
+      _InfoRow(icon: LucideIcons.mail, label: 'Correo electrónico', value: profile.email),
+      _InfoRow(icon: LucideIcons.mapPin, label: 'Ciudad de residencia', value: profile.cityName),
       _InfoRow(
-        icon: Icons.military_tech_outlined,
+        icon: LucideIcons.award,
         label: 'Rango cívico',
         value: 'Nivel ${profile.rankId} · ${profile.rankName}',
       ),
@@ -454,7 +471,7 @@ class _LoadError extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+            Icon(LucideIcons.circleAlert, size: 48, color: theme.colorScheme.error),
             const SizedBox(height: AppSpacing.lg),
             Text('No pudimos cargar tu perfil', style: theme.textTheme.titleMedium),
             const SizedBox(height: AppSpacing.sm),
@@ -464,7 +481,7 @@ class _LoadError extends StatelessWidget {
               style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppSpacing.lg),
-            OutlinedButton(onPressed: onRetry, child: const Text('Reintentar')),
+            PressScale(child: OutlinedButton(onPressed: onRetry, child: const Text('Reintentar'))),
           ],
         ),
       ),

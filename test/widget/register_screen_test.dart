@@ -15,6 +15,7 @@ import 'package:vigia_app/features/auth/domain/usecases/sign_up_usecase.dart';
 import 'package:vigia_app/features/auth/ui/bloc/register_bloc.dart';
 import 'package:vigia_app/features/auth/ui/bloc/register_event.dart';
 import 'package:vigia_app/features/auth/ui/screens/register_screen.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../support/fakes.dart';
 
@@ -167,12 +168,12 @@ void main() {
       await tester.pumpWidget(createRegisterTestWidget(bloc = newBloc()));
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.check_circle_outline), findsNothing);
+      expect(find.byIcon(LucideIcons.circleCheck), findsNothing);
 
       await tester.enterText(find.byType(TextField).at(3), 'Abc123');
       await tester.pump();
 
-      expect(find.byIcon(Icons.check_circle_outline), findsNWidgets(4));
+      expect(find.byIcon(LucideIcons.circleCheck), findsNWidgets(4));
     });
 
     testWidgets('the GPS button selects the nearest city through the bloc', (tester) async {
@@ -255,7 +256,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(bloc.state.selectedCity, isNull);
-      expect(find.byIcon(Icons.error_outline), findsOneWidget);
+      expect(find.byIcon(LucideIcons.circleAlert), findsOneWidget);
       expect(auth.calls, isEmpty);
     });
 

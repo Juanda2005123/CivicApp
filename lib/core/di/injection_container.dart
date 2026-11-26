@@ -3,6 +3,15 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthUser;
 
 import '../theme/theme_cubit.dart';
+import '../../features/city_identity/data/datasources/city_pack_local_data_source.dart';
+import '../../features/city_identity/data/datasources/last_city_local_data_source.dart';
+import '../../features/city_identity/data/repositories/city_identity_repository_impl.dart';
+import '../../features/city_identity/domain/repositories/city_identity_repository.dart';
+import '../../features/city_identity/domain/usecases/get_city_identity_usecase.dart';
+import '../../features/city_identity/domain/usecases/get_featured_cities_usecase.dart';
+import '../../features/city_identity/domain/usecases/get_last_city_usecase.dart';
+import '../../features/city_identity/domain/usecases/save_last_city_usecase.dart';
+import '../../features/city_identity/ui/bloc/city_ambience_bloc.dart';
 import '../../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../../features/auth/data/datasources/city_local_data_source.dart';
 import '../../features/auth/data/datasources/city_remote_data_source.dart';
@@ -115,6 +124,7 @@ Future<void> initDependencies({
   GeocodingRepository? geocodingRepository,
   CommentRepository? commentRepository,
   ImpactRepository? impactRepository,
+  CityIdentityRepository? cityIdentityRepository,
 }) async {
   await sl.reset();
 
@@ -137,6 +147,8 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => PhotoPickerDataSource());
   sl.registerLazySingleton(() => NominatimDataSource(sl()));
   sl.registerLazySingleton(() => RecentCitiesLocalDataSource());
+  sl.registerLazySingleton(() => CityPackLocalDataSource());
+  sl.registerLazySingleton(() => LastCityLocalDataSource());
 
   // Repositories, registered under their contract
   sl.registerLazySingleton<AuthRepository>(
@@ -170,6 +182,9 @@ Future<void> initDependencies({
     () => photoPickerRepository ?? PhotoPickerRepositoryImpl(sl()),
   );
   sl.registerLazySingleton<RecentCitiesRepository>(() => RecentCitiesRepositoryImpl(sl()));
+  sl.registerLazySingleton<CityIdentityRepository>(
+    () => cityIdentityRepository ?? CityIdentityRepositoryImpl(sl(), sl()),
+  );
   sl.registerLazySingleton<GeocodingRepository>(
     () => geocodingRepository ?? GeocodingRepositoryImpl(sl()),
   );
@@ -213,9 +228,14 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => GetCityOptionsUseCase(sl(), sl()));
   sl.registerLazySingleton(() => SearchCitiesUseCase());
   sl.registerLazySingleton(() => SwitchCityUseCase(sl(), sl(), sl()));
+  sl.registerLazySingleton(() => GetCityIdentityUseCase(sl()));
+  sl.registerLazySingleton(() => GetFeaturedCitiesUseCase(sl()));
+  sl.registerLazySingleton(() => GetLastCityUseCase(sl()));
+  sl.registerLazySingleton(() => SaveLastCityUseCase(sl()));
 
   // Blocs: a new instance per screen
   sl.registerFactory(() => ThemeCubit());
+  sl.registerFactory(() => CityAmbienceBloc(sl(), sl(), sl(), sl()));
   sl.registerFactory(() => StartupBloc(sl()));
   sl.registerFactory(() => LoginBloc(sl()));
   sl.registerFactory(() => RegisterBloc(sl(), sl(), sl(), sl()));

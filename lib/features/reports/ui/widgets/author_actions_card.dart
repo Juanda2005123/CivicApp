@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../domain/entities/incident.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// What the author sees on their own report (HU-18, RN-03): "Editar" and
 /// "Eliminar" while the report is inside its 30 minutes and has fewer than 5
@@ -88,19 +90,19 @@ class _AuthorActionsCardState extends State<AuthorActionsCard> {
         Row(
           children: [
             Expanded(
-              child: OutlinedButton.icon(
+              child: PressScale(child: OutlinedButton.icon(
                 onPressed: widget.isDeleting ? null : widget.onEdit,
-                icon: const Icon(Icons.edit_outlined, size: AppSizes.icon),
+                icon: const Icon(LucideIcons.pencil, size: AppSizes.icon),
                 label: const Text('Editar'),
-              ),
+              )),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
-              child: OutlinedButton.icon(
+              child: PressScale(child: OutlinedButton.icon(
                 onPressed: widget.isDeleting ? null : widget.onDelete,
-                icon: const Icon(Icons.delete_outline, size: AppSizes.icon),
+                icon: const Icon(LucideIcons.trash2, size: AppSizes.icon),
                 label: Text(widget.isDeleting ? 'Eliminando…' : 'Eliminar'),
-              ),
+              )),
             ),
           ],
         ),
@@ -112,7 +114,7 @@ class _AuthorActionsCardState extends State<AuthorActionsCard> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.lock_outline, size: AppSizes.iconLarge, color: scheme.onSurfaceVariant),
+        Icon(LucideIcons.lock, size: AppSizes.iconLarge, color: scheme.onSurfaceVariant),
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(

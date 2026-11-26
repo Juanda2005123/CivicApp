@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/city_theme.dart';
 import '../../../../core/widgets/app_notice.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/dotted_spinner.dart';
@@ -9,6 +11,7 @@ import '../../../auth/domain/entities/city.dart';
 import '../bloc/city_switcher_bloc.dart';
 import '../bloc/city_switcher_event.dart';
 import '../bloc/city_switcher_state.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// Opens the city switcher (HU-21) and answers the city the citizen picked, or
 /// null if they closed it. The [CitySwitcherBloc] comes from the caller's tree.
@@ -84,7 +87,7 @@ class _CitySwitcherSheetState extends State<CitySwitcherSheet> {
               label: 'Buscar ciudad o departamento',
               controller: _searchController,
               hint: 'Ej. Bogotá, Nariño',
-              prefixIcon: Icons.search,
+              prefixIcon: LucideIcons.search,
               textInputAction: TextInputAction.search,
               onChanged: (value) => context.read<CitySwitcherBloc>().add(CityQueryChanged(value)),
             ),
@@ -119,10 +122,10 @@ class _Body extends StatelessWidget {
             message: state.errorMessage ?? 'No pudimos cargar las ciudades.',
           ),
           const SizedBox(height: AppSpacing.md),
-          OutlinedButton(
+          PressScale(child: OutlinedButton(
             onPressed: () => context.read<CitySwitcherBloc>().add(CitySwitcherOpened()),
             child: const Text('Reintentar'),
-          ),
+          )),
         ],
       );
     }
@@ -162,12 +165,49 @@ class _Body extends StatelessWidget {
             for (final city in options.quick)
               ActionChip(
                 label: Text(city.name),
-                avatar: city == current ? const Icon(Icons.check, size: AppSizes.icon) : null,
+                avatar: city == current
+                    ? const Icon(LucideIcons.check, size: AppSizes.icon)
+                    : _quickAvatar(context, city),
                 onPressed: () => Navigator.of(context).pop(city),
               ),
           ],
         ),
       ],
+    );
+  }
+}
+
+/// A round photo of a city with its own pack, or nothing.
+Widget? _quickAvatar(BuildContext context, City city) {
+  final photo = CityTheme.of(context).showcaseFor(city.name, department: city.department)?.thumbnail;
+  return photo == null ? null : CircleAvatar(backgroundImage: photo);
+}
+
+/// Thumbnail of a city row: its photo when it has its own pack.
+class _CityThumbnail extends StatelessWidget {
+  final City city;
+
+  const _CityThumbnail(this.city);
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final photo = CityTheme.of(context).showcaseFor(city.name, department: city.department)?.thumbnail;
+    final placeholder = Icon(LucideIcons.building2, color: scheme.onSurfaceVariant);
+
+    return ExcludeSemantics(
+      child: Container(
+        width: AppSizes.cityThumbnail,
+        height: AppSizes.cityThumbnail,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          borderRadius: AppRadii.small,
+          border: Border.all(color: scheme.outlineVariant),
+        ),
+        child: photo == null
+            ? placeholder
+            : Image(image: photo, fit: BoxFit.cover, errorBuilder: (_, _, _) => placeholder),
+      ),
     );
   }
 }
@@ -186,10 +226,10 @@ class _CityList extends StatelessWidget {
           ListTile(
             contentPadding: EdgeInsets.zero,
             minVerticalPadding: AppSpacing.sm,
-            leading: const Icon(Icons.location_city_outlined),
+            leading: _CityThumbnail(city),
             title: Text('${city.name}, ${city.department}'),
             trailing: city == current
-                ? const Icon(Icons.check, semanticLabel: 'Ciudad actual')
+                ? const Icon(LucideIcons.check, semanticLabel: 'Ciudad actual')
                 : null,
             onTap: () => Navigator.of(context).pop(city),
           ),

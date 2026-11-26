@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
 import 'package:vigia_app/core/widgets/validation_seal.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 void main() {
   Widget host(ThemeData theme, {double textScale = 1}) {
@@ -20,7 +21,7 @@ void main() {
 
       expect(find.text('Reporte validado por la comunidad'), findsOneWidget);
       expect(find.text('10 apoyos'), findsOneWidget);
-      expect(find.byIcon(Icons.check), findsOneWidget);
+      expect(find.byIcon(LucideIcons.badgeCheck), findsOneWidget);
       expect(
         find.bySemanticsLabel('Reporte validado por la comunidad, 10 apoyos'),
         findsOneWidget,

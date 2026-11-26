@@ -1,0 +1,685 @@
+<meta charset="utf-8">
+<title>VIGÍA Ciudad Viva</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Fraunces:opsz,wght@9..144,600;9..144,800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky control bar, then a horizontal rail of phones rendered from one template + per-city data, a palette editor, and an animation catalog grid with a sticky choice summary. */
+:root{
+  --page:#EFE9DC; --page-ink:#14212B; --page-mut:#56616B; --page-line:#D3C9B6; --page-card:#FBF7EE; --page-chip:#E4DCCB;
+  --display:"Anton","Arial Narrow",Impact,sans-serif;
+  --serif:"Fraunces",Georgia,serif;
+  --sans:"IBM Plex Sans",system-ui,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  /* city tokens (set from JS) */
+  --c-primary:#1D3E9E; --c-accent:#F08A24; --c-onaccent:#1B1205; --c-veil:#0B2433;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--page:#0C171E;--page-ink:#EAE4D8;--page-mut:#A2AFB7;--page-line:#253A47;--page-card:#122430;--page-chip:#1B3240;color-scheme:dark}}
+:root[data-theme="dark"]{--page:#0C171E;--page-ink:#EAE4D8;--page-mut:#A2AFB7;--page-line:#253A47;--page-card:#122430;--page-chip:#1B3240;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--page-ink);font-family:var(--sans);line-height:1.5;margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--c-accent);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 120px}
+.eyebrow{font:600 11px var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--page-mut)}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(40px,7vw,76px);line-height:.95;margin:6px 0 10px;letter-spacing:.01em;text-wrap:balance}
+h2{font-family:var(--serif);font-weight:800;font-size:26px;margin:44px 0 4px;text-wrap:balance}
+.lede,.sub{color:var(--page-mut);max-width:70ch;margin:0}
+.sub{margin-bottom:16px}
+
+/* controls */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:20;background:var(--page)}
+.controls{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--page);border-bottom:1px solid var(--page-line);margin:16px 0 8px;padding-block:10px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.seg{display:flex;gap:2px;background:var(--page-chip);border-radius:10px;padding:3px}
+.seg button{border:0;background:transparent;padding:7px 12px;border-radius:8px;font-size:13px;font-weight:600;min-height:36px}
+.seg button[aria-pressed="true"]{background:var(--page-card);box-shadow:0 1px 3px #0002}
+.ctl{display:flex;gap:8px;align-items:center}
+.ctl > span{font:600 11px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--page-mut)}
+.check{display:flex;gap:6px;align-items:center;font-size:13px;font-weight:600}
+.check input{width:18px;height:18px;accent-color:var(--c-primary)}
+
+/* rail */
+.rail{display:flex;gap:22px;overflow-x:auto;padding:8px 2px 18px;scroll-snap-type:x proximity}
+.shot{flex:0 0 300px;scroll-snap-align:start;display:grid;gap:8px;align-content:start}
+.cap{font-size:13px;color:var(--page-mut)}.cap b{display:block;color:var(--page-ink);font-size:14px}
+.cap .try{display:inline-block;margin-top:4px;font:600 11px var(--mono);color:var(--page-ink);background:var(--page-chip);padding:2px 7px;border-radius:5px}
+
+/* ---------- phone ---------- */
+.phone{--s-bg:#F6EFE0;--s-card:#FFFBF2;--s-ink:#10364A;--s-mut:#55606B;--s-line:#D9CFBB;--btn:var(--c-accent);--onbtn:var(--c-onaccent);--link:var(--c-primary);--deep:var(--c-primary);--ondeep:#fff;
+  width:300px;height:620px;border-radius:38px;border:9px solid #0A0F13;background:var(--s-bg);color:var(--s-ink);overflow:hidden;position:relative;font-size:13px;box-shadow:0 18px 40px -22px #0009}
+.phone.dark{--s-bg:#0B2433;--s-card:#10364A;--s-ink:#F6EFE0;--s-mut:#B8C4C9;--s-line:#26516A;--btn:var(--c-accent);--onbtn:var(--c-onaccent);--link:var(--c-accent);--deep:var(--c-accent);--ondeep:var(--c-onaccent)}
+.scr{position:absolute;inset:0;display:flex;flex-direction:column}
+.status{position:absolute;inset:0 0 auto;z-index:6;display:flex;justify-content:space-between;padding:8px 20px 0;font:600 11px var(--mono);color:var(--s-ink)}
+.status.on-photo{color:#fff}
+.flag{display:flex;overflow:hidden;border-radius:2px}
+.flag i{display:block;height:100%}
+.hero{position:relative;flex:none;height:240px;overflow:hidden;color:#fff;background:var(--c-veil)}
+.hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero .veil{position:absolute;inset:0;background:linear-gradient(180deg,color-mix(in srgb,var(--c-veil) 55%,transparent) 0%,transparent 32%,color-mix(in srgb,var(--c-veil) 92%,transparent) 100%)}
+.hero .txt{position:absolute;left:16px;right:16px;bottom:14px;display:grid;gap:4px}
+.hero .where{display:flex;gap:8px;align-items:center;font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.hero .where .flag{width:30px;height:7px}
+.hero h3{font-family:var(--display);font-weight:400;font-size:32px;line-height:.95;margin:0;letter-spacing:.01em}
+.hero p{margin:0;font-size:12.5px;opacity:.92}
+.credit{position:absolute;right:8px;top:28px;font:500 8.5px var(--mono);background:#000a;color:#fff;padding:2px 6px;border-radius:4px;z-index:2}
+.kb .hero img{animation:kb 20s ease-in-out infinite alternate}
+@keyframes kb{from{transform:scale(1)}to{transform:scale(1.1) translate(-2%,-1%)}}
+.body{flex:1;min-height:0;overflow:hidden;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.title{font-family:var(--serif);font-weight:800;font-size:21px;line-height:1.1;margin:0}
+.mission{background:var(--c-veil);color:#fff;border-radius:14px;padding:10px 12px;display:grid;grid-template-columns:42px 1fr;gap:10px;align-items:center;position:relative;overflow:hidden}
+.mission img{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px dashed var(--c-accent)}
+.mission b{display:block;font-size:12.5px}.mission small{font:500 10.5px var(--mono);color:var(--c-accent)}
+.chips{display:flex;gap:6px;overflow:hidden}
+.chip{font-size:11px;padding:5px 10px;border-radius:99px;border:1px solid var(--s-line);white-space:nowrap;background:var(--s-card);color:var(--s-ink)}
+.chip.on{background:var(--deep);color:var(--ondeep);border-color:transparent;font-weight:700}
+.rep{border:1px solid var(--s-line);border-radius:12px;background:var(--s-card);display:grid;grid-template-columns:60px 1fr;gap:10px;padding:8px;position:relative;overflow:hidden}
+.rep .ph{border-radius:8px;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--s-ink) 14%,transparent) 0 6px,transparent 6px 12px);display:grid;place-items:center;font:600 9px var(--mono);color:var(--s-mut)}
+.rep b{font-size:12.5px;display:block;line-height:1.25}
+.meta{font:500 10px var(--mono);color:var(--s-mut);display:flex;gap:7px;margin-top:4px;flex-wrap:wrap;align-items:center}
+.sev{font:700 10px var(--sans);color:#fff;background:#B42318;padding:1px 6px;border-radius:4px}.sev.m{background:#9A5B00}
+.barrio{font:600 10px var(--mono);color:var(--link)}
+.fab{position:absolute;right:14px;bottom:64px;z-index:3;background:var(--c-accent);color:var(--c-onaccent);font-weight:700;padding:11px 16px;border-radius:99px;font-size:13px;border:0;box-shadow:0 8px 18px -8px #0008;overflow:hidden}
+.nav{display:flex;justify-content:space-around;border-top:1px solid var(--s-line);padding:7px 0 12px;background:var(--s-bg);font-size:10px;color:var(--s-mut);flex:none}
+.nav span{text-align:center;min-width:52px}.nav .a{color:var(--s-ink);font-weight:700}
+.nav span{display:grid;justify-items:center;gap:2px}.nav svg{width:46px;height:26px;padding:2px 12px;border-radius:99px;stroke-width:1.8}.nav .a svg{background:color-mix(in srgb,var(--c-accent) 38%,transparent);color:var(--s-ink)}
+.btn{display:flex;justify-content:center;align-items:center;gap:8px;background:var(--btn);color:var(--onbtn);font-weight:700;border-radius:10px;min-height:46px;border:0;width:100%;position:relative;overflow:hidden;font-size:14px}
+.btn.done{background:transparent;color:var(--s-ink);border:1.5px solid var(--s-ink)}
+.btn .ico{display:inline-grid;place-items:center;position:relative;width:30px;height:30px}.btn svg.lucide{width:19px;height:19px}
+.link{background:none;border:0;color:var(--link);font:600 11px var(--mono);text-decoration:underline;padding:4px 0;align-self:flex-start}
+/* picker */
+.pc{position:relative;height:78px;border-radius:12px;overflow:hidden;color:#fff;border:0;padding:0;text-align:left;width:100%;flex:none}
+.pc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pc::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,color-mix(in srgb,var(--c-veil) 92%,transparent),color-mix(in srgb,var(--c-veil) 20%,transparent))}
+.pc div{position:absolute;left:12px;top:10px;z-index:1}
+.pc b{font-family:var(--display);font-weight:400;font-size:24px;display:block;line-height:1}
+.pc small{font:500 10px var(--mono)}
+.pc.on{outline:3px solid var(--c-accent);outline-offset:-3px}
+.pc .gps{position:absolute;right:8px;bottom:8px;z-index:2;background:var(--c-accent);color:var(--c-onaccent);font:700 9px var(--mono);padding:2px 6px;border-radius:4px}
+/* detail */
+.dhead{padding:40px 14px 10px;display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--s-line)}
+.code{font:600 15px var(--mono);color:var(--link)}
+.dphoto{height:120px;border-radius:12px;border:1px solid var(--s-line);background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--s-ink) 10%,transparent) 0 8px,transparent 8px 16px);display:grid;place-items:center;font:600 10px var(--mono);color:var(--s-mut)}
+.valbox{border:1px solid var(--s-line);border-radius:12px;padding:10px;background:var(--s-card);display:grid;gap:6px}
+.valbox .row{display:flex;justify-content:space-between;font-size:12px;font-weight:600}
+.valbox .row span{font-family:var(--mono);color:var(--link)}
+.bar{height:8px;border-radius:99px;background:color-mix(in srgb,var(--s-ink) 14%,transparent);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--c-accent);border-radius:99px;transition:width .32s cubic-bezier(.2,0,0,1)}
+.ringwrap{position:absolute;left:-5px;top:-5px;width:40px;height:40px;pointer-events:none;display:none}.r2C .ringwrap,.r2D .ringwrap{display:block}
+.r2C .ringwrap{display:block}
+.plus{position:absolute;font:700 14px var(--mono);color:var(--c-accent);pointer-events:none;z-index:4}
+/* trail */
+.trailhead{padding:40px 16px 12px;background:var(--c-veil);color:#fff;flex:none;display:grid;gap:3px}
+.trailhead h3{font-family:var(--display);font-weight:400;font-size:27px;margin:0;line-height:1}
+.xp{font:600 11.5px var(--mono);color:var(--c-accent)}
+.trail{position:relative;flex:1;min-height:0;padding:14px 14px 8px}
+.trail::before{content:"";position:absolute;left:41px;top:34px;bottom:46px;border-left:3px dotted color-mix(in srgb,var(--s-ink) 35%,transparent)}
+.stop{position:relative;display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:center;margin-bottom:16px}
+.stop .med{width:56px;height:56px;border-radius:50%;overflow:hidden;border:3px solid var(--s-bg);box-shadow:0 0 0 2px var(--s-line);position:relative;z-index:1}
+.stop .med img{width:100%;height:100%;object-fit:cover;display:block}
+.stop.got .med{box-shadow:0 0 0 3px var(--c-accent)}
+.stop.lock .med img{filter:grayscale(1) contrast(.85);opacity:.7}
+.stop b{font-family:var(--serif);font-size:15px;display:block;line-height:1.15}
+.stop small{font:500 10px var(--mono);color:var(--s-mut)}
+.tag{font:700 8.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:var(--deep);color:var(--ondeep);margin-left:4px;vertical-align:2px}
+.you{position:absolute;left:22px;z-index:3;background:var(--c-accent);color:var(--c-onaccent);font:700 10px var(--mono);padding:3px 8px;border-radius:99px;border:2px solid var(--s-bg)}
+/* album */
+.prog{height:8px;border-radius:99px;background:color-mix(in srgb,var(--s-ink) 14%,transparent);overflow:hidden}.prog i{display:block;height:100%;background:var(--deep);transition:width .4s}
+.album{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.st{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:3/4;background:var(--s-card);border:1px solid var(--s-line);padding:0;transform-style:preserve-3d}
+.st img{width:100%;height:100%;object-fit:cover;display:block}
+.st span{position:absolute;inset:auto 0 0;background:color-mix(in srgb,var(--c-veil) 85%,transparent);color:#fff;font:600 9px var(--sans);padding:4px 5px;line-height:1.15;text-align:left}
+.st.lock img{filter:grayscale(1) blur(1.5px);opacity:.55}
+.st .lk{position:absolute;top:5px;right:5px;width:20px;height:20px;padding:3px;border-radius:50%;background:var(--c-veil);color:#fff}.st:not(.lock) .lk{display:none}
+.st.season{outline:2px dashed var(--c-accent);outline-offset:-4px}
+.sheen{position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,#fff9 50%,transparent 70%);transform:translateX(-120%);pointer-events:none}
+/* celebration */
+.cele{position:absolute;inset:0;z-index:8;background:var(--c-veil);color:#fff;display:grid;place-items:center;text-align:center;padding:24px;overflow:hidden}
+.cele[hidden]{display:none!important}
+.cele .inner{display:grid;gap:9px;position:relative;z-index:2;justify-items:center}
+.seal{width:150px;height:150px;border-radius:50%;border:4px dashed var(--c-accent);padding:6px;position:relative}
+.seal .ph{width:100%;height:100%;border-radius:50%;overflow:hidden}
+.seal img{width:100%;height:100%;object-fit:cover;display:block}
+.seal b{position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);background:var(--btn);color:var(--onbtn);font:700 11px var(--mono);padding:3px 10px;border-radius:99px;white-space:nowrap}
+.cele h3{font-family:var(--display);font-weight:400;font-size:31px;margin:6px 0 0;line-height:1}
+.cele .x{font:600 22px var(--mono);color:var(--c-accent)}
+.cele p{margin:0;font-size:12.5px;opacity:.85;max-width:24ch}
+.ghost{border:1px solid #ffffff66;border-radius:10px;min-height:44px;background:transparent;color:#fff;width:200px}
+.confetti{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.confetti i{position:absolute;top:-20px;width:8px;height:13px;border-radius:2px}
+.full{position:absolute;inset:0;z-index:9;color:#fff;display:grid;align-content:end;padding:20px;background:var(--c-veil)}
+.full img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.full::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,color-mix(in srgb,var(--c-veil) 92%,transparent))}
+.full div{position:relative;z-index:1}
+.full b{font-family:var(--display);font-weight:400;font-size:36px;display:block;line-height:1}
+.curtain{position:absolute;inset:0;z-index:12;display:flex;flex-direction:column;pointer-events:none}
+.curtain i{flex:1;display:block}
+
+/* palette */
+.pal{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.sw{background:var(--page-card);border:1px solid var(--page-line);border-radius:12px;padding:12px;display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:center;min-width:0}
+.sw input[type=color]{width:52px;height:52px;border:0;padding:0;background:none;border-radius:10px;cursor:pointer}
+.sw b{display:block;font-size:14px}.sw small{display:block;color:var(--page-mut);font-size:12px;line-height:1.35}
+.sw code{font:600 12px var(--mono)}
+.aa{display:inline-block;font:700 10px var(--mono);padding:1px 6px;border-radius:4px;margin-left:4px}
+.aa.ok{background:#1F6B4A;color:#fff}.aa.bad{background:#A3261B;color:#fff}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.tbtn{border:1px solid var(--page-line);background:var(--page-card);border-radius:10px;padding:9px 14px;font-weight:600;font-size:13px;min-height:40px}
+.tbtn.primary{background:var(--page-ink);color:var(--page);border-color:transparent}
+.out{font:500 12px var(--mono);background:var(--page-card);border:1px solid var(--page-line);border-radius:10px;padding:10px;white-space:pre-wrap;overflow-x:auto;margin-top:10px}
+
+/* catalog */
+.group{border-top:1px solid var(--page-line);padding-top:16px;margin-top:22px}
+.group h3{font-family:var(--serif);font-weight:800;font-size:19px;margin:0}
+.group > p{margin:2px 0 12px;color:var(--page-mut);font-size:14px;max-width:72ch}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.opt{background:var(--page-card);border:1.5px solid var(--page-line);border-radius:14px;padding:12px;display:grid;gap:10px;min-width:0}
+.opt.sel{border-color:var(--page-ink);box-shadow:0 0 0 2px var(--page-ink)}
+.opt header{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.opt header b{font-size:14.5px}.opt header span{font:600 11px var(--mono);color:var(--page-mut)}
+.opt p{margin:0;font-size:13px;color:var(--page-mut);line-height:1.4}
+.stage{height:150px;border-radius:10px;background:#F6EFE0;color:#10364A;position:relative;overflow:hidden;display:grid;place-items:center;border:1px solid var(--page-line)}
+.stage .btn{width:auto;padding:0 18px;min-height:44px;--btn:var(--c-accent);--onbtn:var(--c-onaccent)}
+.optrow{display:flex;gap:8px}
+.optrow button{flex:1;min-height:38px;border-radius:9px;border:1px solid var(--page-line);background:transparent;font-weight:600;font-size:13px}
+.optrow .pick[aria-pressed="true"]{background:var(--page-ink);color:var(--page);border-color:transparent}
+.rec{font:700 9.5px var(--mono);background:var(--c-accent);color:var(--c-onaccent);padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:2px}
+.summary{position:fixed;left:0;right:0;bottom:0;z-index:16;background:var(--page-ink);color:var(--page);padding-block:10px calc(10px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.summary .txt{flex:1;min-width:0;font:500 12px var(--mono);overflow-wrap:anywhere}
+.summary button{background:var(--c-accent);color:var(--c-onaccent);border:0;border-radius:9px;padding:9px 14px;font-weight:700;min-height:40px}
+.arch{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;align-items:stretch}
+.arch div{background:var(--page-card);border:1px solid var(--page-line);border-radius:12px;padding:12px;font-size:13.5px;color:var(--page-mut)}
+.arch b{display:block;color:var(--page-ink);font-size:14.5px;margin-bottom:2px}
+.arch code{font:600 12px var(--mono);color:var(--page-ink)}
+.credits{columns:2 320px;font-size:12px;color:var(--page-mut)}
+.credits div{break-inside:avoid;margin-bottom:5px}.credits a{color:var(--page-ink)}
+.toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:var(--page-ink);color:var(--page);padding:8px 14px;border-radius:8px;font-size:13px;z-index:30}
+.fab{display:flex;align-items:center;gap:6px}.fab svg{width:18px;height:18px}
+.pc .gps{display:flex;gap:4px;align-items:center}.pc .gps svg{width:11px;height:11px}
+.cnt{display:inline-flex;gap:3px;align-items:center}.meta svg{width:12px;height:12px}
+.dhead .back{width:22px;height:22px}
+.rep .ph svg,.dphoto svg{width:22px;height:22px;opacity:.7}
+.mission{grid-template-columns:42px 1fr 18px}.mission .go{width:18px;height:18px;opacity:.8}
+.busy svg{animation:spin 1.2s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.h3{font-family:var(--serif);font-weight:800;font-size:19px;margin:24px 0 2px}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.slot{background:var(--page-card);border:1px solid var(--page-line);border-radius:12px;padding:10px;display:grid;gap:8px;min-width:0}
+.slot .big{aspect-ratio:16/10;border-radius:8px;overflow:hidden;background:var(--page-chip)}
+.slot .big img{width:100%;height:100%;object-fit:cover;display:block}
+.slot b{font-size:14px}.slot small{display:block;color:var(--page-mut);font-size:12px}
+.thumbs{display:flex;flex-wrap:wrap;gap:5px}
+.thumbs button{flex:0 0 46px;height:46px;border-radius:7px;overflow:hidden;border:3px solid transparent;padding:0;background:none}
+.thumbs button[aria-pressed="true"]{border-color:var(--page-ink)}
+.thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.texts{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.texts label{display:grid;gap:4px;font-size:13px;font-weight:600;min-width:0}
+.texts input{font:inherit;font-weight:400;padding:9px 10px;border-radius:8px;border:1px solid var(--page-line);background:var(--page-card);color:var(--page-ink);min-height:42px;width:100%}
+#catalog{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.opt .moment{font:600 11px var(--mono);color:var(--page-mut);text-transform:uppercase;letter-spacing:.06em}
+</style>
+
+<div class="wrap" id="top">
+  <div class="eyebrow">VIGÍA · Ciudad Viva · maqueta para decidir</div>
+  <h1 id="h1">Una app, cada ciudad con su alma</h1>
+  <p class="lede">Las mismas pantallas para todas las ciudades. Lo que cambia es el paquete de cada una: fotos reales, bandera, colores, saludos y el nombre de lugar de cada rango. Las funciones son las de hoy en develop. Cambia de ciudad y de tema arriba (el momento del día en la app es automático; aquí puedes forzarlo para revisar las fotos), toca los botones dentro de los teléfonos y escoge las animaciones al final. Abajo puedes copiar tus elecciones para pegármelas.</p>
+
+  <div class="controls" role="toolbar" aria-label="Opciones de la maqueta">
+    <div class="ctl"><span>Ciudad</span><div class="seg" data-ctl="city"><button data-v="cali">Cali</button><button data-v="medellin">Medellín</button></div></div>
+    <div class="ctl"><span title="En la app es automático según la hora; aquí se puede forzar solo para revisar">Momento (solo maqueta)</span><div class="seg" data-ctl="part"><button data-v="auto">Automático</button><button data-v="morning">Mañana</button><button data-v="afternoon">Tarde</button><button data-v="night">Noche</button></div></div>
+    <div class="ctl"><span>App</span><div class="seg" data-ctl="mode"><button data-v="light">Claro</button><button data-v="dark">Oscuro</button></div></div>
+    <label class="check"><input type="checkbox" id="reduce"> Reducir movimiento</label>
+  </div>
+
+  <h2>Pantallas</h2>
+  <p class="sub">Todas salen del mismo molde con los datos del paquete de la ciudad. Prueba: apoyar el reporte hasta 10 y simular la subida de rango.</p>
+  <div class="rail" id="rail"></div>
+
+  <h2>Paquete de la ciudad</h2>
+  <p class="sub">Es lo único que cambia de una ciudad a otra: fotos, textos y colores. Todo lo que cambies aquí se ve al instante en los teléfonos de arriba. Cuando quede como quieres, toca "Copiar paquete" y pégamelo.</p>
+  <h3 class="h3">Fotos</h3>
+  <p class="sub">Cada espacio muestra la foto actual. Toca una miniatura para probar otra.</p>
+  <div class="slots" id="slots"></div>
+  <h3 class="h3">Textos</h3>
+  <div class="texts" id="texts"></div>
+  <h3 class="h3">Colores</h3>
+  <p class="sub">El chequeo AA dice si el texto se lee bien sobre cada color.</p>
+  <div class="pal" id="pal"></div>
+  <div class="tools"><button class="tbtn primary" id="copyPal">Copiar paquete</button><button class="tbtn" id="resetPal">Restablecer esta ciudad</button></div>
+  <div class="out" id="palOut" hidden></div>
+
+  <h2>Animaciones de la app</h2>
+  <p class="sub">Ya están decididas y son iguales en todas las ciudades: no se escogen por ciudad. Toca "Reproducir" para verlas. Con "Reducir movimiento" activo verás el respaldo: un fundido corto.</p>
+  <div id="catalog"></div>
+
+  <h2>Cómo está armado por dentro</h2>
+  <p class="sub">Para que nadie haga cuatro versiones de la app. El detalle completo está en <code>docs/design/04-city-identity.md</code>.</p>
+  <div class="arch">
+    <div><b>1 · Paquete de ciudad</b>Un archivo de datos por ciudad: <code>cali_pack.dart</code>, <code>medellin_pack.dart</code>. Colores, fotos, saludos y el nombre de lugar de los 4 rangos.</div>
+    <div><b>2 · CityAmbienceBloc</b>Sabe qué ciudad estás mirando y qué hora es. Escoge el paquete: completo, regional o por defecto.</div>
+    <div><b>3 · CityTheme</b>Una extensión del tema, como las de gravedad que ya existen. Recolorea los botones y entrega fotos y bandera.</div>
+    <div><b>4 · Widgets compartidos</b><code>CityHero</code>, <code>LandmarkTrail</code>, <code>CelebrationOverlay</code>, <code>FlagStripe</code>. Leen el tema; nunca preguntan "¿es Cali?".</div>
+  </div>
+
+  <h2>Origen de las fotos</h2>
+  <p class="sub">Solo para el equipo: todas son de Wikimedia Commons con licencia libre. En la app no se muestran créditos.</p>
+  <div class="credits" id="credits"></div>
+</div>
+
+
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<script id="credits-data" type="application/json">{"bog-monserrate": {"file": "bog-monserrate.jpg", "title": "2019 Bogotá - Iglesia de Monserrate.jpg", "license": "CC BY-SA 4.0", "author": "Felipe Restrepo Acosta", "source": "https://commons.wikimedia.org/wiki/File:2019_Bogot%C3%A1_-_Iglesia_de_Monserrate.jpg"}, "cali-bulevar": {"file": "cali-bulevar.jpg", "title": "Explanada peatonal sobre el Bulevar del Río Puente Ortiz.jpg", "license": "CC BY-SA 4.0", "author": "Cathetovar", "source": "https://commons.wikimedia.org/wiki/File:Explanada_peatonal_sobre_el_Bulevar_del_R%C3%ADo_Puente_Ortiz.jpg"}, "cali-caycedo": {"file": "cali-caycedo.jpg", "title": "Plaza de Caycedo Cali.jpg", "license": "CC BY 3.0", "author": "Alekow at English Wikipedia", "source": "https://commons.wikimedia.org/wiki/File:Plaza_de_Caycedo_Cali.jpg"}, "cali-centro-cristo": {"file": "cali-centro-cristo.jpg", "title": "Centro de Cali desde Cristo Rey.jpg", "license": "CC BY-SA 4.0", "author": "Petruss", "source": "https://commons.wikimedia.org/wiki/File:Centro_de_Cali_desde_Cristo_Rey.jpg"}, "cali-cholado": {"file": "cali-cholado.jpg", "title": "CHOLADO EN CALI.jpg", "license": "CC BY 2.0", "author": "Didier Albán Murillo", "source": "https://commons.wikimedia.org/wiki/File:CHOLADO_EN_CALI.jpg"}, "cali-chontaduro": {"file": "cali-chontaduro.jpg", "title": "Chontaduro (Bactris gasipaes) at Cali.JPG", "license": "CC BY-SA 3.0", "author": "Michael Hermann", "source": "https://commons.wikimedia.org/wiki/File:Chontaduro_(Bactris_gasipaes)_at_Cali.JPG"}, "cali-cristo-rey": {"file": "cali-cristo-rey.jpg", "title": "Monumento a Cristo Rey (Cali).JPG", "license": "CC BY-SA 4.0", "author": "Juan Velasco", "source": "https://commons.wikimedia.org/wiki/File:Monumento_a_Cristo_Rey_(Cali).JPG"}, "cali-ermita": {"file": "cali-ermita.jpg", "title": "La Ermita, Cali, Colombia.jpg", "license": "CC0", "author": "Juanes016", "source": "https://commons.wikimedia.org/wiki/File:La_Ermita,_Cali,_Colombia.jpg"}, "cali-farallones": {"file": "cali-farallones.jpg", "title": "Farallones de Cali Naturaleza.jpg", "license": "CC BY-SA 4.0", "author": "Juan David Corrales Aguilar", "source": "https://commons.wikimedia.org/wiki/File:Farallones_de_Cali_Naturaleza.jpg"}, "cali-gato": {"file": "cali-gato.jpg", "title": "El Gato del Río en Cali, Colombia (4170441107).jpg", "license": "CC BY 2.0", "author": "Mario Carvajal", "source": "https://commons.wikimedia.org/wiki/File:El_Gato_del_R%C3%ADo_en_Cali,_Colombia_(4170441107).jpg"}, "cali-noche-cristo": {"file": "cali-noche-cristo.jpg", "title": "Gatonegro Cali Noche desde Cristo Rey.jpg", "license": "CC BY-SA 2.0", "author": "Carlos Dussán Gómez", "source": "https://commons.wikimedia.org/wiki/File:Gatonegro_Cali_Noche_desde_Cristo_Rey.jpg"}, "cali-noche-oeste": {"file": "cali-noche-oeste.jpg", "title": "Oeste de Cali de noche.jpg", "license": "CC BY-SA 4.0", "author": "Johanfnix", "source": "https://commons.wikimedia.org/wiki/File:Oeste_de_Cali_de_noche.jpg"}, "cali-pance": {"file": "cali-pance.jpg", "title": "Río Pance 2.JPG", "license": "CC BY-SA 4.0", "author": "Juan Velasco", "source": "https://commons.wikimedia.org/wiki/File:R%C3%ADo_Pance_2.JPG"}, "cali-salsodromo": {"file": "cali-salsodromo.jpg", "title": "Salsódromo, Feria de Cali, Colombia.JPG", "license": "CC BY-SA 3.0", "author": "Jyon", "source": "https://commons.wikimedia.org/wiki/File:Sals%C3%B3dromo,_Feria_de_Cali,_Colombia.JPG"}, "cali-san-antonio": {"file": "cali-san-antonio.jpg", "title": "Barrio San Antonio, Cali 01.jpg", "license": "CC BY 4.0", "author": "ProtoplasmaKid", "source": "https://commons.wikimedia.org/wiki/File:Barrio_San_Antonio,_Cali_01.jpg"}, "cali-torre": {"file": "cali-torre.jpg", "title": "Torre de Cali 3.jpg", "license": "Public domain", "author": "Luism199", "source": "https://commons.wikimedia.org/wiki/File:Torre_de_Cali_3.jpg"}, "cali-tres-cruces-foto": {"file": "cali-tres-cruces-foto.jpg", "title": "Tres cruces, Cali.jpg", "license": "CC BY-SA 4.0", "author": "Franciscokarriere", "source": "https://commons.wikimedia.org/wiki/File:Tres_cruces,_Cali.jpg"}, "cali-tres-cruces-lejos": {"file": "cali-tres-cruces-lejos.jpg", "title": "El cerro de las tres cruces.jpg", "license": "CC BY 2.0", "author": "David", "source": "https://commons.wikimedia.org/wiki/File:El_cerro_de_las_tres_cruces.jpg"}, "cali-tres-cruces-vista": {"file": "cali-tres-cruces-vista.jpg", "title": "CERRO DE LAS TRES CRUCES, VISTA DE LA CIUDAD SANTIAGO DE CALI.JPG", "license": "CC BY-SA 4.0", "author": "Hectorangelazul", "source": "https://commons.wikimedia.org/wiki/File:CERRO_DE_LAS_TRES_CRUCES,_VISTA_DE_LA_CIUDAD_SANTIAGO_DE_CALI.JPG"}, "ctg-reloj": {"file": "ctg-reloj.jpg", "title": "Puerta del Reloj, Cartagena 03.jpg", "license": "CC BY-SA 4.0", "author": "Bernard Gagnon", "source": "https://commons.wikimedia.org/wiki/File:Puerta_del_Reloj,_Cartagena_03.jpg"}, "med-arvi": {"file": "med-arvi.jpg", "title": "Metrocable del Parque Arví - Medellín.jpg", "license": "CC BY-SA 4.0", "author": "Alejandro Rojas (SajoR)", "source": "https://commons.wikimedia.org/wiki/File:Metrocable_del_Parque_Arv%C3%AD_-_Medell%C3%ADn.jpg"}, "med-bandeja": {"file": "med-bandeja.jpg", "title": "Bandeja paisa antioqueña, Colombia.jpg", "license": "CC BY-SA 2.0", "author": "Matt Lemmon from Colorado, USA", "source": "https://commons.wikimedia.org/wiki/File:Bandeja_paisa_antioque%C3%B1a,_Colombia.jpg"}, "med-biblioteca": {"file": "med-biblioteca.jpg", "title": "Biblioteca de España and Metrocable 01.jpg", "license": "CC BY-SA 4.0", "author": "JoranL", "source": "https://commons.wikimedia.org/wiki/File:Biblioteca_de_Espa%C3%B1a_and_Metrocable_01.jpg"}, "med-botero": {"file": "med-botero.jpg", "title": "Medellín, Plaza Botero, 2023-07 CN-01.jpg", "license": "CC BY-SA 4.0", "author": "Steffen Schmitz (more photos)", "source": "https://commons.wikimedia.org/wiki/File:Medell%C3%ADn,_Plaza_Botero,_2023-07_CN-01.jpg"}, "med-coltejer": {"file": "med-coltejer.jpg", "title": "Edificio Coltejer Medellin.jpg", "license": "CC BY-SA 4.0", "author": "Ephren23", "source": "https://commons.wikimedia.org/wiki/File:Edificio_Coltejer_Medellin.jpg"}, "med-comuna13": {"file": "med-comuna13.jpg", "title": "Graffiti in Comuna 13, Medellín 02.jpg", "license": "CC BY-SA 4.0", "author": "Bernard Gagnon", "source": "https://commons.wikimedia.org/wiki/File:Graffiti_in_Comuna_13,_Medell%C3%ADn_02.jpg"}, "med-explora": {"file": "med-explora.jpg", "title": "Parque Explora (Medellín, Colombia).JPG", "license": "CC BY-SA 4.0", "author": "Averpues", "source": "https://commons.wikimedia.org/wiki/File:Parque_Explora_(Medell%C3%ADn,_Colombia).JPG"}, "med-feria-flores": {"file": "med-feria-flores.png", "title": "Feria de las Flores by Luis Perez.png", "license": "CC BY 2.0", "author": "Luis Pérez from Medellin, Colombia", "source": "https://commons.wikimedia.org/wiki/File:Feria_de_las_Flores_by_Luis_Perez.png"}, "med-metrocable": {"file": "med-metrocable.jpg", "title": "Metrocable and Comuna 1 in Medellín 02.jpg", "license": "CC BY-SA 4.0", "author": "JoranL", "source": "https://commons.wikimedia.org/wiki/File:Metrocable_and_Comuna_1_in_Medell%C3%ADn_02.jpg"}, "med-noche": {"file": "med-noche.jpg", "title": "Medellin de Noche - panoramio.jpg", "license": "CC BY-SA 3.0", "author": "Ricardo Astrauskas", "source": "https://commons.wikimedia.org/wiki/File:Medellin_de_Noche_-_panoramio.jpg"}, "med-orquideorama": {"file": "med-orquideorama.jpg", "title": "Jardin Botanico-Orquideorama.Medellin.jpg", "license": "CC BY 2.0", "author": "To (+) B [1]", "source": "https://commons.wikimedia.org/wiki/File:Jardin_Botanico-Orquideorama.Medellin.jpg"}, "med-panoramica": {"file": "med-panoramica.jpg", "title": "Panorámica de Medellín desde el Cerro El Picacho.jpg", "license": "CC BY-SA 4.0", "author": "Luis90f", "source": "https://commons.wikimedia.org/wiki/File:Panor%C3%A1mica_de_Medell%C3%ADn_desde_el_Cerro_El_Picacho.jpg"}, "med-pies": {"file": "med-pies.jpg", "title": "Parque de los Pies Descalzos 01.jpg", "license": "CC BY-SA 4.0", "author": "HaseyJDBS", "source": "https://commons.wikimedia.org/wiki/File:Parque_de_los_Pies_Descalzos_01.jpg"}, "med-pueblito": {"file": "med-pueblito.jpg", "title": "Pueblito Paisa, Medellin, Antioquia, Colombia.jpg", "license": "CC BY-SA 4.0", "author": "RH Ruggles", "source": "https://commons.wikimedia.org/wiki/File:Pueblito_Paisa,_Medellin,_Antioquia,_Colombia.jpg"}, "med-silleta-color": {"file": "med-silleta-color.jpg", "title": "Donde florecen las flores hay esperanza.jpg", "license": "CC0", "author": "Mariaalejandragallego", "source": "https://commons.wikimedia.org/wiki/File:Donde_florecen_las_flores_hay_esperanza.jpg"}}</script>
+<script>
+/* ================= data: one pack per city (mirrors lib/features/city_identity/data/datasources/packs) ================= */
+const PACKS={
+ cali:{name:'Cali',dept:'Valle del Cauca',slug:'cali',
+  palette:{primary:'#1B4B5F',accent:'#F08A24',onAccent:'#1B1205',veil:'#0B2433',flag:['#1D3E9E','#C8202F','#FFFFFF','#C8202F','#1C7C43'],flagW:[3,1,3,1,3]},
+  heroes:{morning:['cali-centro-cristo','Centro de Cali desde Cristo Rey'],afternoon:['cali-tres-cruces-lejos','Cerro de las Tres Cruces'],night:['cali-noche-oeste','El oeste de Cali de noche']},
+  greet:{morning:'¡Buenos días, ve!',afternoon:'¡Qué más, ve!',night:'¡Buenas noches, ve!'},
+  temp:{morning:'24 °C',afternoon:'29 °C',night:'23 °C'},
+  heroLine:'Cali se cuida entre vecinos.',
+  mission:{t:'Misión: San Antonio sin huecos',s:'2/5 reportes · +300 XP · cierra el domingo',img:'cali-san-antonio'},
+  reports:[['Hueco frente al parque del Perro','SAN FERNANDO','Alta'],['Obra quieta en la Calle 5','EL INGENIO','Media']],
+  detail:{code:'#VIG-1042',title:'Hueco frente al parque del Perro',addr:'Calle 2 # 34-10, San Fernando'},
+  climb:'Tu subida al Cerro de las Tres Cruces',
+  landmarks:[['Gato del Río','cali-gato','Observador Urbano',0],['La Ermita','cali-ermita','Vecino Activo',1000],['Cristo Rey','cali-cristo-rey','Guardián Vial',2500],['Cerro de las Tres Cruces','cali-tres-cruces-foto','Veedor Mayor',4000]],
+  stamps:[['Gato del Río','cali-gato',1],['La Ermita','cali-ermita',1],['San Antonio','cali-san-antonio',1],['Bulevar del Río','cali-bulevar',1],['Cholado','cali-cholado',1],['Chontaduro','cali-chontaduro',1],['Torre de Cali','cali-torre',1],['Plaza de Caycedo','cali-caycedo',0,'Reporta en el centro'],['Río Pance','cali-pance',0,'3 apoyos en Pance'],['Farallones','cali-farallones',0,'10 reportes validados'],['Salsódromo','cali-salsodromo',0,'Solo en la Feria','season'],['Tres Cruces','cali-tres-cruces-foto',0,'Llega a la cima']],
+  season:{name:'Feria de Cali',dates:'25 al 30 dic',img:'cali-salsodromo',h:'Llegó la Feria, ve',p:'Durante la Feria cada acción da una estampa especial. Las calles del Salsódromo, sin huecos.',route:'Ruta del Salsódromo',routeS:'Autopista Sur · 4/8 tramos revisados',rep:['Hueco en la ruta del desfile','AUTOPISTA SUR']},
+  cheer:'¡Eso, ve!',cheerP:'10 vecinos confirmaron el hueco. Ya tiene el sello de la comunidad.',
+  others:[['Bogotá','Bogotá D.C.','bog-monserrate'],['Medellín','Antioquia','med-metrocable'],['Cartagena','Bolívar','ctg-reloj']]},
+ medellin:{name:'Medellín',dept:'Antioquia',slug:'medellin',
+  palette:{primary:'#0E6B3F',accent:'#F4B400',onAccent:'#1A1400',veil:'#0B2A1E',flag:['#FFFFFF','#0E6B3F'],flagW:[1,1]},
+  heroes:{morning:['med-panoramica','Medellín desde el cerro El Picacho'],afternoon:['med-metrocable','Metrocable sobre la Comuna 1'],night:['med-noche','Medellín de noche']},
+  greet:{morning:'¡Buenos días, parce!',afternoon:'¡Quiubo, parce!',night:'¡Buenas noches, parce!'},
+  temp:{morning:'19 °C',afternoon:'27 °C',night:'20 °C'},
+  heroLine:'Medellín se cuida entre vecinos.',
+  mission:{t:'Misión: Santo Domingo sin huecos',s:'2/5 reportes · +300 XP · cierra el domingo',img:'med-biblioteca'},
+  reports:[['Hueco en la 70 frente a la estación','ESTADIO','Alta'],['Obra quieta en la Avenida Oriental','LA CANDELARIA','Media']],
+  detail:{code:'#VIG-2087',title:'Hueco en la 70 frente a la estación',addr:'Carrera 70 # 48-30, Estadio'},
+  climb:'Tu subida al Pueblito Paisa',
+  landmarks:[['Comuna 13','med-comuna13','Observador Urbano',0],['Plaza Botero','med-botero','Vecino Activo',1000],['Metrocable','med-metrocable','Guardián Vial',2500],['Pueblito Paisa','med-pueblito','Veedor Mayor',4000]],
+  stamps:[['Comuna 13','med-comuna13',1],['Plaza Botero','med-botero',1],['Pies Descalzos','med-pies',1],['Bandeja paisa','med-bandeja',1],['Orquideorama','med-orquideorama',1],['Coltejer','med-coltejer',1],['Parque Explora','med-explora',1],['Biblioteca España','med-biblioteca',0,'Reporta en Santo Domingo'],['Parque Arví','med-arvi',0,'3 apoyos en Santa Elena'],['Metrocable','med-metrocable',0,'Llega a Guardián Vial'],['Silleta','med-silleta-color',0,'Solo en la Feria','season'],['Pueblito Paisa','med-pueblito',0,'Llega a la cima']],
+  season:{name:'Feria de las Flores',dates:'1 al 10 ago',img:'med-silleta-color',h:'Llegó la Feria de las Flores',p:'Durante la Feria cada acción da una estampa especial. Que los silleteros pasen por calles sin huecos.',route:'Ruta del Desfile de Silleteros',routeS:'Avenida Regional · 3/7 tramos revisados',rep:['Hueco en la ruta de los silleteros','LA CANDELARIA']},
+  cheer:'¡Qué chimba, parce!',cheerP:'10 vecinos confirmaron el hueco. Ya tiene el sello de la comunidad.',
+  others:[['Cali','Valle del Cauca','cali-centro-cristo'],['Bogotá','Bogotá D.C.','bog-monserrate'],['Cartagena','Bolívar','ctg-reloj']]}
+};
+const POOL={"cali": ["cali-bulevar", "cali-caycedo", "cali-centro-cristo", "cali-cholado", "cali-chontaduro", "cali-cristo-rey", "cali-ermita", "cali-farallones", "cali-gato", "cali-noche-cristo", "cali-noche-oeste", "cali-pance", "cali-salsodromo", "cali-san-antonio", "cali-torre", "cali-tres-cruces-foto", "cali-tres-cruces-lejos", "cali-tres-cruces-vista"], "medellin": ["med-arvi", "med-bandeja", "med-biblioteca", "med-botero", "med-coltejer", "med-comuna13", "med-explora", "med-feria-flores", "med-metrocable", "med-noche", "med-orquideorama", "med-panoramica", "med-pies", "med-pueblito", "med-silleta-color"]};
+const CREDITS=(()=>{try{return JSON.parse(document.getElementById('credits-data').textContent)}catch(e){return {}}})();
+const ring=f=>`<svg class="ringwrap" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" stroke-opacity=".3" stroke-width="3" stroke-dasharray="2 4"/><circle data-ring cx="32" cy="32" r="28" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-dasharray="176" stroke-dashoffset="${176*(1-f)}" transform="rotate(-90 32 32)" style="transition:stroke-dashoffset .4s"/></svg>`;
+const icons=()=>{try{if(window.lucide)lucide.createIcons({attrs:{'stroke-width':1.9}})}catch(e){}};
+const img=(k,sq)=>`city-img/${k}${sq?'-sq':''}.jpg`;
+const credit=k=>{const c=CREDITS[k];return c?`Foto: ${c.author||'autor sin dato'} · ${c.license}`:''};
+
+/* ================= animation catalog ================= */
+const CAT=[
+ {id:'press',n:1,t:'Tocar botones y tarjetas',p:'La respuesta inmediata a cualquier toque. Se nota en todo, así que debe ser discreta.',o:[
+   ['A','Sello que se hunde','El elemento baja un 4 % y vuelve. Sobrio, como estampar.'],
+   ['B','Onda de color','Una onda del color de la ciudad sale desde el dedo.'],
+   ['C','Rebote','Se encoge y rebota con un poco de resorte. Más juguetón.']],rec:'A'},
+ {id:'endorse',n:2,t:'Apoyar un reporte',p:'La acción más repetida de la app. Tiene que dar gusto hacerla.',o:[
+   ['A','Pulgar que salta y +1','El ícono salta, un "+1" sube y la barra se llena.'],
+   ['B','Contador que gira','El número cambia como un odómetro.'],
+   ['C','Anillo que se completa','Un anillo punteado alrededor del botón se llena una décima.'],
+   ['D','Combinada','El pulgar salta, sube el "+1" y se llena la barra (de 2A), y el anillo del botón se completa (de 2C).']],rec:'D'},
+ {id:'validate',n:3,t:'Reporte validado (10 apoyos)',p:'El gran momento. Aparece encima de la pantalla y se cierra solo.',o:[
+   ['A','Sello estampado y confeti','El sello cae girando, rebota y salta confeti con la bandera.'],
+   ['B','Foto que se revela','La foto del hito pasa de borrosa y gris a nítida.'],
+   ['C','Solo confeti','Confeti con los colores de la bandera, sin más.']],rec:'A'},
+ {id:'rank',n:4,t:'Llegar a un nuevo hito',p:'Pasar de La Ermita a Cristo Rey, o de Plaza Botero al Metrocable.',o:[
+   ['A','Subida por la ruta','La pastilla "TÚ" sube hasta el siguiente hito y su foto se enciende.'],
+   ['B','Lámina que gira','La fila del hito gira y aparece lograda.'],
+   ['C','Foto a pantalla completa','La foto del hito se abre en círculo hasta llenar la pantalla.']],rec:'C'},
+ {id:'nav',n:6,t:'Cambiar de pantalla',p:'Al abrir un reporte, ir a ajustes o volver.',o:[
+   ['A','Eje compartido','La pantalla nueva entra deslizándose un poco y con fundido.'],
+   ['B','Fundido','Sale una y entra la otra, con un leve crecimiento.'],
+   ['C','Foto compartida','La tarjeta del feed crece hasta ser el detalle.']],rec:'A'},
+ {id:'hero',n:7,t:'Foto de cabecera',p:'Cómo se comporta la foto de la ciudad arriba de Comunidad.',o:[
+   ['A','Zoom lento','La foto se acerca muy despacio (20 s). Da vida sin distraer.'],
+   ['B','Paralaje','Al bajar, la foto se mueve más lento que el contenido.'],
+   ['C','Quieta','Sin movimiento.']],rec:'A'},
+ {id:'city',n:8,t:'Cambiar de ciudad',p:'Cuando exploras otra ciudad desde el mapa. Pruébalo con el selector de arriba.',o:[
+   ['A','Cortina con la bandera','Las franjas de la bandera barren la pantalla y aparece la ciudad nueva.'],
+   ['B','Fundido cruzado','Una ciudad se desvanece en la otra.'],
+   ['C','Foto que se desliza','La ciudad nueva entra desde el lado.']],rec:'A'},
+ {id:'load',n:9,t:'Cargando',p:'Mientras llegan los reportes o el perfil.',o:[
+   ['A','Anillo punteado','El que ya existe en la app, ahora con el acento de la ciudad.'],
+   ['B','Esqueletos con brillo','Formas grises de las tarjetas con un brillo que pasa.'],
+   ['C','Bandera que se llena','La franja de la bandera se llena en bucle.'],
+   ['D','Según el caso','Esqueletos con brillo la primera vez que carga una lista o pantalla (feed, álbum, perfil, detalle). Anillo punteado dentro del botón en acciones cortas (publicar, comentar, apoyar, cambiar de ciudad).']],rec:'D'}
+];
+
+CAT.forEach((g,i)=>g.n=i+1);
+/* ================= state ================= */
+const store={get(k,d){try{const v=localStorage.getItem('vigia-cv-'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('vigia-cv-'+k,JSON.stringify(v))}catch(e){}}};
+const S={city:store.get('city','cali'),part:store.get('part2','auto'),mode:store.get('mode','light'),
+  choice:Object.fromEntries(CAT.map(g=>[g.id,g.rec])),edit:store.get('edit',{}),
+  over:store.get('over2',{}),reduce:false};
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const EASE='cubic-bezier(.2,0,0,1)',STAMP='cubic-bezier(.3,1.4,.5,1)';
+const reduced=()=>S.reduce;
+const pal=()=>Object.assign({},PACKS[S.city].palette,S.over[S.city]||{});
+function fade(el,d=100){return el.animate([{opacity:0},{opacity:1}],{duration:d})}
+
+/* ================= helpers ================= */
+const flagHTML=(p,h)=>`<span class="flag" style="height:${h||'100%'}">${p.flag.map((c,i)=>`<i style="background:${c};flex:${p.flagW[i]}"></i>`).join('')}</span>`;
+const nav=a=>`<div class="nav">${['Mapa','Comunidad','Mi perfil'].map((n,i)=>`<span class="${i==a?'a':''}"><i data-lucide="${['map','users-round','circle-user-round'][i]}"></i>${n}</span>`).join('')}</div>`;
+/* DayPart.of(now): morning 05:00-11:59, afternoon 12:00-18:29, night 18:30-04:59 (04-city-identity.md §3) */
+function dp(){if(S.part!='auto')return S.part;const d=new Date(),t=d.getHours()*60+d.getMinutes();return t>=300&&t<720?'morning':t>=720&&t<1110?'afternoon':'night'}
+const status=(on)=>`<div class="status ${on?'on-photo':''}"><span>${{morning:'7:40',afternoon:'5:48',night:'8:15'}[dp()]}</span><span>5G</span></div>`;
+
+/* ================= screens ================= */
+function screens(){
+ const D=pack(),P=pal(),H=D.heroes[dp()];
+ const L=D.landmarks;
+ return [
+ ['Registro · eliges tu ciudad','Las cinco ciudades completas salen con foto; la detectada por GPS va primero.',`
+  ${status(0)}<div class="body" style="padding-top:44px">
+   <div class="eyebrow" style="color:var(--s-mut)">Paso 2 de 3 · Tu ciudad</div>
+   <p class="title">¿Dónde vas a cuidar la calle?</p>
+   <button class="pc on" data-press><img src="${img(D.heroes.afternoon[0])}" alt=""><div><b>${D.name}</b><small>${D.dept}</small></div><span class="gps"><i data-lucide="locate-fixed"></i>Detectada por GPS</span></button>
+   ${D.others.map(o=>`<button class="pc" data-press><img src="${img(o[2])}" alt=""><div><b>${o[0]}</b><small>${o[1]}</small></div></button>`).join('')}
+   <button class="btn" data-press style="margin-top:auto">Seguir con ${D.name}</button>
+  </div>`],
+ ['Comunidad','La foto cambia con el momento del día y el saludo habla como la ciudad.',`
+  ${status(1)}<div class="hero"><img src="${img(H[0])}" alt="${H[1]}"><div class="veil"></div>
+   <div class="txt"><div class="where">${flagHTML(P)}${D.name} · ${{morning:'mañana',afternoon:'tarde',night:'noche'}[dp()]} · ${D.temp[dp()]}</div><h3>${D.greet[dp()]}</h3><p>${D.heroLine}</p></div></div>
+  <div class="body">
+   
+   <div class="chips"><span class="chip on">Todos</span><span class="chip">Huecos</span><span class="chip">Obras</span><span class="chip">Cerca de mí</span></div>
+   ${D.reports.map(r=>`<div class="rep" data-press><div class="ph"><i data-lucide="image"></i></div><div><b>${r[0]}</b><div class="meta"><span class="sev ${r[2]=='Media'?'m':''}">${r[2]}</span><span class="barrio">${r[1]}</span><span class="cnt"><i data-lucide="thumbs-up"></i>7</span><span class="cnt"><i data-lucide="message-circle"></i>3</span></div></div></div>`).join('')}
+  </div><button class="fab" data-press><i data-lucide="map-pin-plus"></i>Reportar</button>${nav(1)}`],
+ ['Detalle · apoyar','Toca "Apoyar" hasta llegar a 10: verás la animación de apoyo y luego la de validación.',`
+  ${status(0)}<div class="dhead"><i data-lucide="arrow-left" class="back"></i><span class="code">${D.detail.code}</span><span class="sev" style="margin-left:auto">Alta</span></div>
+  <div class="body">
+   <b style="font-size:15px">${D.detail.title}</b><div class="meta" style="margin-top:-6px"><span class="cnt"><i data-lucide="map-pin"></i>${D.detail.addr}</span></div>
+   <div class="dphoto"><i data-lucide="images"></i></div>
+   <div class="valbox"><div class="row">Validación comunitaria <span data-count>7 de 10 apoyos</span></div><div class="bar"><i data-bar style="width:70%"></i></div><small style="color:var(--s-mut);font-size:11px" data-hint>Faltan 3 apoyos para validarlo (+500 XP)</small></div>
+   <button class="btn r2${S.choice.endorse}" data-endorse data-press><span class="ico" data-ico><i data-lucide="thumbs-up"></i>${ring(.7)}</span><span data-lbl>Apoyar este reporte</span></button>
+   <button class="link" data-reset-endorse>Reiniciar en 7</button>
+  </div>${nav(1)}
+  <div class="cele" hidden data-cele>${celeInner(D)}</div>`],
+ ['Perfil · la subida','Los 4 rangos de siempre, con nombre de lugar. Toca "Simular" para ver la animación de hito.',`
+  ${status(1)}<div class="trailhead"><div class="eyebrow" style="color:#ffffffb3">${D.climb}</div><h3 data-th>Vas por ${L[1][0]}</h3><div class="xp" data-xp>1.420 XP · faltan 1.080 para ${L[2][0]}</div></div>
+  <div class="trail" data-trail>
+   ${[3,2,1,0].map(i=>`<div class="stop ${i<=1?'got':'lock'}" data-stop="${i}"><div class="med"><img src="${img(L[i][1],1)}" alt="${L[i][0]}"></div><div><b>${L[i][0]} ${i==2?'<span class="tag">Siguiente</span>':''}${i==1?'<span class="tag">Logrado</span>':''}</b><small>${L[i][3].toLocaleString('es-CO')} XP · ${L[i][2]}</small></div></div>`).join('')}
+   <span class="you" data-you>TÚ</span>
+   <button class="link" data-rankup style="position:absolute;left:84px;bottom:6px">Simular +1.080 XP</button>
+  </div>${nav(2)}`],
+ ['Validado · celebración','Así se ve el momento de validación. "Repetir" la vuelve a mostrar con la animación elegida.',`
+  <div class="cele" data-cele data-static>${celeInner(D)}</div>`]
+ ];
+}
+function celeInner(D){
+ const lm=D.landmarks[1];
+ return `<div class="confetti" data-conf></div><div class="inner">
+  <div class="eyebrow" style="color:#ffffffb3">Reporte ${D.detail.code}</div>
+  <div class="seal" data-seal><div class="ph"><img data-sealimg src="${img(lm[1],1)}" alt=""></div><b>VALIDADO</b></div>
+  <h3>${D.cheer}</h3><p>${D.cheerP}</p><div class="x">+500 XP</div>
+  <button class="ghost" data-replay>Repetir</button></div>`;
+}
+
+/* ================= render ================= */
+function applyVars(){
+ const p=pal(),r=document.documentElement.style;
+ r.setProperty('--c-primary',p.primary);r.setProperty('--c-accent',p.accent);r.setProperty('--c-onaccent',p.onAccent);r.setProperty('--c-veil',p.veil);
+}
+function render(){
+ applyVars();
+ const rail=$('#rail');
+ rail.innerHTML=screens().map(([t,c,html],i)=>`<div class="shot"><div class="phone ${S.mode=='dark'?'dark':''} ${S.choice.hero=='A'?'kb':''}" data-i="${i}"><div class="scr">${html}</div></div><div class="cap"><b>${t}</b>${c}</div></div>`).join('');
+ $('#h1').textContent=S.city=='cali'?'Una app, y Cali con su alma':'Una app, y Medellín con su alma';
+ bindPhones(); renderPal(); renderSlots(); syncSeg(); icons();
+}
+function syncSeg(){$$('.seg').forEach(s=>{const k=s.dataset.ctl;$$('button',s).forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v==S[k])))})}
+
+/* ================= effects ================= */
+function press(el,e){
+ const c=S.choice.press;
+ if(reduced()){el.animate([{opacity:1},{opacity:.7},{opacity:1}],{duration:100});return}
+ if(c=='A')el.animate([{transform:'scale(1)'},{transform:'scale(.96)'},{transform:'scale(1)'}],{duration:240,easing:EASE});
+ if(c=='C')el.animate([{transform:'scale(1)'},{transform:'scale(.92)',offset:.35},{transform:'scale(1.04)',offset:.7},{transform:'scale(1)'}],{duration:340,easing:'ease-out'});
+ if(c=='B'){const r=el.getBoundingClientRect(),s=document.createElement('span'),d=Math.max(r.width,r.height)*2.2;
+  const x=(e?e.clientX:r.left+r.width/2)-r.left,y=(e?e.clientY:r.top+r.height/2)-r.top;
+  if(getComputedStyle(el).position=='static')el.style.position='relative';el.style.overflow='hidden';
+  Object.assign(s.style,{position:'absolute',left:x-d/2+'px',top:y-d/2+'px',width:d+'px',height:d+'px',borderRadius:'50%',background:'var(--c-accent)',pointerEvents:'none',zIndex:5});
+  el.appendChild(s);s.animate([{transform:'scale(0)',opacity:.45},{transform:'scale(1)',opacity:0}],{duration:520,easing:EASE}).onfinish=()=>s.remove()}
+}
+function confetti(box){
+ if(reduced())return;box.innerHTML='';const cols=pal().flag.concat([pal().accent]);
+ for(let i=0;i<40;i++){const p=document.createElement('i');p.style.left=Math.random()*100+'%';p.style.background=cols[i%cols.length];
+  if(cols[i%cols.length].toUpperCase()=='#FFFFFF')p.style.boxShadow='0 0 0 1px #0002';
+  box.appendChild(p);const dx=(Math.random()-.5)*80,rot=360+Math.random()*540;
+  p.animate([{transform:'translate(0,-20px) rotate(0)'},{transform:`translate(${dx}px,660px) rotate(${rot}deg)`}],{duration:1600+Math.random()*1200,delay:Math.random()*350,easing:'cubic-bezier(.3,.1,.6,1)',fill:'both'})}
+}
+function celebrate(cele){
+ const seal=$('[data-seal]',cele),pic=$('[data-sealimg]',cele),inner=$('.inner',cele),c=S.choice.validate;
+ if(reduced()){fade(inner);return}
+ if(c=='A'){seal.animate([{transform:'scale(1.9) rotate(-16deg)',opacity:0},{transform:'scale(1) rotate(0)',opacity:1}],{duration:520,easing:STAMP,fill:'both'});
+  const ring=document.createElement('span');Object.assign(ring.style,{position:'absolute',inset:'-6px',borderRadius:'50%',border:'3px solid var(--c-accent)'});seal.appendChild(ring);
+  ring.animate([{transform:'scale(1)',opacity:.9},{transform:'scale(1.7)',opacity:0}],{duration:700,delay:380,easing:EASE,fill:'both'}).onfinish=()=>ring.remove();
+  setTimeout(()=>confetti($('[data-conf]',cele)),360)}
+ if(c=='B'){pic.animate([{filter:'blur(14px) grayscale(1)',transform:'scale(1.15)'},{filter:'blur(0) grayscale(0)',transform:'scale(1)'}],{duration:1100,easing:EASE,fill:'both'});
+  $$('h3,p,.x',inner).forEach((n,i)=>n.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:320,delay:700+i*90,easing:EASE,fill:'both'}))}
+ if(c=='C'){fade(seal,300);confetti($('[data-conf]',cele))}
+}
+function bindPhones(){
+ $$('#rail [data-press]').forEach(el=>el.addEventListener('pointerdown',e=>press(el,e)));
+ $$('#rail .phone').forEach(ph=>{
+  // endorse
+  const b=$('[data-endorse]',ph);
+  if(b){let n=7;const cele=$('[data-cele]',ph);
+   const draw=()=>{$('[data-count]',ph).textContent=`${n} de 10 apoyos`;$('[data-bar]',ph).style.width=n*10+'%';$('[data-ring]',ph).style.strokeDashoffset=176*(1-n/10);
+    $('[data-hint]',ph).textContent=n>=10?'Los vecinos ya validaron este reporte.':`Faltan ${10-n} apoyos para validarlo (+500 XP)`;
+    b.classList.toggle('done',n>=10);$('[data-lbl]',ph).textContent=n>=10?'Apoyado':'Apoyar este reporte'};
+   b.addEventListener('click',()=>{if(n>=10)return;n++;endorseFx(b,ph);draw();if(n==10)setTimeout(()=>{cele.hidden=false;celebrate(cele);setTimeout(()=>{if(!cele.hidden){cele.animate([{opacity:1},{opacity:0}],{duration:200}).onfinish=()=>cele.hidden=true}},3200)},450)});
+   cele.addEventListener('click',()=>cele.hidden=true);
+   $('[data-reset-endorse]',ph).addEventListener('click',()=>{n=7;draw()});draw()}
+  // static celebration
+  const sc=$('[data-cele][data-static]',ph);
+  if(sc){$('[data-replay]',sc).addEventListener('click',e=>{e.stopPropagation();celebrate(sc)})}
+  const dyn=$('[data-cele]:not([data-static]) [data-replay]',ph);if(dyn)dyn.addEventListener('click',e=>{e.stopPropagation();celebrate(dyn.closest('[data-cele]'))});
+  // trail
+  const tr=$('[data-trail]',ph);if(tr){placeYou(tr,1);$('[data-rankup]',tr).addEventListener('click',()=>rankUp(ph))}
+  // stamps
+  $$('[data-stamp]',ph).forEach(st=>st.addEventListener('click',()=>{if(st.classList.contains('lock'))unlock(st,ph)}));
+ });
+}
+function endorseFx(b,ph){
+ const c=S.choice.endorse,ico=$('[data-ico]',b),cnt=$('[data-count]',ph);
+ if(reduced()){fade(cnt);return}
+ if(c=='A'||c=='D')thumbPlus(b,ph,ico);
+ if(c=='B'){cnt.animate([{transform:'translateY(60%)',opacity:0},{transform:'translateY(0)',opacity:1}],{duration:300,easing:STAMP})}
+ if(c=='C'||c=='D'){$('.ringwrap',b).animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(1)'}],{duration:420,easing:STAMP})}
+}
+/* 2A: the thumb jumps and a "+1" floats up from the icon */
+function thumbPlus(b,host,ico){
+ ico.animate([{transform:'scale(1)'},{transform:'scale(1.45) rotate(-12deg)'},{transform:'scale(1)'}],{duration:380,easing:STAMP});
+ const p=document.createElement('span');p.className='plus';p.textContent='+1';const r=ico.getBoundingClientRect(),pr=host.getBoundingClientRect();
+ p.style.left=(r.left-pr.left+r.width/2-10)+'px';p.style.top=(r.top-pr.top-14)+'px';host.appendChild(p);
+ p.animate([{transform:'translateY(0)',opacity:1},{transform:'translateY(-34px)',opacity:0}],{duration:750,easing:EASE}).onfinish=()=>p.remove();
+}
+function placeYou(tr,i){const st=$(`[data-stop="${i}"]`,tr),you=$('[data-you]',tr);you.style.top=(st.offsetTop+st.offsetHeight-14)+'px';return you}
+function rankUp(ph){
+ const D=pack(),tr=$('[data-trail]',ph),you=$('[data-you]',tr),next=$('[data-stop="2"]',tr),c=S.choice.rank;
+ const done=()=>{next.classList.remove('lock');next.classList.add('got');$('[data-th]',ph).textContent='Llegaste a '+D.landmarks[2][0];$('[data-xp]',ph).textContent='2.500 XP · faltan 1.500 para '+D.landmarks[3][0];$$('.tag',tr).forEach(t=>t.remove());$('b',next).insertAdjacentHTML('beforeend','<span class="tag">Logrado</span>')};
+ const reset=()=>{next.classList.add('lock');next.classList.remove('got');placeYou(tr,1)};
+ if(next.classList.contains('got')){$('[data-th]',ph).textContent='Vas por '+D.landmarks[1][0];$('[data-xp]',ph).textContent='1.420 XP · faltan 1.080 para '+D.landmarks[2][0];$$('.tag',tr).forEach(t=>t.remove());$('b',next).insertAdjacentHTML('beforeend','<span class="tag">Siguiente</span>');reset();return}
+ if(reduced()){placeYou(tr,2);done();fade(tr);return}
+ if(c=='A'){const from=you.offsetTop,to=next.offsetTop+next.offsetHeight-14;
+  you.animate([{transform:'translateY(0)'},{transform:`translateY(${to-from}px)`}],{duration:900,easing:EASE,fill:'forwards'}).onfinish=a=>{a.target.cancel?.();you.style.top=to+'px';you.getAnimations().forEach(x=>x.cancel());done();
+   $('.med',next).animate([{transform:'scale(1)'},{transform:'scale(1.3)'},{transform:'scale(1)'}],{duration:520,easing:STAMP})}}
+ if(c=='B'){placeYou(tr,2);next.animate([{transform:'perspective(500px) rotateX(0)'},{transform:'perspective(500px) rotateX(90deg)'}],{duration:220,easing:'ease-in'}).onfinish=()=>{done();next.animate([{transform:'perspective(500px) rotateX(-90deg)'},{transform:'perspective(500px) rotateX(0)'}],{duration:320,easing:STAMP})}}
+ if(c=='C'){placeYou(tr,2);done();const m=$('.med',next).getBoundingClientRect(),pr=ph.getBoundingClientRect(),x=m.left-pr.left+m.width/2,y=m.top-pr.top+m.height/2;
+  const f=document.createElement('div');f.className='full';f.innerHTML=`<img src="${img(D.landmarks[2][1])}" alt=""><div><div class="eyebrow" style="color:#ffffffb3">Nuevo hito · ${D.landmarks[2][2]}</div><b>${D.landmarks[2][0]}</b><span style="font:600 12px var(--mono);color:var(--c-accent)">2.500 XP</span></div>`;
+  ph.appendChild(f);f.animate([{clipPath:`circle(0px at ${x}px ${y}px)`},{clipPath:`circle(160% at ${x}px ${y}px)`}],{duration:750,easing:EASE});
+  const close=()=>f.animate([{opacity:1},{opacity:0}],{duration:220}).onfinish=()=>f.remove();f.addEventListener('click',close);setTimeout(()=>f.isConnected&&close(),2600)}
+}
+function unlock(st,ph){
+ const c=S.choice.stamp,im=$('img',st);
+ const fin=()=>{st.classList.remove('lock');const lbl=$('span',st);lbl.textContent=lbl.textContent.split(' · ')[0];
+  const left=$$('[data-stamp]:not(.lock)',ph).length;$('[data-acount]',ph).textContent=`${left} de 12 lugares`;$('[data-aprog]',ph).style.width=(left/12*100)+'%'};
+ if(reduced()){fin();fade(st);return}
+ if(c=='A'){fin();im.animate([{filter:'grayscale(1) blur(1.5px)',opacity:.55},{filter:'none',opacity:1}],{duration:600,easing:EASE});
+  const sh=document.createElement('span');sh.className='sheen';st.appendChild(sh);sh.animate([{transform:'translateX(-120%)'},{transform:'translateX(120%)'}],{duration:750,delay:250,easing:EASE}).onfinish=()=>sh.remove()}
+ if(c=='B'){st.animate([{transform:'perspective(500px) rotateY(0)'},{transform:'perspective(500px) rotateY(90deg)'}],{duration:240,easing:'ease-in'}).onfinish=()=>{fin();st.animate([{transform:'perspective(500px) rotateY(-90deg)'},{transform:'perspective(500px) rotateY(0)'}],{duration:380,easing:STAMP})}}
+ if(c=='C'){fin();st.style.zIndex=2;st.animate([{transform:'scale(1.4) rotate(9deg)',boxShadow:'0 22px 26px #0007'},{transform:'scale(1) rotate(0)',boxShadow:'0 0 0 transparent'}],{duration:460,easing:STAMP}).onfinish=()=>st.style.zIndex=''}
+}
+function citySwitch(){
+ const c=S.choice.city;
+ if(reduced()){render();$$('#rail .scr').forEach(s=>fade(s));return}
+ if(c=='B'){$$('#rail .scr').forEach(s=>s.animate([{opacity:1},{opacity:0}],{duration:160,fill:'forwards'}));setTimeout(()=>{render();$$('#rail .scr').forEach(s=>s.animate([{opacity:0},{opacity:1}],{duration:260,easing:EASE}))},160);return}
+ if(c=='C'){$$('#rail .scr').forEach(s=>s.animate([{transform:'translateX(0)',opacity:1},{transform:'translateX(-40%)',opacity:0}],{duration:200,easing:'ease-in',fill:'forwards'}));setTimeout(()=>{render();$$('#rail .scr').forEach(s=>s.animate([{transform:'translateX(40%)',opacity:0},{transform:'none',opacity:1}],{duration:320,easing:EASE}))},200);return}
+ // A: flag curtain (new city's flag)
+ const nextP=Object.assign({},PACKS[S.city].palette,S.over[S.city]||{});
+ $$('#rail .phone').forEach(ph=>{const cu=document.createElement('div');cu.className='curtain';cu.innerHTML=nextP.flag.map((col,i)=>`<i style="background:${col};flex:${nextP.flagW[i]}"></i>`).join('');ph.appendChild(cu);
+  cu.animate([{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],{duration:300,easing:'ease-in',fill:'forwards'})});
+ setTimeout(()=>{render();$$('#rail .phone').forEach(ph=>{const cu=document.createElement('div');cu.className='curtain';cu.innerHTML=nextP.flag.map((col,i)=>`<i style="background:${col};flex:${nextP.flagW[i]}"></i>`).join('');ph.appendChild(cu);
+  cu.animate([{clipPath:'inset(0 0 0 0)'},{clipPath:'inset(0 0 0 100%)'}],{duration:380,easing:EASE,fill:'forwards'}).onfinish=()=>cu.remove()})},320);
+}
+
+/* ================= palette editor ================= */
+function lum(h){const c=h.replace('#','').match(/../g).map(x=>parseInt(x,16)/255).map(v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4));return .2126*c[0]+.7152*c[1]+.0722*c[2]}
+function ratio(a,b){const x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)}
+function aa(r){return `<span class="aa ${r>=4.5?'ok':'bad'}">${r.toFixed(1)}:1 ${r>=4.5?'AA':'bajo AA'}</span>`}
+function renderPal(){
+ const p=pal(),D=PACKS[S.city];
+ const rows=[['primary','Tono profundo (deep)','Chips activos, enlaces, etiquetas y barra del álbum. Texto blanco encima.',aa(ratio(p.primary,'#ffffff'))],
+  ['accent','Acento (botones)','Todos los botones principales, Reportar, "TÚ", barra de apoyos y confeti.',aa(ratio(p.accent,p.onAccent))+' con su texto'],
+  ['onAccent','Texto sobre acento','Color del texto encima del acento.',''],
+  ['veil','Velo de fotos','Oscurece la foto para que el texto blanco se lea.',aa(ratio(p.veil,'#ffffff'))]];
+ let h=rows.map(([k,n,d,x])=>`<label class="sw"><input type="color" data-k="${k}" value="${p[k]}"><span><b>${n} <code>${p[k].toUpperCase()}</code></b><small>${d}</small>${x}</span></label>`).join('');
+ h+=p.flag.map((c,i)=>`<label class="sw"><input type="color" data-flag="${i}" value="${c}"><span><b>Bandera · franja ${i+1} <code>${c.toUpperCase()}</code></b><small>${D.name}: franjas de arriba a abajo, peso ${p.flagW[i]}.</small></span></label>`).join('');
+ $('#pal').innerHTML=h;
+ $$('#pal input').forEach(inp=>inp.addEventListener('input',()=>{const o=S.over[S.city]=S.over[S.city]||{};
+  if(inp.dataset.flag!=null){o.flag=(o.flag||PACKS[S.city].palette.flag).slice();o.flag[+inp.dataset.flag]=inp.value}else o[inp.dataset.k]=inp.value;
+  store.set('over2',S.over);applyVars();$$('#rail .flag').forEach(f=>{const q=pal();f.innerHTML=q.flag.map((c,i)=>`<i style="background:${c};flex:${q.flagW[i]}"></i>`).join('')});
+  const sw=inp.closest('.sw');$('code',sw).textContent=inp.value.toUpperCase()}));
+ $$('#pal input').forEach(inp=>inp.addEventListener('change',()=>renderPal()));
+}
+$('#copyPal').addEventListener('click',()=>{const p=pal(),D=pack(),U=x=>x.toUpperCase();
+ const t=JSON.stringify({city:D.name,
+  palette:{deep:U(p.primary),accent:U(p.accent),onAccent:U(p.onAccent),veil:U(p.veil),flag:p.flag.map(U),flagWeights:p.flagW},
+  photos:{morning:D.heroes.morning[0],afternoon:D.heroes.afternoon[0],night:D.heroes.night[0],ranks:D.landmarks.map(l=>l[1])},
+  ranks:D.landmarks.map(l=>l[0]),greetings:D.greet,slogan:D.heroLine,validationCheer:D.cheer},null,1);
+ copy(t,$('#palOut'))});
+$('#resetPal').addEventListener('click',()=>{delete S.over[S.city];delete S.edit[S.city];store.set('over2',S.over);saveEdit();render();renderTexts();toast(PACKS[S.city].name+' quedó como venía')});
+
+/* ================= catalog ================= */
+function stageFor(g,o){
+ switch(g.id){
+  case 'press':return `<button class="btn" data-demo>Apoyar este reporte</button>`;
+  case 'endorse':return `<div style="display:grid;gap:8px;width:80%"><div class="valbox" style="--s-card:#fff;--s-line:#D9CFBB;--link:var(--c-primary);--s-ink:#10364A"><div class="row">Validación <span data-dc>7 de 10</span></div><div class="bar"><i data-db style="width:70%"></i></div></div><button class="btn r2${o}" data-demo style="width:100%"><span class="ico" data-ico><i data-lucide="thumbs-up"></i>${ring(.7)}</span> Apoyar</button></div>`;
+  case 'validate':return `<div class="cele" style="position:absolute" data-dcele>${celeMini()}</div>`;
+  case 'rank':return `<div data-drank style="position:absolute;inset:0;display:grid;place-items:center"><div style="display:flex;gap:10px;align-items:center"><div class="med" style="width:56px;height:56px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 3px var(--c-accent)"><img src="${img(pack().landmarks[2][1],1)}" alt="" style="width:100%;height:100%;object-fit:cover"></div><b style="font-family:var(--serif)">${pack().landmarks[2][0]}</b></div></div>`;
+  case 'stamp':return `<button class="st lock" data-dst style="width:92px;--s-card:#fff;--s-line:#D9CFBB"><img src="${img(PACKS[S.city].stamps[8][1],1)}" alt=""><span>${PACKS[S.city].stamps[8][0]}</span></button>`;
+  case 'nav':return `<div data-dnav style="position:absolute;inset:0"><div data-s1 style="position:absolute;inset:10px;display:grid;gap:6px;align-content:start"><div class="rep" style="--s-card:#fff;--s-line:#D9CFBB;grid-template-columns:48px 1fr"><img src="${img(PACKS[S.city].heroes.afternoon[0],1)}" style="width:48px;height:48px;object-fit:cover;border-radius:6px" data-thumb alt=""><div><b>${PACKS[S.city].reports[0][0]}</b></div></div><div class="rep" style="--s-card:#fff;--s-line:#D9CFBB;opacity:.6;height:40px"></div></div><div data-s2 style="position:absolute;inset:0;background:#FFFBF2;display:none"><img src="${img(PACKS[S.city].heroes.afternoon[0])}" style="width:100%;height:70px;object-fit:cover" alt=""><div style="padding:8px 10px;font-weight:700;font-size:13px">${PACKS[S.city].reports[0][0]}</div></div></div>`;
+  case 'hero':return `<div data-dhero style="position:absolute;inset:0;overflow:hidden"><img src="${img(pack().heroes[dp()][0])}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" data-himg><div data-hcont style="position:absolute;left:10px;right:10px;top:96px;display:grid;gap:6px"><div style="background:#FFFBF2;border-radius:8px;height:44px"></div><div style="background:#FFFBF2;border-radius:8px;height:44px"></div><div style="background:#FFFBF2;border-radius:8px;height:44px"></div></div></div>`;
+  case 'city':return `<div data-dcity style="position:absolute;inset:0"><img data-cimg src="${img(PACKS.cali.heroes.afternoon[0])}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"><b data-cname style="position:absolute;left:12px;bottom:10px;color:#fff;font-family:var(--display);font-weight:400;font-size:28px;text-shadow:0 2px 8px #000a">Cali</b></div>`;
+  case 'load':if(o=='D')return `<div style="width:84%;display:grid;gap:7px">${[1,2].map(()=>`<div style="height:24px;border-radius:7px;background:#E4DCCB;position:relative;overflow:hidden"><span class="sheen" data-sk></span></div>`).join('')}<button class="btn" style="min-height:40px;font-size:13px"><svg width="20" height="20" viewBox="0 0 54 54" data-spin><circle cx="27" cy="27" r="22" fill="none" stroke="currentColor" stroke-width="6" stroke-dasharray="3 8" stroke-linecap="round"/></svg>Publicando…</button></div>`;
+   return o=='A'?`<svg width="54" height="54" viewBox="0 0 54 54" data-spin><circle cx="27" cy="27" r="22" fill="none" stroke="var(--c-accent)" stroke-width="5" stroke-dasharray="3 8" stroke-linecap="round"/></svg>`:o=='B'?`<div style="width:80%;display:grid;gap:8px">${[1,2,3].map(()=>`<div style="height:26px;border-radius:7px;background:#E4DCCB;position:relative;overflow:hidden"><span class="sheen" data-sk></span></div>`).join('')}</div>`:`<div style="width:70%;height:12px;border-radius:6px;overflow:hidden;background:#E4DCCB"><div data-fl style="height:100%;width:0;display:flex">${pal().flag.map((c,i)=>`<i style="background:${c};flex:${pal().flagW[i]}"></i>`).join('')}</div></div>`;
+ }
+}
+function celeMini(){const D=pack();return `<div class="confetti" data-conf></div><div class="inner" style="gap:4px"><div class="seal" data-seal style="width:84px;height:84px;border-width:3px;padding:4px"><div class="ph"><img data-sealimg src="${img(D.landmarks[1][1],1)}" alt=""></div><b style="font-size:9px">VALIDADO</b></div><h3 style="font-size:20px">${D.cheer}</h3></div>`}
+function playDemo(g,o,st){
+ const prev=S.choice[g.id];S.choice[g.id]=o;try{
+ switch(g.id){
+  case 'press':press($('[data-demo]',st));break;
+  case 'endorse':{const dc=$('[data-dc]',st),db=$('[data-db]',st);let n=parseInt(dc.textContent);n=n>=10?7:n+1;dc.textContent=n+' de 10';db.style.width=n*10+'%';
+   const b=$('[data-demo]',st),rg=$('[data-ring]',b);if(rg)rg.style.strokeDashoffset=176*(1-n/10);if(reduced()){fade(dc);break}
+   if(o=='A'||o=='D')thumbPlus(b,st,$('[data-ico]',b));
+   if(o=='B')dc.animate([{transform:'translateY(70%)',opacity:0},{transform:'none',opacity:1}],{duration:300,easing:STAMP});
+   if(o=='C'||o=='D')$('.ringwrap',b).animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(1)'}],{duration:420,easing:STAMP});
+   break}
+  case 'validate':celebrate($('[data-dcele]',st));break;
+  case 'rank':{const r=$('[data-drank]',st),m=$('.med',r);if(reduced()){fade(r);break}
+   if(o=='A'){m.animate([{transform:'translateY(60px)'},{transform:'translateY(0)'}],{duration:700,easing:EASE}).onfinish=()=>m.animate([{transform:'scale(1)'},{transform:'scale(1.3)'},{transform:'scale(1)'}],{duration:480,easing:STAMP})}
+   if(o=='B')r.firstElementChild.animate([{transform:'perspective(400px) rotateX(-90deg)'},{transform:'perspective(400px) rotateX(0)'}],{duration:420,easing:STAMP});
+   if(o=='C'){const f=document.createElement('div');f.className='full';f.style.padding='10px';f.innerHTML=`<img src="${img(pack().landmarks[2][1])}" alt=""><div><b style="font-size:24px">${pack().landmarks[2][0]}</b></div>`;st.appendChild(f);f.animate([{clipPath:'circle(0 at 30% 50%)'},{clipPath:'circle(150% at 30% 50%)'}],{duration:700,easing:EASE});setTimeout(()=>f.animate([{opacity:1},{opacity:0}],{duration:200}).onfinish=()=>f.remove(),1700)}
+   break}
+  case 'stamp':{const t=$('[data-dst]',st);t.classList.add('lock');unlock(t,st);setTimeout(()=>t.classList.add('lock'),1800);break}
+  case 'nav':{const s1=$('[data-s1]',st),s2=$('[data-s2]',st);s2.style.display='block';
+   if(reduced()){fade(s2);}
+   else if(o=='A'){s1.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateX(-24px)'}],{duration:200,easing:EASE,fill:'forwards'});s2.animate([{opacity:0,transform:'translateX(30px)'},{opacity:1,transform:'none'}],{duration:320,delay:60,easing:EASE,fill:'both'})}
+   else if(o=='B'){s1.animate([{opacity:1},{opacity:0}],{duration:90,fill:'forwards'});s2.animate([{opacity:0,transform:'scale(.94)'},{opacity:1,transform:'none'}],{duration:240,delay:90,easing:EASE,fill:'both'})}
+   else{const th=$('[data-thumb]',st).getBoundingClientRect(),sr=st.getBoundingClientRect();s2.animate([{clipPath:`inset(${th.top-sr.top}px ${sr.right-th.right}px ${sr.bottom-th.bottom}px ${th.left-sr.left}px round 6px)`},{clipPath:'inset(0 0 0 0 round 0)'}],{duration:420,easing:EASE})}
+   setTimeout(()=>{s2.style.display='none';s1.getAnimations().forEach(a=>a.cancel())},1600);break}
+  case 'hero':{const im=$('[data-himg]',st),ct=$('[data-hcont]',st);im.getAnimations().forEach(a=>a.cancel());ct.getAnimations().forEach(a=>a.cancel());if(reduced()||o=='C')break;
+   if(o=='A')im.animate([{transform:'scale(1)'},{transform:'scale(1.12) translate(-2%,-1%)'}],{duration:4000,easing:'ease-in-out',direction:'alternate',iterations:2});
+   if(o=='B'){ct.animate([{transform:'translateY(0)'},{transform:'translateY(-80px)'}],{duration:1600,easing:'ease-in-out',direction:'alternate',iterations:2});im.animate([{transform:'translateY(0) scale(1.15)'},{transform:'translateY(-30px) scale(1.15)'}],{duration:1600,easing:'ease-in-out',direction:'alternate',iterations:2})}
+   break}
+  case 'city':{const box=$('[data-dcity]',st),im=$('[data-cimg]',box),nm=$('[data-cname]',box);const toMed=nm.textContent=='Cali';const nk=toMed?'medellin':'cali',NP=PACKS[nk];
+   const swap=()=>{im.src=img(NP.heroes.afternoon[0]);nm.textContent=NP.name};
+   if(reduced()){swap();fade(box);break}
+   if(o=='A'){const cu=document.createElement('div');cu.className='curtain';cu.innerHTML=NP.palette.flag.map((c,i)=>`<i style="background:${c};flex:${NP.palette.flagW[i]}"></i>`).join('');box.appendChild(cu);
+    cu.animate([{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'},{clipPath:'inset(0 0 0 0)',offset:.6},{clipPath:'inset(0 0 0 100%)'}],{duration:900,easing:'ease-in-out'}).onfinish=()=>cu.remove();setTimeout(swap,330)}
+   if(o=='B'){box.animate([{opacity:1},{opacity:0}],{duration:200}).onfinish=()=>{swap();box.animate([{opacity:0},{opacity:1}],{duration:280})}}
+   if(o=='C'){box.animate([{transform:'none'},{transform:'translateX(-100%)'}],{duration:220,easing:'ease-in'}).onfinish=()=>{swap();box.animate([{transform:'translateX(100%)'},{transform:'none'}],{duration:340,easing:EASE})}}
+   break}
+  case 'load':{if(reduced())break;
+   if(o=='A'||o=='D')$('[data-spin]',st).animate([{transform:'rotate(0)'},{transform:'rotate(360deg)'}],{duration:1400,iterations:2});
+   if(o=='B'||o=='D')$$('[data-sk]',st).forEach((s,i)=>s.animate([{transform:'translateX(-120%)'},{transform:'translateX(120%)'}],{duration:1100,delay:i*120,iterations:2}));
+   if(o=='C')$('[data-fl]',st).animate([{width:'0%'},{width:'100%'}],{duration:1200,easing:EASE,iterations:2});
+   break}
+ }}finally{S.choice[g.id]=prev}
+}
+function renderCatalog(){
+ $('#catalog').innerHTML=CAT.map(g=>{const k=g.rec,o=g.o.find(x=>x[0]==k);return `
+  <div class="opt" data-g="${g.id}"><div class="moment">${g.n} · ${g.t}</div><header><b>${o[1]}</b></header><p>${o[2]}</p>
+  <div class="stage" data-stage>${stageFor(g,k)}</div>
+  <div class="optrow"><button data-play>Reproducir</button></div></div>`}).join('');
+ icons();
+ $$('#catalog .opt').forEach(opt=>{const g=CAT.find(x=>x.id==opt.dataset.g),st=$('[data-stage]',opt);
+  $('[data-play]',opt).addEventListener('click',()=>playDemo(g,g.rec,st))});
+}
+
+/* ================= city pack editor (photos, texts, colors) ================= */
+function pack(){
+ const D=PACKS[S.city],e=S.edit[S.city]||{},hs=e.heroes||{},lm=e.lm||{},ln=e.lmName||{};
+ return Object.assign({},D,{
+  heroes:Object.fromEntries(Object.entries(D.heroes).map(([p,v])=>[p,[hs[p]||v[0],v[1]]])),
+  landmarks:D.landmarks.map((l,i)=>[ln[i]||l[0],lm[i]||l[1],l[2],l[3]]),
+  greet:Object.assign({},D.greet,e.greet||{}),
+  heroLine:e.slogan||D.heroLine,cheer:e.cheer||D.cheer,palette:pal()});
+}
+function editOf(){return S.edit[S.city]=S.edit[S.city]||{}}
+function saveEdit(){store.set('edit',S.edit)}
+const desc=k=>CREDITS[k]?CREDITS[k].title.replace(/\.(jpe?g|png)$/i,''):k;
+function renderSlots(){
+ const D=pack(),P=POOL[S.city]||[];
+ const slots=[['heroes','morning','Cabecera · mañana','Comunidad entre 5:00 y 11:59'],['heroes','afternoon','Cabecera · tarde','Comunidad entre 12:00 y 18:29'],['heroes','night','Cabecera · noche','Comunidad desde las 18:30']]
+  .concat(D.landmarks.map((l,i)=>['lm',i,`Rango ${i+1} · ${l[0]}`,`${l[2]} · ${l[3].toLocaleString('es-CO')} XP`]));
+ $('#slots').innerHTML=slots.map(([kind,id,t,s])=>{const cur=kind=='heroes'?D.heroes[id][0]:D.landmarks[id][1];
+  return `<div class="slot"><div class="big"><img src="${img(cur)}" alt="${desc(cur)}"></div><div><b>${t}</b><small>${s} · ${desc(cur)}</small></div>
+   <div class="thumbs">${P.map(k=>`<button data-kind="${kind}" data-id="${id}" data-k="${k}" aria-pressed="${k==cur}" title="${desc(k)}"><img src="${img(k,1)}" alt="${desc(k)}"></button>`).join('')}</div></div>`}).join('');
+ $$('#slots .thumbs button').forEach(b=>b.addEventListener('click',()=>{const e=editOf(),kd=b.dataset.kind;
+  if(kd=='heroes'){e.heroes=e.heroes||{};e.heroes[b.dataset.id]=b.dataset.k;if(S.part=='auto'||S.part==b.dataset.id){}}
+  else{e.lm=e.lm||{};e.lm[b.dataset.id]=b.dataset.k}
+  saveEdit();render()}));
+}
+function renderTexts(){
+ const D=pack();
+ const f=[['greet','morning','Saludo de la mañana',D.greet.morning],['greet','afternoon','Saludo de la tarde',D.greet.afternoon],['greet','night','Saludo de la noche',D.greet.night],
+  ['slogan','','Eslogan bajo el saludo',D.heroLine],['cheer','','Frase al validar un reporte',D.cheer]]
+  .concat(D.landmarks.map((l,i)=>['lmName',i,`Lugar del rango ${i+1} (${l[2]})`,l[0]]));
+ $('#texts').innerHTML=f.map(([k,id,label,v],i)=>`<label>${label}<input id="t-${i}" data-k="${k}" data-id="${id}" value="${String(v).replace(/"/g,'&quot;')}"></label>`).join('');
+ $$('#texts input').forEach(inp=>inp.addEventListener('input',()=>{const e=editOf(),k=inp.dataset.k,id=inp.dataset.id;
+  if(k=='greet'||k=='lmName'){e[k]=e[k]||{};e[k][id]=inp.value}else e[k]=inp.value;saveEdit();render()}));
+}
+
+/* ================= utils ================= */
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800)}
+function copy(text,box){
+ const show=()=>{if(box){box.hidden=false;box.textContent=text;const r=document.createRange();r.selectNodeContents(box);const s=getSelection();s.removeAllRanges();s.addRange(r)}};
+ try{navigator.clipboard.writeText(text).then(()=>{toast('Copiado. Pégamelo en el chat.');if(box){box.hidden=false;box.textContent=text}},()=>{show();toast('Selecciona el texto y cópialo')})}catch(e){show();toast('Selecciona el texto y cópialo')}
+ if(!box){const o=$('#palOut');}
+}
+function renderCredits(){
+ $('#credits').innerHTML=Object.keys(CREDITS).sort().map(k=>{const c=CREDITS[k];return `<div><a href="${c.source}" target="_blank" rel="noopener">${c.title.replace(/\.(jpe?g|png)$/i,'')}</a> · ${c.author||'autor sin dato'} · ${c.license}</div>`}).join('');
+}
+
+/* ================= controls ================= */
+$$('.seg').forEach(s=>s.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const k=s.dataset.ctl;if(S[k]==b.dataset.v)return;S[k]=b.dataset.v;store.set(k,S[k]);
+ if(k=='part')store.set('part2',S[k]);if(k=='city'){syncSeg();citySwitch();renderCatalog();renderTexts()}else render();if(k=='part')renderCatalog()}));
+const mq=window.matchMedia('(prefers-reduced-motion: reduce)');
+$('#reduce').checked=mq.matches;S.reduce=mq.matches;
+$('#reduce').addEventListener('change',e=>{S.reduce=e.target.checked;document.body.classList.toggle('reduce',S.reduce);$$('#rail .phone').forEach(p=>p.classList.toggle('kb',!S.reduce&&S.choice.hero=='A'))});
+render();renderTexts();renderCatalog();renderCredits();
+</script>

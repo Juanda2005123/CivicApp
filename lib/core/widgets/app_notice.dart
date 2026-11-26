@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -19,9 +20,9 @@ class AppNotice extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final semantic = context.semantic;
     final (background, foreground, defaultIcon) = switch (kind) {
-      NoticeKind.error => (scheme.errorContainer, scheme.onErrorContainer, Icons.error_outline),
-      NoticeKind.success => (semantic.successContainer, semantic.success, Icons.check_circle_outline),
-      NoticeKind.info => (semantic.infoContainer, semantic.info, Icons.info_outline),
+      NoticeKind.error => (scheme.errorContainer, scheme.onErrorContainer, LucideIcons.circleAlert),
+      NoticeKind.success => (semantic.successContainer, semantic.success, LucideIcons.circleCheck),
+      NoticeKind.info => (semantic.infoContainer, semantic.info, LucideIcons.info),
     };
 
     return Semantics(

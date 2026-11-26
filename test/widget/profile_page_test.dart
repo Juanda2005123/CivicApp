@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/core/constants/app_routes.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
 import 'package:vigia_app/core/theme/theme_cubit.dart';
-import 'package:vigia_app/core/widgets/dotted_spinner.dart';
+import 'package:vigia_app/core/widgets/city/city_skeleton.dart';
 import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
 import 'package:vigia_app/features/auth/domain/entities/profile.dart';
 import 'package:vigia_app/features/dashboard/ui/bloc/profile_bloc.dart';
@@ -86,13 +86,13 @@ void main() {
       await tester.pumpWidget(createProfileTestWidget(newBloc()));
       await tester.pump();
 
-      expect(find.byType(DottedSpinner), findsOneWidget);
+      expect(find.byType(CitySkeleton), findsOneWidget);
       expect(find.text('Rango cívico'), findsNothing);
 
       gate.complete();
       await tester.pumpAndSettle();
 
-      expect(find.byType(DottedSpinner), findsNothing);
+      expect(find.byType(CitySkeleton), findsNothing);
       expect(find.text('Juan David Quintero'), findsOneWidget);
     });
 

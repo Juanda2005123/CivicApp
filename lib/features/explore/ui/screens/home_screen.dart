@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_routes.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/city_theme.dart';
 import '../../../../core/widgets/sign_in_required_dialog.dart';
 import '../../../../core/widgets/theme_toggle_button.dart';
+import '../../../auth/domain/entities/city.dart';
 import '../../../auth/domain/entities/coordinates.dart';
+import '../../../city_identity/ui/bloc/city_ambience_bloc.dart';
+import '../../../city_identity/ui/bloc/city_ambience_event.dart';
 import '../../../dashboard/ui/bloc/profile_bloc.dart';
 import '../../../dashboard/ui/bloc/profile_event.dart';
 import '../../../dashboard/ui/bloc/profile_state.dart';
@@ -18,13 +24,38 @@ import '../bloc/map_event.dart';
 import '../bloc/map_state.dart';
 import '../pages/feed_page.dart';
 import '../pages/map_page.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
+
+/// Icon of a tab. In a city the active one sits in a pill of its accent; the
+/// default look has a transparent pill.
+class _NavIcon extends StatelessWidget {
+  final IconData icon;
+  final bool active;
+
+  const _NavIcon(this.icon, {this.active = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: AppSizes.navPillWidth,
+      height: AppSizes.navPillHeight,
+      alignment: Alignment.center,
+      decoration: active
+          ? ShapeDecoration(color: CityTheme.of(context).navPill, shape: const StadiumBorder())
+          : null,
+      child: Icon(icon),
+    );
+  }
+}
 
 /// The shell: host Screen with the bottom navigation bar. Each tab is a Page;
 /// `IndexedStack` keeps them alive, so switching tabs does not reload the map
 /// nor the feed. The city the map shows is the one the Comunidad feed lists
 /// (HU-19): the shell forwards every change of it from the [MapBloc] to the
-/// [FeedBloc]. A guest (HU-22) browses the same shell; actions that need an
-/// account open the sign-in modal instead.
+/// [FeedBloc] and to the [CityAmbienceBloc], which dresses the app for it. The
+/// citizen's own city, from the profile, gives the places of their rank climb.
+/// A guest (HU-22) browses the same shell; actions that need an account open the
+/// sign-in modal instead.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -43,13 +74,33 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static const _titles = ['Mapa', 'Comunidad', 'Mi perfil'];
 
+  /// City the shell showed last; a different one is a switch (HU-21).
+  String? _shownCity;
+
   @override
   void initState() {
     super.initState();
-    // The map may have resolved its city before this screen was built.
+    // The map may have resolved its city, and the profile loaded, before this
+    // screen was built.
     final city = context.read<MapBloc>().state.city;
-    if (city != null) context.read<FeedBloc>().add(FeedCityChanged(city));
+    if (city != null) _showCity(city);
+    final home = context.read<ProfileBloc>().state.profile?.cityName;
+    if (home != null) _showReferenceCity(home);
   }
+
+  /// The feed lists the city of the map and the app wears its look.
+  void _showCity(City city) {
+    final switched = _shownCity != null && _shownCity != city.name;
+    _shownCity = city.name;
+    context.read<FeedBloc>().add(FeedCityChanged(city));
+    context.read<CityAmbienceBloc?>()?.add(
+          ActiveCityChanged(name: city.name, department: city.department, switched: switched),
+        );
+  }
+
+  /// Absent only in tests that pump the shell without the app around it.
+  void _showReferenceCity(String name) =>
+      context.read<CityAmbienceBloc?>()?.add(ReferenceCityChanged(name));
 
   /// A guest is invited to sign in instead of opening the wizard (HU-22).
   void _onReportPressed(bool isGuest) {
@@ -104,9 +155,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     // Forwarding the city is a side effect, so it runs once per change here and
     // never in a builder. The same city again does nothing in the FeedBloc.
-    return BlocListener<MapBloc, MapState>(
-      listenWhen: (previous, current) => current.city != null && previous.city != current.city,
-      listener: (context, state) => context.read<FeedBloc>().add(FeedCityChanged(state.city!)),
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<MapBloc, MapState>(
+          listenWhen: (previous, current) => current.city != null && previous.city != current.city,
+          listener: (context, state) => _showCity(state.city!),
+        ),
+        BlocListener<ProfileBloc, ProfileState>(
+          listenWhen: (previous, current) =>
+              current.profile != null && previous.profile?.cityName != current.profile!.cityName,
+          listener: (context, state) => _showReferenceCity(state.profile!.cityName),
+        ),
+      ],
       child: BlocBuilder<ProfileBloc, ProfileState>(
         buildWhen: (previous, current) =>
             (previous.status == ProfileStatus.guest) != (current.status == ProfileStatus.guest),
@@ -127,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (_tab == HomeScreen.profileTab && !isGuest)
             IconButton(
               tooltip: 'Cerrar sesión',
-              icon: const Icon(Icons.logout),
+              icon: const Icon(LucideIcons.logOut),
               onPressed: () => context.read<ProfileBloc>().add(SignOutRequested()),
             ),
         ],
@@ -164,11 +224,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: PressScale(child: FloatingActionButton.extended(
         onPressed: () => _onReportPressed(isGuest),
-        icon: const Icon(Icons.add_location_alt_outlined),
+        icon: const Icon(LucideIcons.mapPinPlus),
         label: const Text('Reportar daño'),
-      ),
+      )),
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
           border: Border(top: BorderSide(color: theme.colorScheme.outlineVariant)),
@@ -183,18 +243,18 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.map_outlined),
-              activeIcon: Icon(Icons.map),
+              icon: _NavIcon(LucideIcons.map),
+              activeIcon: _NavIcon(LucideIcons.map, active: true),
               label: 'Mapa',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.groups_outlined),
-              activeIcon: Icon(Icons.groups),
+              icon: _NavIcon(LucideIcons.usersRound),
+              activeIcon: _NavIcon(LucideIcons.usersRound, active: true),
               label: 'Comunidad',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
+              icon: _NavIcon(LucideIcons.circleUserRound),
+              activeIcon: _NavIcon(LucideIcons.circleUserRound, active: true),
               label: 'Mi perfil',
             ),
           ],
