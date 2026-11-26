@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../domain/entities/incident_photo.dart';
@@ -109,7 +110,7 @@ class _PhotoSlot extends StatelessWidget {
               tooltip: 'Quitar foto',
               onPressed: onRemove,
               style: IconButton.styleFrom(backgroundColor: scheme.surface, foregroundColor: scheme.onSurface),
-              icon: const Icon(Icons.close, size: AppSizes.icon),
+              icon: const Icon(LucideIcons.x, size: AppSizes.icon),
             ),
           ),
         ],
@@ -142,7 +143,7 @@ class _AddSlot extends StatelessWidget {
               border: Border.all(color: scheme.outline),
               color: scheme.surfaceContainerLow,
             ),
-            child: Center(child: Icon(Icons.add_a_photo_outlined, size: AppSizes.iconLarge, color: scheme.primary)),
+            child: Center(child: Icon(LucideIcons.imagePlus, size: AppSizes.iconLarge, color: scheme.primary)),
           ),
         ),
       ),
@@ -157,7 +158,7 @@ class _BrokenPhoto extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Icon(
-        Icons.broken_image_outlined,
+        LucideIcons.imageOff,
         size: AppSizes.iconLarge,
         color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),

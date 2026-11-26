@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -107,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             label: 'Correo electrónico',
                             hint: 'nombre@correo.com',
                             controller: _emailController,
-                            prefixIcon: Icons.mail_outline,
+                            prefixIcon: LucideIcons.mail,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
                             autofillHints: const [AutofillHints.email],
@@ -119,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             label: 'Contraseña',
                             hint: 'Tu contraseña',
                             controller: _passwordController,
-                            prefixIcon: Icons.lock_outline,
+                            prefixIcon: LucideIcons.lock,
                             obscureText: _obscurePassword,
                             textInputAction: TextInputAction.done,
                             autofillHints: const [AutofillHints.password],
@@ -129,8 +130,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               tooltip: _obscurePassword ? 'Mostrar contraseña' : 'Ocultar contraseña',
                               icon: Icon(
                                 _obscurePassword
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
+                                    ? LucideIcons.eye
+                                    : LucideIcons.eyeOff,
                               ),
                               onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                             ),
@@ -166,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           // HU-22: browse the map and the reports without an account.
                           TextButton.icon(
                             onPressed: isLoading ? null : () => Navigator.pushNamed(context, AppRoutes.home),
-                            icon: const Icon(Icons.explore_outlined, size: AppSizes.icon),
+                            icon: const Icon(LucideIcons.compass, size: AppSizes.icon),
                             label: const Text('Explorar sin cuenta'),
                           ),
                           const SizedBox(height: AppSpacing.lg),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -77,7 +78,7 @@ class _EditReportScreenState extends State<EditReportScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.camera_alt_outlined),
+              leading: const Icon(LucideIcons.camera),
               title: const Text('Tomar foto con la cámara'),
               onTap: () {
                 Navigator.of(sheetContext).pop();
@@ -85,7 +86,7 @@ class _EditReportScreenState extends State<EditReportScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
+              leading: const Icon(LucideIcons.images),
               title: const Text('Elegir foto de la galería'),
               onTap: () {
                 Navigator.of(sheetContext).pop();

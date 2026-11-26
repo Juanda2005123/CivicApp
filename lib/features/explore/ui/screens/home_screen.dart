@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/widgets/sign_in_required_dialog.dart';
@@ -161,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (_tab == HomeScreen.profileTab && !isGuest)
             IconButton(
               tooltip: 'Cerrar sesión',
-              icon: const Icon(Icons.logout),
+              icon: const Icon(LucideIcons.logOut),
               onPressed: () => context.read<ProfileBloc>().add(SignOutRequested()),
             ),
         ],
@@ -200,7 +201,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _onReportPressed(isGuest),
-        icon: const Icon(Icons.add_location_alt_outlined),
+        icon: const Icon(LucideIcons.mapPinPlus),
         label: const Text('Reportar daño'),
       ),
       bottomNavigationBar: DecoratedBox(
@@ -217,18 +218,18 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.map_outlined),
-              activeIcon: Icon(Icons.map),
+              icon: Icon(LucideIcons.map),
+              activeIcon: Icon(LucideIcons.map),
               label: 'Mapa',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.groups_outlined),
-              activeIcon: Icon(Icons.groups),
+              icon: Icon(LucideIcons.usersRound),
+              activeIcon: Icon(LucideIcons.usersRound),
               label: 'Comunidad',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
+              icon: Icon(LucideIcons.circleUserRound),
+              activeIcon: Icon(LucideIcons.circleUserRound),
               label: 'Mi perfil',
             ),
           ],

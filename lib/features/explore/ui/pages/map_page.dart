@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -280,7 +281,7 @@ class _CityButton extends StatelessWidget {
         ),
         icon: isLoading
             ? const DottedSpinner(size: AppSizes.icon, semanticLabel: 'Cargando la ciudad')
-            : const Icon(Icons.location_city_outlined, size: AppSizes.icon),
+            : const Icon(LucideIcons.building2, size: AppSizes.icon),
         label: Text('${city.name}, ${city.department}', overflow: TextOverflow.ellipsis),
       ),
     );
@@ -311,7 +312,7 @@ class _MyLocationButton extends StatelessWidget {
       ),
       icon: isLocating
           ? const DottedSpinner(size: AppSizes.icon, semanticLabel: 'Buscando tu ubicación')
-          : const Icon(Icons.my_location),
+          : const Icon(LucideIcons.locateFixed),
     );
   }
 }
@@ -358,7 +359,7 @@ class _LoadError extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.map_outlined, size: AppSpacing.xxxl, color: theme.colorScheme.error),
+            Icon(LucideIcons.map, size: AppSpacing.xxxl, color: theme.colorScheme.error),
             const SizedBox(height: AppSpacing.lg),
             Text('No pudimos cargar el mapa', style: theme.textTheme.titleMedium),
             const SizedBox(height: AppSpacing.sm),
@@ -407,7 +408,7 @@ class _ActiveFiltersNotice extends StatelessWidget {
         padding: const EdgeInsets.only(left: AppSpacing.md),
         child: Row(
           children: [
-            Icon(Icons.filter_alt_outlined, size: AppSizes.icon, color: theme.colorScheme.onSurfaceVariant),
+            Icon(LucideIcons.slidersHorizontal, size: AppSizes.icon, color: theme.colorScheme.onSurfaceVariant),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(

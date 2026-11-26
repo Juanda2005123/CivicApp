@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../explore/ui/widgets/feed_incident_card.dart';
@@ -64,7 +65,7 @@ class _EmptyInvitation extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             OutlinedButton.icon(
               onPressed: onReportFirst,
-              icon: const Icon(Icons.add_location_alt_outlined, size: AppSizes.icon),
+              icon: const Icon(LucideIcons.mapPinPlus, size: AppSizes.icon),
               label: const Text('Reportar mi primer daño'),
             ),
           ],

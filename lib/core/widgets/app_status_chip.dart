@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -29,7 +30,7 @@ class AppStatusChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (met) ...[
-            Icon(Icons.check_circle_outline, size: 14, color: foreground),
+            Icon(LucideIcons.circleCheck, size: 14, color: foreground),
             const SizedBox(width: AppSpacing.xs + 2),
           ],
           Text(

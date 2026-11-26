@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_notice.dart';
@@ -81,7 +82,7 @@ class _PermissionsScreenState extends State<PermissionsScreen> with WidgetsBindi
                     ],
                     if (permissions != null) ...[
                       _PermissionCard(
-                        icon: Icons.camera_alt_outlined,
+                        icon: LucideIcons.camera,
                         title: 'Cámara',
                         status: permissions.camera,
                         onTap: () =>
@@ -89,7 +90,7 @@ class _PermissionsScreenState extends State<PermissionsScreen> with WidgetsBindi
                       ),
                       const SizedBox(height: AppSpacing.md),
                       _PermissionCard(
-                        icon: Icons.location_on_outlined,
+                        icon: LucideIcons.mapPin,
                         title: 'Ubicación',
                         status: permissions.location,
                         onTap: () =>
@@ -137,7 +138,7 @@ class _PermissionCard extends StatelessWidget {
           '$label · $hint',
           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: const Icon(LucideIcons.chevronRight),
         onTap: onTap,
       ),
     );

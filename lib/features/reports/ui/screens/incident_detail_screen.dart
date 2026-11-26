@@ -12,6 +12,7 @@ import 'package:vigia_app/core/widgets/sign_in_required_dialog.dart';
 import 'package:vigia_app/core/widgets/validation_seal.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_photo.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../widgets/author_actions_card.dart';
 import '../widgets/incident_comments_section.dart';
 import '../bloc/incident_detail_bloc.dart';
@@ -296,7 +297,7 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.info_outline, size: 14, color: semantic.info),
+                    Icon(LucideIcons.info, size: 14, color: semantic.info),
                     const SizedBox(width: 4),
                     Text(
                       incident.status.labelSpanish,
@@ -385,7 +386,7 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.photo_library_outlined, size: 48, color: theme.colorScheme.outline),
+            Icon(LucideIcons.images, size: 48, color: theme.colorScheme.outline),
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Sin fotografías adjuntas',
@@ -421,7 +422,7 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.broken_image_outlined, size: 40),
+                      const Icon(LucideIcons.imageOff, size: 40),
                       const SizedBox(height: 4),
                       Text('Error cargando evidencia', style: theme.textTheme.bodySmall),
                     ],
@@ -534,12 +535,12 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
       child: endorsed
           ? OutlinedButton.icon(
               onPressed: onPressed,
-              icon: const Icon(Icons.thumb_up, size: AppSizes.icon),
+              icon: const Icon(LucideIcons.thumbsUp, size: AppSizes.icon),
               label: const Text('Apoyado'),
             )
           : FilledButton.icon(
               onPressed: onPressed,
-              icon: const Icon(Icons.thumb_up_outlined, size: AppSizes.icon),
+              icon: const Icon(LucideIcons.thumbsUp, size: AppSizes.icon),
               label: const Text('Apoyar este reporte'),
             ),
     );
@@ -569,7 +570,7 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
             const Divider(height: AppSpacing.lg),
             Row(
               children: [
-                Icon(Icons.straighten_outlined, size: 18, color: theme.colorScheme.onSurfaceVariant),
+                Icon(LucideIcons.ruler, size: 18, color: theme.colorScheme.onSurfaceVariant),
                 const SizedBox(width: AppSpacing.xs),
                 Text(
                   'Dimensiones estimadas: ${incident.estimatedDimensions}',
@@ -599,7 +600,7 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.location_on, color: theme.colorScheme.primary, size: 22),
+              Icon(LucideIcons.mapPin, color: theme.colorScheme.primary, size: 22),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 'Ubicación georreferenciada',

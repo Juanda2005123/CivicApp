@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/app_spacing.dart';
 
@@ -14,7 +15,7 @@ Future<void> showSignInRequiredDialog(
   return showDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      icon: const Icon(Icons.lock_outline),
+      icon: const Icon(LucideIcons.lock),
       title: const Text('Necesitas iniciar sesión'),
       content: Text(message),
       actions: [
@@ -34,7 +35,7 @@ Future<void> showSignInRequiredDialog(
             Navigator.of(dialogContext).pop();
             onSignIn();
           },
-          icon: const Icon(Icons.login, size: AppSizes.icon),
+          icon: const Icon(LucideIcons.logIn, size: AppSizes.icon),
           label: const Text('Iniciar sesión'),
         ),
       ],

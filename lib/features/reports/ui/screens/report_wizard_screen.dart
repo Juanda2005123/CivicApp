@@ -8,6 +8,7 @@ import 'package:vigia_app/core/widgets/location_blocked_dialog.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_category.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../bloc/report_wizard_bloc.dart';
 import '../bloc/report_wizard_event.dart';
 import '../bloc/report_wizard_state.dart';
@@ -231,24 +232,24 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
   IconData _getCategoryIcon(IncidentCategory cat) {
     final lower = cat.name.toLowerCase();
     if (lower.contains('hueco') || lower.contains('bache') || lower.contains('pothole')) {
-      return Icons.remove_road_outlined;
+      return LucideIcons.road;
     }
     if (lower.contains('semáforo') || lower.contains('semaforo') || lower.contains('traffic')) {
-      return Icons.traffic_outlined;
+      return LucideIcons.trafficCone;
     }
     if (lower.contains('obra') || lower.contains('abandoned')) {
-      return Icons.construction_outlined;
+      return LucideIcons.construction;
     }
     if (lower.contains('andén') || lower.contains('anden') || lower.contains('sidewalk')) {
-      return Icons.directions_walk_outlined;
+      return LucideIcons.footprints;
     }
     if (lower.contains('agua') || lower.contains('fuga') || lower.contains('water') || lower.contains('alcantarilla')) {
-      return Icons.water_drop_outlined;
+      return LucideIcons.droplet;
     }
     if (lower.contains('señal') || lower.contains('senal') || lower.contains('signage')) {
-      return Icons.signpost_outlined;
+      return LucideIcons.signpost;
     }
-    return Icons.report_problem_outlined;
+    return LucideIcons.triangleAlert;
   }
 
   // STEP 2: Classification and Severity (HU-08/HU-09)
@@ -378,7 +379,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.warning, color: theme.colorScheme.error, size: 20),
+                Icon(LucideIcons.triangleAlert, color: theme.colorScheme.error, size: 20),
                 const SizedBox(width: AppSpacing.xs),
                 Expanded(
                   child: Text(
@@ -483,7 +484,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.camera_alt_outlined),
+                  leading: const Icon(LucideIcons.camera),
                   title: const Text('Tomar foto con la cámara'),
                   onTap: () {
                     Navigator.of(bottomSheetContext).pop();
@@ -491,7 +492,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.photo_library_outlined),
+                  leading: const Icon(LucideIcons.images),
                   title: const Text('Elegir foto de la galería / archivos'),
                   onTap: () {
                     Navigator.of(bottomSheetContext).pop();
@@ -651,7 +652,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
               const Divider(height: AppSpacing.lg),
               Row(
                 children: [
-                  const Icon(Icons.location_on_outlined, size: 18),
+                  const Icon(LucideIcons.mapPin, size: 18),
                   const SizedBox(width: AppSpacing.xs),
                   Expanded(
                     child: Text(
@@ -664,7 +665,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
               const SizedBox(height: AppSpacing.xs),
               Row(
                 children: [
-                  const Icon(Icons.photo_camera_outlined, size: 18),
+                  const Icon(LucideIcons.camera, size: 18),
                   const SizedBox(width: AppSpacing.xs),
                   Text(
                     'Fotos adjuntas: ${state.photos.length}',
@@ -685,7 +686,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
           ),
           child: Row(
             children: [
-              Icon(Icons.workspace_premium, color: theme.colorScheme.primary),
+              Icon(LucideIcons.award, color: theme.colorScheme.primary),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(

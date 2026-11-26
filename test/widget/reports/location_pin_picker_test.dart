@@ -6,6 +6,7 @@ import 'package:vigia_app/features/reports/domain/entities/address_outcome.dart'
 import 'package:vigia_app/features/reports/domain/entities/location_source.dart';
 import 'package:vigia_app/features/reports/domain/entities/suggested_address.dart';
 import 'package:vigia_app/features/reports/ui/widgets/location_pin_picker.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 void main() {
   Widget pickerUnderTest({
@@ -141,10 +142,10 @@ void main() {
 
     testWidgets('says where the point comes from, in words and with an icon', (tester) async {
       for (final (source, text, icon) in [
-        (LocationSource.gps, 'Tu ubicación (GPS)', Icons.gps_fixed),
-        (LocationSource.mapPoint, 'Punto marcado en el mapa', Icons.push_pin_outlined),
-        (LocationSource.address, 'Aproximada: según la dirección', Icons.edit_location_alt_outlined),
-        (LocationSource.cityCenter, 'Aproximada: centro de la ciudad', Icons.location_city_outlined),
+        (LocationSource.gps, 'Tu ubicación (GPS)', LucideIcons.locateFixed),
+        (LocationSource.mapPoint, 'Punto marcado en el mapa', LucideIcons.pin),
+        (LocationSource.address, 'Aproximada: según la dirección', LucideIcons.mapPinPen),
+        (LocationSource.cityCenter, 'Aproximada: centro de la ciudad', LucideIcons.building2),
       ]) {
         await tester.pumpWidget(pickerUnderTest(coordinatesSource: source));
 

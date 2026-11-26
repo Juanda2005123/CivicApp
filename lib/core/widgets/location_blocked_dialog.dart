@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/app_spacing.dart';
 
@@ -13,7 +14,7 @@ Future<void> showLocationBlockedDialog(
   return showDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      icon: const Icon(Icons.location_disabled_outlined),
+      icon: const Icon(LucideIcons.locateOff),
       title: const Text('Ubicación bloqueada'),
       content: Text(message),
       actions: [
@@ -26,7 +27,7 @@ Future<void> showLocationBlockedDialog(
             Navigator.of(dialogContext).pop();
             onOpenSettings();
           },
-          icon: const Icon(Icons.settings_outlined, size: AppSizes.icon),
+          icon: const Icon(LucideIcons.settings, size: AppSizes.icon),
           label: const Text('Abrir ajustes'),
         ),
       ],

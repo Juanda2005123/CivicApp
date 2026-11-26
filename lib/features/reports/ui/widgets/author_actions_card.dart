@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../domain/entities/incident.dart';
@@ -90,7 +91,7 @@ class _AuthorActionsCardState extends State<AuthorActionsCard> {
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: widget.isDeleting ? null : widget.onEdit,
-                icon: const Icon(Icons.edit_outlined, size: AppSizes.icon),
+                icon: const Icon(LucideIcons.pencil, size: AppSizes.icon),
                 label: const Text('Editar'),
               ),
             ),
@@ -98,7 +99,7 @@ class _AuthorActionsCardState extends State<AuthorActionsCard> {
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: widget.isDeleting ? null : widget.onDelete,
-                icon: const Icon(Icons.delete_outline, size: AppSizes.icon),
+                icon: const Icon(LucideIcons.trash2, size: AppSizes.icon),
                 label: Text(widget.isDeleting ? 'Eliminando…' : 'Eliminar'),
               ),
             ),
@@ -112,7 +113,7 @@ class _AuthorActionsCardState extends State<AuthorActionsCard> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.lock_outline, size: AppSizes.iconLarge, color: scheme.onSurfaceVariant),
+        Icon(LucideIcons.lock, size: AppSizes.iconLarge, color: scheme.onSurfaceVariant),
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(

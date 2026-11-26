@@ -13,6 +13,7 @@ import 'package:vigia_app/features/reports/ui/bloc/incident_detail_bloc.dart';
 import 'package:vigia_app/features/reports/ui/screens/incident_detail_screen.dart';
 
 import 'package:vigia_app/features/reports/ui/bloc/comments_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../support/detail_bloc_factory.dart';
 import '../../support/fake_comment_repository.dart';
@@ -168,7 +169,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Sin fotografías adjuntas'), findsOneWidget);
-      expect(find.byIcon(Icons.photo_library_outlined), findsOneWidget);
+      expect(find.byIcon(LucideIcons.images), findsOneWidget);
     });
 
     testWidgets('renders error notice and retry button when report does not exist', (tester) async {

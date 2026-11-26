@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -100,25 +101,25 @@ class ProfilePage extends StatelessWidget {
               const SizedBox(height: AppSpacing.xl),
               OutlinedButton.icon(
                 onPressed: () => _openSettings(context, profile),
-                icon: const Icon(Icons.settings_outlined, size: AppSizes.icon),
+                icon: const Icon(LucideIcons.settings, size: AppSizes.icon),
                 label: const Text('Configuración'),
               ),
               const SizedBox(height: AppSpacing.sm),
               OutlinedButton.icon(
                 onPressed: () => _openEditProfile(context, profile),
-                icon: const Icon(Icons.edit_outlined, size: AppSizes.icon),
+                icon: const Icon(LucideIcons.pencil, size: AppSizes.icon),
                 label: const Text('Datos personales'),
               ),
               const SizedBox(height: AppSpacing.sm),
               OutlinedButton.icon(
                 onPressed: () => Navigator.pushNamed(context, AppRoutes.permissions),
-                icon: const Icon(Icons.security_outlined, size: AppSizes.icon),
+                icon: const Icon(LucideIcons.shieldCheck, size: AppSizes.icon),
                 label: const Text('Permisos'),
               ),
               const SizedBox(height: AppSpacing.sm),
               OutlinedButton.icon(
                 onPressed: () => context.read<ProfileBloc>().add(SignOutRequested()),
-                icon: const Icon(Icons.logout, size: AppSizes.icon),
+                icon: const Icon(LucideIcons.logOut, size: AppSizes.icon),
                 label: const Text('Cerrar sesión'),
               ),
             ],
@@ -154,7 +155,7 @@ class ProfilePage extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.camera_alt_outlined),
+                leading: const Icon(LucideIcons.camera),
                 title: const Text('Tomar foto'),
                 onTap: () {
                   Navigator.pop(sheetContext);
@@ -162,7 +163,7 @@ class ProfilePage extends StatelessWidget {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library_outlined),
+                leading: const Icon(LucideIcons.images),
                 title: const Text('Elegir de la galería'),
                 onTap: () {
                   Navigator.pop(sheetContext);
@@ -252,7 +253,7 @@ class _GuestInvitation extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(Icons.person_outline, size: AppSpacing.xxxl, color: context.semantic.accent),
+                  Icon(LucideIcons.user, size: AppSpacing.xxxl, color: context.semantic.accent),
                   const SizedBox(height: AppSpacing.md),
                   Text(
                     'Inicia sesión para ver tu perfil',
@@ -368,15 +369,15 @@ class _DetailsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final rows = [
       _InfoRow(
-        icon: Icons.star_outline,
+        icon: LucideIcons.star,
         label: 'Puntos de reputación',
         value: '${profile.experiencePoints} pts',
         mono: true,
       ),
-      _InfoRow(icon: Icons.mail_outline, label: 'Correo electrónico', value: profile.email),
-      _InfoRow(icon: Icons.location_on_outlined, label: 'Ciudad de residencia', value: profile.cityName),
+      _InfoRow(icon: LucideIcons.mail, label: 'Correo electrónico', value: profile.email),
+      _InfoRow(icon: LucideIcons.mapPin, label: 'Ciudad de residencia', value: profile.cityName),
       _InfoRow(
-        icon: Icons.military_tech_outlined,
+        icon: LucideIcons.award,
         label: 'Rango cívico',
         value: 'Nivel ${profile.rankId} · ${profile.rankName}',
       ),
@@ -454,7 +455,7 @@ class _LoadError extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+            Icon(LucideIcons.circleAlert, size: 48, color: theme.colorScheme.error),
             const SizedBox(height: AppSpacing.lg),
             Text('No pudimos cargar tu perfil', style: theme.textTheme.titleMedium),
             const SizedBox(height: AppSpacing.sm),

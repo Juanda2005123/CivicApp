@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -123,14 +124,14 @@ class _FeedPageState extends State<FeedPage> {
         if (state.items.isEmpty) {
           body = state.status == FeedStatus.failure
               ? _Message(
-                  icon: Icons.cloud_off_outlined,
+                  icon: LucideIcons.cloudOff,
                   title: 'No pudimos cargar los reportes',
                   message: state.errorMessage ?? 'Revisa tu conexión e inténtalo de nuevo.',
                   actionLabel: 'Reintentar',
                   onAction: () => context.read<FeedBloc>().add(FeedRefreshed()),
                 )
               : _Message(
-                  icon: Icons.add_location_alt_outlined,
+                  icon: LucideIcons.mapPinPlus,
                   title: 'Aún no hay reportes en ${city.name}',
                   message: 'Sé la primera persona en reportar un daño en tu ciudad.',
                   actionLabel: 'Reportar daño',
@@ -141,7 +142,7 @@ class _FeedPageState extends State<FeedPage> {
           body = const Center(child: DottedSpinner(size: 32, semanticLabel: 'Buscando en los reportes'));
         } else if (visible.isEmpty && state.loadMoreFailed) {
           body = _Message(
-            icon: Icons.cloud_off_outlined,
+            icon: LucideIcons.cloudOff,
             title: 'No pudimos buscar en todos los reportes',
             message: state.errorMessage ?? 'Revisa tu conexión e inténtalo de nuevo.',
             actionLabel: 'Reintentar',
@@ -149,7 +150,7 @@ class _FeedPageState extends State<FeedPage> {
           );
         } else if (visible.isEmpty) {
           body = _Message(
-            icon: Icons.search_off_outlined,
+            icon: LucideIcons.searchX,
             title: 'Ningún reporte coincide',
             message: 'Prueba con otras palabras o quita algún filtro para ver los reportes de ${city.name}.',
             actionLabel: 'Limpiar filtros',
@@ -311,7 +312,7 @@ class _CityHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.xs),
       child: Row(
         children: [
-          Icon(Icons.location_city_outlined, size: AppSizes.icon, color: theme.colorScheme.onSurfaceVariant),
+          Icon(LucideIcons.building2, size: AppSizes.icon, color: theme.colorScheme.onSurfaceVariant),
           const SizedBox(width: AppSpacing.sm),
           Expanded(child: Text(cityName, style: theme.textTheme.titleSmall)),
         ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../features/city_identity/domain/entities/city_identity.dart';
 import '../widgets/city/city_motion.dart';
@@ -164,6 +165,11 @@ abstract final class AppTheme {
       radioTheme: !hasCity ? null : RadioThemeData(fillColor: selectedControl),
       checkboxTheme: !hasCity ? null : CheckboxThemeData(fillColor: selectedControl),
       textSelectionTheme: !hasCity ? null : TextSelectionThemeData(cursorColor: scheme.secondary),
+      // Back and close buttons Flutter adds on its own use Lucide too.
+      actionIconTheme: ActionIconThemeData(
+        backButtonIconBuilder: (_) => const Icon(LucideIcons.arrowLeft),
+        closeButtonIconBuilder: (_) => const Icon(LucideIcons.x),
+      ),
       dividerTheme: DividerThemeData(color: scheme.outlineVariant, thickness: 1, space: 1),
       appBarTheme: AppBarTheme(
         backgroundColor: scheme.surface,

@@ -28,6 +28,7 @@ import 'package:vigia_app/features/reports/domain/entities/nearby_incident.dart'
 import 'package:vigia_app/features/reports/ui/bloc/report_wizard_bloc.dart';
 import 'package:vigia_app/features/reports/ui/bloc/report_wizard_event.dart';
 import 'package:vigia_app/features/reports/ui/screens/report_wizard_screen.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../support/fakes.dart';
 
@@ -436,7 +437,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tap close button (top right icon)
-      await tester.tap(find.byIcon(Icons.close));
+      await tester.tap(find.byIcon(LucideIcons.x));
       await tester.pumpAndSettle();
 
       expect(find.text('¿Descartar este reporte?'), findsOneWidget);

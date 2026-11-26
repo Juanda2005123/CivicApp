@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -115,8 +116,8 @@ class FeedIncidentCard extends StatelessWidget {
                       runSpacing: AppSpacing.sm,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        _Counter(icon: Icons.thumb_up_outlined, count: incident.upvotesCount),
-                        _Counter(icon: Icons.chat_bubble_outline, count: incident.commentsCount),
+                        _Counter(icon: LucideIcons.thumbsUp, count: incident.upvotesCount),
+                        _Counter(icon: LucideIcons.messageCircle, count: incident.commentsCount),
                         AppStatusChip(label: incident.status.labelSpanish, met: isClosedOrValidated),
                         Text(
                           formatDate(incident.createdAt),

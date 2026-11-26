@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/theme_cubit.dart';
 
@@ -15,7 +16,7 @@ class ThemeToggleButton extends StatelessWidget {
 
     return IconButton(
       tooltip: isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro',
-      icon: Icon(isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
+      icon: Icon(isDark ? LucideIcons.sun : LucideIcons.moon),
       onPressed: () => context.read<ThemeCubit>().toggle(brightness),
     );
   }

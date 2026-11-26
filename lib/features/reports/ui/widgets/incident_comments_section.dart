@@ -11,6 +11,7 @@ import 'package:vigia_app/core/widgets/dotted_spinner.dart';
 import 'package:vigia_app/core/widgets/sign_in_required_dialog.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_comment.dart';
 import 'package:vigia_app/features/reports/domain/entities/picked_photo.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../bloc/comments_bloc.dart';
 import '../bloc/comments_event.dart';
@@ -175,7 +176,7 @@ class _IncidentCommentsSectionState extends State<IncidentCommentsSection> {
         width: double.infinity,
         child: OutlinedButton.icon(
           onPressed: _askToSignIn,
-          icon: const Icon(Icons.lock_outline, size: AppSizes.icon),
+          icon: const Icon(LucideIcons.lock, size: AppSizes.icon),
           label: const Text('Inicia sesión para comentar'),
         ),
       );
@@ -211,12 +212,12 @@ class _IncidentCommentsSectionState extends State<IncidentCommentsSection> {
             IconButton(
               tooltip: 'Tomar una foto',
               onPressed: state.isSending ? null : () => bloc.add(const CommentPhotoRequested(fromCamera: true)),
-              icon: const Icon(Icons.photo_camera_outlined),
+              icon: const Icon(LucideIcons.camera),
             ),
             IconButton(
               tooltip: 'Elegir una foto de la galería',
               onPressed: state.isSending ? null : () => bloc.add(const CommentPhotoRequested()),
-              icon: const Icon(Icons.add_photo_alternate_outlined),
+              icon: const Icon(LucideIcons.imagePlus),
             ),
             const Spacer(),
             ValueListenableBuilder<TextEditingValue>(
@@ -227,7 +228,7 @@ class _IncidentCommentsSectionState extends State<IncidentCommentsSection> {
                   onPressed: canSend ? () => bloc.add(CommentSubmitted(_controller.text)) : null,
                   icon: state.isSending
                       ? const DottedSpinner(size: 18, semanticLabel: 'Publicando')
-                      : const Icon(Icons.send_outlined, size: AppSizes.icon),
+                      : const Icon(LucideIcons.send, size: AppSizes.icon),
                   label: Text(state.isSending ? 'Publicando…' : 'Publicar'),
                 );
               },
@@ -314,7 +315,7 @@ class _CommentTile extends StatelessWidget {
                   height: 120,
                   alignment: Alignment.center,
                   color: theme.colorScheme.surfaceContainerHighest,
-                  child: Icon(Icons.broken_image_outlined, color: theme.colorScheme.onSurfaceVariant),
+                  child: Icon(LucideIcons.imageOff, color: theme.colorScheme.onSurfaceVariant),
                 ),
               ),
             ),
@@ -325,7 +326,7 @@ class _CommentTile extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: TextButton.icon(
                 onPressed: isDeleting ? null : onDelete,
-                icon: const Icon(Icons.delete_outline, size: AppSizes.icon),
+                icon: const Icon(LucideIcons.trash2, size: AppSizes.icon),
                 label: Text(isDeleting ? 'Eliminando…' : 'Eliminar'),
               ),
             ),
@@ -368,7 +369,7 @@ class _DraftPhoto extends StatelessWidget {
               height: 72,
               alignment: Alignment.center,
               color: theme.colorScheme.surfaceContainerHighest,
-              child: Icon(Icons.image_outlined, color: theme.colorScheme.onSurfaceVariant),
+              child: Icon(LucideIcons.image, color: theme.colorScheme.onSurfaceVariant),
             ),
           ),
         ),
@@ -379,7 +380,7 @@ class _DraftPhoto extends StatelessWidget {
         IconButton(
           tooltip: 'Quitar la foto',
           onPressed: onRemove,
-          icon: const Icon(Icons.close),
+          icon: const Icon(LucideIcons.x),
         ),
       ],
     );

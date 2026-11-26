@@ -5,6 +5,7 @@ import 'package:vigia_app/core/theme/severity_colors.dart';
 import 'package:vigia_app/core/widgets/severity_chip.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/nearby_incident.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Bottom modal displaying nearby reports matching category and location (HU-09).
 class NearbyIncidentsModal extends StatelessWidget {
@@ -63,7 +64,7 @@ class NearbyIncidentsModal extends StatelessWidget {
             ),
             Row(
               children: [
-                Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error, size: 28),
+                Icon(LucideIcons.circleAlert, color: theme.colorScheme.error, size: 28),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
@@ -136,7 +137,7 @@ class _NearbyIncidentItem extends StatelessWidget {
     // Reports without a photo (or whose photo fails to load) show the hazard icon.
     final placeholder = ColoredBox(
       color: theme.colorScheme.primary.withValues(alpha: 0.1),
-      child: Icon(Icons.report_problem, color: theme.colorScheme.primary),
+      child: Icon(LucideIcons.triangleAlert, color: theme.colorScheme.primary),
     );
 
     return Container(

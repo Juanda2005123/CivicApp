@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_notice.dart';
@@ -84,7 +85,7 @@ class _CitySwitcherSheetState extends State<CitySwitcherSheet> {
               label: 'Buscar ciudad o departamento',
               controller: _searchController,
               hint: 'Ej. Bogotá, Nariño',
-              prefixIcon: Icons.search,
+              prefixIcon: LucideIcons.search,
               textInputAction: TextInputAction.search,
               onChanged: (value) => context.read<CitySwitcherBloc>().add(CityQueryChanged(value)),
             ),
@@ -162,7 +163,7 @@ class _Body extends StatelessWidget {
             for (final city in options.quick)
               ActionChip(
                 label: Text(city.name),
-                avatar: city == current ? const Icon(Icons.check, size: AppSizes.icon) : null,
+                avatar: city == current ? const Icon(LucideIcons.check, size: AppSizes.icon) : null,
                 onPressed: () => Navigator.of(context).pop(city),
               ),
           ],
@@ -186,10 +187,10 @@ class _CityList extends StatelessWidget {
           ListTile(
             contentPadding: EdgeInsets.zero,
             minVerticalPadding: AppSpacing.sm,
-            leading: const Icon(Icons.location_city_outlined),
+            leading: const Icon(LucideIcons.building2),
             title: Text('${city.name}, ${city.department}'),
             trailing: city == current
-                ? const Icon(Icons.check, semanticLabel: 'Ciudad actual')
+                ? const Icon(LucideIcons.check, semanticLabel: 'Ciudad actual')
                 : null,
             onTap: () => Navigator.of(context).pop(city),
           ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vigia_app/core/theme/app_spacing.dart';
+import 'package:vigia_app/core/theme/severity_colors.dart';
+import 'package:vigia_app/core/widgets/severity_chip.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 
 /// Renders the 4 severity levels (Baja, Media, Alta, Crítica) strictly following
@@ -109,28 +111,28 @@ class _SeverityChip extends StatelessWidget {
       case IncidentSeverity.low:
         return _SeverityVisualSpec(
           label: 'Baja',
-          icon: Icons.circle,
+          icon: SeverityChip.shapeOf(SeverityLevel.low),
           iconSize: 10,
           baseColor: isDark ? const Color(0xFF3E9AA2) : const Color(0xFF266A70),
         );
       case IncidentSeverity.medium:
         return _SeverityVisualSpec(
           label: 'Media',
-          icon: Icons.change_history,
+          icon: SeverityChip.shapeOf(SeverityLevel.medium),
           iconSize: 12,
           baseColor: isDark ? const Color(0xFFF2C66A) : const Color(0xFFC7830B),
         );
       case IncidentSeverity.high:
         return _SeverityVisualSpec(
           label: 'Alta',
-          icon: Icons.square_outlined,
+          icon: SeverityChip.shapeOf(SeverityLevel.high),
           iconSize: 11,
           baseColor: isDark ? const Color(0xFFF08A57) : const Color(0xFFC2410C),
         );
       case IncidentSeverity.critical:
         return _SeverityVisualSpec(
           label: 'Crítica',
-          icon: Icons.warning_amber_rounded,
+          icon: SeverityChip.shapeOf(SeverityLevel.critical),
           iconSize: 14,
           baseColor: isDark ? const Color(0xFFE56B7B) : const Color(0xFFB91C1C),
         );

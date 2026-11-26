@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -79,7 +80,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _visibilityToggle({required bool obscured, required VoidCallback onPressed}) {
     return IconButton(
       tooltip: obscured ? 'Mostrar contraseña' : 'Ocultar contraseña',
-      icon: Icon(obscured ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+      icon: Icon(obscured ? LucideIcons.eye : LucideIcons.eyeOff),
       onPressed: onPressed,
     );
   }
@@ -124,7 +125,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             title: const Text('Crear cuenta'),
             leading: IconButton(
               tooltip: 'Volver',
-              icon: const Icon(Icons.arrow_back_ios_new, size: AppSizes.icon),
+              icon: const Icon(LucideIcons.arrowLeft, size: AppSizes.icon),
               onPressed: isLoading ? null : () => Navigator.pop(context),
             ),
             actions: const [ThemeToggleButton()],
@@ -161,7 +162,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           label: 'Nombre completo',
                           hint: 'Ej. Juan David Quintero',
                           controller: _fullNameController,
-                          prefixIcon: Icons.person_outline,
+                          prefixIcon: LucideIcons.user,
                           keyboardType: TextInputType.name,
                           textCapitalization: TextCapitalization.words,
                           textInputAction: TextInputAction.next,
@@ -174,7 +175,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           label: 'Correo electrónico',
                           hint: 'nombre@correo.com',
                           controller: _emailController,
-                          prefixIcon: Icons.mail_outline,
+                          prefixIcon: LucideIcons.mail,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.email],
@@ -185,7 +186,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         AppDropdownField<int>(
                           label: 'Ciudad de residencia',
                           hint: 'Elige tu ciudad',
-                          prefixIcon: Icons.location_city_outlined,
+                          prefixIcon: LucideIcons.building2,
                           value: state.selectedCityId,
                           entries: state.cities.map((city) {
                             return DropdownMenuEntry<int>(
@@ -217,7 +218,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               : () => context.read<RegisterBloc>().add(NearestCityRequested()),
                           icon: isDetectingGps
                               ? DottedSpinner(size: 18, semanticLabel: 'Detectando tu ubicación')
-                              : const Icon(Icons.my_location, size: 18),
+                              : const Icon(LucideIcons.locateFixed, size: 18),
                           label: Text(isDetectingGps ? 'Detectando tu ubicación…' : 'Detectar mi ciudad por GPS'),
                         ),
                         // A blocked permission is explained in the modal instead.
@@ -233,7 +234,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           label: 'Contraseña',
                           hint: 'Mínimo ${PasswordPolicy.minLength} caracteres',
                           controller: _passwordController,
-                          prefixIcon: Icons.lock_outline,
+                          prefixIcon: LucideIcons.lock,
                           obscureText: _obscurePassword,
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.newPassword],
@@ -251,7 +252,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           label: 'Confirmar contraseña',
                           hint: 'Repite tu contraseña',
                           controller: _confirmPasswordController,
-                          prefixIcon: Icons.lock_reset_outlined,
+                          prefixIcon: LucideIcons.keyRound,
                           obscureText: _obscureConfirmPassword,
                           textInputAction: TextInputAction.done,
                           enabled: !isLoading,
