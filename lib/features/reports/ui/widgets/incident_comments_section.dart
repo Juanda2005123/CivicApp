@@ -16,6 +16,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../bloc/comments_bloc.dart';
 import '../bloc/comments_event.dart';
 import '../bloc/comments_state.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// Discussion thread of a report and its composer (HU-17), shown at the end of
 /// the report detail. Comments read oldest first. A guest reads them and is
@@ -68,7 +69,7 @@ class _IncidentCommentsSectionState extends State<IncidentCommentsSection> {
         content: const Text('Se borrarán el texto y la foto, y perderás los 15 XP que ganaste.'),
         actions: [
           TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Eliminar')),
+          PressScale(child: FilledButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Eliminar'))),
         ],
       ),
     );
@@ -137,10 +138,10 @@ class _IncidentCommentsSectionState extends State<IncidentCommentsSection> {
               kind: NoticeKind.error,
             ),
             const SizedBox(height: AppSpacing.sm),
-            OutlinedButton(
+            PressScale(child: OutlinedButton(
               onPressed: () => context.read<CommentsBloc>().add(CommentsStarted(widget.incidentId)),
               child: const Text('Reintentar'),
-            ),
+            )),
           ],
         );
       case CommentsStatus.success:
@@ -174,11 +175,11 @@ class _IncidentCommentsSectionState extends State<IncidentCommentsSection> {
     if (state.isGuest) {
       return SizedBox(
         width: double.infinity,
-        child: OutlinedButton.icon(
+        child: PressScale(child: OutlinedButton.icon(
           onPressed: _askToSignIn,
           icon: const Icon(LucideIcons.lock, size: AppSizes.icon),
           label: const Text('Inicia sesión para comentar'),
-        ),
+        )),
       );
     }
 
@@ -224,13 +225,13 @@ class _IncidentCommentsSectionState extends State<IncidentCommentsSection> {
               valueListenable: _controller,
               builder: (context, value, _) {
                 final canSend = (value.text.trim().isNotEmpty || state.draftPhoto != null) && !state.isSending;
-                return FilledButton.icon(
+                return PressScale(child: FilledButton.icon(
                   onPressed: canSend ? () => bloc.add(CommentSubmitted(_controller.text)) : null,
                   icon: state.isSending
                       ? const DottedSpinner(size: 18, semanticLabel: 'Publicando')
                       : const Icon(LucideIcons.send, size: AppSizes.icon),
                   label: Text(state.isSending ? 'Publicando…' : 'Publicar'),
-                );
+                ));
               },
             ),
           ],

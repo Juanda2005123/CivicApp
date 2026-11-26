@@ -16,6 +16,7 @@ import '../bloc/feed_state.dart';
 import '../widgets/choice_sheet.dart';
 import '../widgets/feed_filter_bar.dart';
 import '../widgets/feed_incident_card.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// "Comunidad" tab of the shell (HU-19): the reports of the active city, newest
 /// first, 20 at a time as the citizen scrolls, with pull-to-refresh. A Page, so
@@ -363,7 +364,7 @@ class _Message extends StatelessWidget {
                     style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  OutlinedButton(onPressed: onAction, child: Text(actionLabel)),
+                  PressScale(child: OutlinedButton(onPressed: onAction, child: Text(actionLabel))),
                 ],
               ),
             ),

@@ -22,6 +22,7 @@ import '../bloc/map_event.dart';
 import '../bloc/map_state.dart';
 import '../pages/feed_page.dart';
 import '../pages/map_page.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// The shell: host Screen with the bottom navigation bar. Each tab is a Page;
 /// `IndexedStack` keeps them alive, so switching tabs does not reload the map
@@ -199,11 +200,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: PressScale(child: FloatingActionButton.extended(
         onPressed: () => _onReportPressed(isGuest),
         icon: const Icon(LucideIcons.mapPinPlus),
         label: const Text('Reportar daño'),
-      ),
+      )),
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
           border: Border(top: BorderSide(color: theme.colorScheme.outlineVariant)),

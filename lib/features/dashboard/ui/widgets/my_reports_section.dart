@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../explore/ui/widgets/feed_incident_card.dart';
 import '../../../reports/domain/entities/feed_incident.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// "Mis reportes" (HU-23, criterion 5): the reports the citizen published,
 /// newest first, drawn with the same card as the community feed. Tapping one
@@ -63,11 +64,11 @@ class _EmptyInvitation extends StatelessWidget {
               style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppSpacing.md),
-            OutlinedButton.icon(
+            PressScale(child: OutlinedButton.icon(
               onPressed: onReportFirst,
               icon: const Icon(LucideIcons.mapPinPlus, size: AppSizes.icon),
               label: const Text('Reportar mi primer daño'),
-            ),
+            )),
           ],
         ),
       ),

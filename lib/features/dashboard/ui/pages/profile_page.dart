@@ -19,6 +19,7 @@ import '../bloc/profile_state.dart';
 import '../widgets/impact_counters.dart';
 import '../widgets/my_reports_section.dart';
 import '../widgets/rank_progress_card.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// "Mi perfil" tab of the shell: the citizen's civic impact dashboard (HU-23),
 /// built on the profile summary of Sprint 1, with secure logout. A Page, so it
@@ -99,29 +100,29 @@ class ProfilePage extends StatelessWidget {
               const SizedBox(height: AppSpacing.lg),
               _DetailsCard(profile: profile),
               const SizedBox(height: AppSpacing.xl),
-              OutlinedButton.icon(
+              PressScale(child: OutlinedButton.icon(
                 onPressed: () => _openSettings(context, profile),
                 icon: const Icon(LucideIcons.settings, size: AppSizes.icon),
                 label: const Text('Configuración'),
-              ),
+              )),
               const SizedBox(height: AppSpacing.sm),
-              OutlinedButton.icon(
+              PressScale(child: OutlinedButton.icon(
                 onPressed: () => _openEditProfile(context, profile),
                 icon: const Icon(LucideIcons.pencil, size: AppSizes.icon),
                 label: const Text('Datos personales'),
-              ),
+              )),
               const SizedBox(height: AppSpacing.sm),
-              OutlinedButton.icon(
+              PressScale(child: OutlinedButton.icon(
                 onPressed: () => Navigator.pushNamed(context, AppRoutes.permissions),
                 icon: const Icon(LucideIcons.shieldCheck, size: AppSizes.icon),
                 label: const Text('Permisos'),
-              ),
+              )),
               const SizedBox(height: AppSpacing.sm),
-              OutlinedButton.icon(
+              PressScale(child: OutlinedButton.icon(
                 onPressed: () => context.read<ProfileBloc>().add(SignOutRequested()),
                 icon: const Icon(LucideIcons.logOut, size: AppSizes.icon),
                 label: const Text('Cerrar sesión'),
-              ),
+              )),
             ],
           ),
         ),
@@ -219,10 +220,10 @@ class _ImpactPanel extends StatelessWidget {
             message: state.impactErrorMessage ?? 'No pudimos cargar tu impacto.',
           ),
           const SizedBox(height: AppSpacing.sm),
-          OutlinedButton(
+          PressScale(child: OutlinedButton(
             onPressed: () => context.read<ProfileBloc>().add(ProfileStarted()),
             child: const Text('Reintentar'),
-          ),
+          )),
         ],
       );
     }
@@ -272,10 +273,10 @@ class _GuestInvitation extends StatelessWidget {
                     onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  OutlinedButton(
+                  PressScale(child: OutlinedButton(
                     onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
                     child: const Text('Crear cuenta'),
-                  ),
+                  )),
                 ],
               ),
             ),
@@ -465,7 +466,7 @@ class _LoadError extends StatelessWidget {
               style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppSpacing.lg),
-            OutlinedButton(onPressed: onRetry, child: const Text('Reintentar')),
+            PressScale(child: OutlinedButton(onPressed: onRetry, child: const Text('Reintentar'))),
           ],
         ),
       ),

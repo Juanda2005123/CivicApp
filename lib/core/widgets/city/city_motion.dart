@@ -63,7 +63,12 @@ class _PressScaleState extends State<PressScale> with SingleTickerProviderStateM
     final reduce = AppMotion.reduceOf(context);
 
     return Listener(
-      onPointerDown: _down,
+      onPointerDown: (event) {
+        final child = widget.child;
+        // A disabled button does not answer the finger either.
+        if (child is ButtonStyleButton && !child.enabled) return;
+        _down(event);
+      },
       // Dragging to scroll is not a press.
       onPointerMove: (event) {
         final start = _downAt;

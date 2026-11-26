@@ -2,10 +2,15 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../features/city_identity/domain/entities/city_identity.dart';
+import '../theme/city_theme.dart';
 import 'brand_seal.dart';
+import 'city/city_motion.dart';
 
-/// Loading indicator of the design system: a dotted ring that rotates. With
-/// "reduce motion" on, the ring stays still.
+/// Loading indicator of the design system: a dotted ring that rotates, for short
+/// actions (inside the button that was tapped) and for screens without data that
+/// are not lists. It appears after 300 ms (8D), so quick work shows nothing. In a
+/// city it takes the city's tone. With "reduce motion" on, the ring stays still.
 class DottedSpinner extends StatefulWidget {
   final double size;
   final Color? color;
@@ -37,18 +42,22 @@ class _DottedSpinnerState extends State<DottedSpinner> with SingleTickerProvider
     } else if (!_controller.isAnimating) {
       _controller.repeat();
     }
-    final color = widget.color ?? Theme.of(context).colorScheme.onSurface;
+    final city = CityTheme.of(context);
+    final color = widget.color ??
+        (city.level == CityIdentityLevel.fallback ? Theme.of(context).colorScheme.onSurface : city.deep);
 
     return Semantics(
       label: widget.semanticLabel,
       child: ExcludeSemantics(
-        child: SizedBox.square(
-          dimension: widget.size,
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, _) => Transform.rotate(
-              angle: _controller.value * 2 * math.pi,
-              child: CustomPaint(painter: _RingPainter(color)),
+        child: DelayedReveal(
+          child: SizedBox.square(
+            dimension: widget.size,
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, _) => Transform.rotate(
+                angle: _controller.value * 2 * math.pi,
+                child: CustomPaint(painter: _RingPainter(color)),
+              ),
             ),
           ),
         ),

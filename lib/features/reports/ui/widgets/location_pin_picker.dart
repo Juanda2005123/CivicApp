@@ -13,6 +13,7 @@ import 'package:vigia_app/features/reports/domain/entities/suggested_address.dar
 import 'package:vigia_app/features/reports/domain/validators/report_validators.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'map_point_selector.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// Step 1: Location georeferencing and Colombian address confirmation (HU-07).
 class LocationPinPicker extends StatefulWidget {
@@ -444,11 +445,11 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
                 const SizedBox(height: AppSpacing.xs),
                 _SourceLabel(source: widget.coordinatesSource),
                 const SizedBox(height: AppSpacing.sm),
-                OutlinedButton.icon(
+                PressScale(child: OutlinedButton.icon(
                   onPressed: () => setState(() => _pickingOnMap = true),
                   icon: const Icon(LucideIcons.map),
                   label: const Text('Seleccionar ubicación'),
-                ),
+                )),
                 if (widget.locationStatusMessage != null) ...[
                   const SizedBox(height: AppSpacing.xs),
                   Text(

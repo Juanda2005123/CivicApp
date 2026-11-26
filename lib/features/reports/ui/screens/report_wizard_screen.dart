@@ -17,6 +17,7 @@ import '../widgets/nearby_incidents_modal.dart';
 import '../widgets/photo_evidence_box.dart';
 import '../widgets/severity_chip_selector.dart';
 import '../widgets/wizard_progress_header.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// 5-Step guided wizard for reporting road infrastructure damage (HU-06 to HU-12).
 class ReportWizardScreen extends StatefulWidget {
@@ -71,7 +72,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
             onPressed: () => Navigator.of(dialogCtx).pop(false),
             child: const Text('Seguir editando'),
           ),
-          FilledButton(
+          PressScale(child: FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
@@ -80,7 +81,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
               Navigator.of(context).pop();
             },
             child: const Text('Descartar reporte'),
-          ),
+          )),
         ],
       ),
     );
@@ -738,13 +739,13 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
           ],
         ),
         actions: [
-          FilledButton(
+          PressScale(child: FilledButton(
             onPressed: () {
               Navigator.of(dialogCtx).pop();
               Navigator.of(context).pop(incident);
             },
             child: const Text('Aceptar'),
-          ),
+          )),
         ],
       ),
     );

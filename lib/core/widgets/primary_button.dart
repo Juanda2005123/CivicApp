@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_spacing.dart';
 import 'dotted_spinner.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// Full-width primary action. While [isLoading] it keeps its color, shows the
 /// dotted spinner with [loadingLabel] and ignores taps (a disabled look would
@@ -26,7 +27,7 @@ class PrimaryButton extends StatelessWidget {
 
     return SizedBox(
       width: double.infinity,
-      child: FilledButton(
+      child: PressScale(child: FilledButton(
         onPressed: isLoading ? () {} : onPressed,
         child: isLoading
             ? Row(
@@ -38,7 +39,7 @@ class PrimaryButton extends StatelessWidget {
                 ],
               )
             : Text(label),
-      ),
+      )),
     );
   }
 }

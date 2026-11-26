@@ -6,6 +6,7 @@ import 'package:vigia_app/core/widgets/severity_chip.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/nearby_incident.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// Bottom modal displaying nearby reports matching category and location (HU-09).
 class NearbyIncidentsModal extends StatelessWidget {
@@ -105,7 +106,7 @@ class NearbyIncidentsModal extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            OutlinedButton(
+            PressScale(child: OutlinedButton(
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size.fromHeight(48),
               ),
@@ -114,7 +115,7 @@ class NearbyIncidentsModal extends StatelessWidget {
                 onContinueDraft();
               },
               child: const Text('Es otro daño (Continuar reporte)'),
-            ),
+            )),
           ],
         ),
       ),

@@ -18,6 +18,7 @@ import '../widgets/incident_comments_section.dart';
 import '../bloc/incident_detail_bloc.dart';
 import '../bloc/incident_detail_event.dart';
 import '../bloc/incident_detail_state.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// Detailed inspection view for a public road damage report (HU-14).
 class IncidentDetailScreen extends StatefulWidget {
@@ -180,7 +181,7 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
         ),
         actions: [
           TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Eliminar')),
+          PressScale(child: FilledButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Eliminar'))),
         ],
       ),
     );
@@ -533,16 +534,16 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
     return SizedBox(
       width: double.infinity,
       child: endorsed
-          ? OutlinedButton.icon(
+          ? PressScale(child: OutlinedButton.icon(
               onPressed: onPressed,
               icon: const Icon(LucideIcons.thumbsUp, size: AppSizes.icon),
               label: const Text('Apoyado'),
-            )
-          : FilledButton.icon(
+            ))
+          : PressScale(child: FilledButton.icon(
               onPressed: onPressed,
               icon: const Icon(LucideIcons.thumbsUp, size: AppSizes.icon),
               label: const Text('Apoyar este reporte'),
-            ),
+            )),
     );
   }
 

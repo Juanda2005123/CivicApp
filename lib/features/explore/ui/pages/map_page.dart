@@ -18,6 +18,7 @@ import '../bloc/map_event.dart';
 import '../bloc/map_state.dart';
 import '../widgets/city_switcher_sheet.dart';
 import '../widgets/incident_map_marker.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// "Mapa" tab of the shell (HU-13): the reports of the citizen's city as
 /// markers, and a button to center the map on the citizen's position. A Page,
@@ -270,7 +271,7 @@ class _CityButton extends StatelessWidget {
 
     return Align(
       alignment: Alignment.centerLeft,
-      child: OutlinedButton.icon(
+      child: PressScale(child: OutlinedButton.icon(
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(0, AppSizes.touchTarget),
@@ -283,7 +284,7 @@ class _CityButton extends StatelessWidget {
             ? const DottedSpinner(size: AppSizes.icon, semanticLabel: 'Cargando la ciudad')
             : const Icon(LucideIcons.building2, size: AppSizes.icon),
         label: Text('${city.name}, ${city.department}', overflow: TextOverflow.ellipsis),
-      ),
+      )),
     );
   }
 }
@@ -369,7 +370,7 @@ class _LoadError extends StatelessWidget {
               style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppSpacing.lg),
-            OutlinedButton(onPressed: onRetry, child: const Text('Reintentar')),
+            PressScale(child: OutlinedButton(onPressed: onRetry, child: const Text('Reintentar'))),
           ],
         ),
       ),

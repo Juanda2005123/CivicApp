@@ -10,6 +10,7 @@ import '../../../auth/domain/entities/city.dart';
 import '../bloc/city_switcher_bloc.dart';
 import '../bloc/city_switcher_event.dart';
 import '../bloc/city_switcher_state.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// Opens the city switcher (HU-21) and answers the city the citizen picked, or
 /// null if they closed it. The [CitySwitcherBloc] comes from the caller's tree.
@@ -120,10 +121,10 @@ class _Body extends StatelessWidget {
             message: state.errorMessage ?? 'No pudimos cargar las ciudades.',
           ),
           const SizedBox(height: AppSpacing.md),
-          OutlinedButton(
+          PressScale(child: OutlinedButton(
             onPressed: () => context.read<CitySwitcherBloc>().add(CitySwitcherOpened()),
             child: const Text('Reintentar'),
-          ),
+          )),
         ],
       );
     }
