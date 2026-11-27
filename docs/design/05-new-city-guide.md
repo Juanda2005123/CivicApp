@@ -40,13 +40,13 @@ Mensaje listo para pegarle a Claude:
 > Lee `AGENTS.md`, `docs/design/04-city-identity.md` y `docs/design/05-new-city-guide.md`. Quiero agregar **[CIUDAD]** como ciudad completa de VIGÍA. Primero solo la maqueta: agrega [CIUDAD] a `docs/design/mockups/city-identity.html` (nueva entrada en `PACKS` y botón en el selector), sin tocar pantallas ni animaciones. Busca en Wikimedia Commons un banco de unas 15 fotos reales con licencia libre, con al menos 3 candidatas por espacio (cabeceras de mañana, tarde y noche, y 4 lugares icónicos para los rangos en orden de subida). Revísalas a ojo y agrégalas a `POOL` para que yo escoja en el editor. Propón la paleta (`deep`, `accent`, `onAccent`, `veil`) que pase AA, la bandera oficial y los saludos en el habla local. Guarda las fotos y sus créditos como dice la guía. Muéstrame la maqueta publicada y espera mi aprobación antes de escribir Dart.
 
 ## 4. Paso 2: el paquete en la app
-1. Rama desde la rama de Ciudad Viva de Juan (`claude/ciudad-viva-redesign-798c30`): `feat/city-<slug>`.
+1. Rama desde `develop` (Ciudad Viva ya está fusionada): `feat/city-<slug>`.
 2. Copia `lib/features/city_identity/data/datasources/packs/cali_pack.dart` a `<slug>_pack.dart` y cambia solo los datos: `caliPack`, la ruta `assets/cities/cali`, `slug`, `name` y `department` (escritos igual que en el catálogo DANE), paleta, bandera, fotos, lugares y textos.
 3. Fotos: agrega tu ciudad al diccionario `CITIES` de `tool/city_photos.py` (las claves de `CREDITS.json` que escogiste en la maqueta) y corre `python tool/city_photos.py` (necesita Pillow). Genera los WebP de `assets/cities/<slug>/` y reescribe `assets/cities/CREDITS.md`.
 4. Dos líneas más: la carpeta `assets/cities/<slug>/` en `pubspec.yaml` y el paquete en la lista de `city_pack_local_data_source.dart` (con su `import`).
 5. `dart run tool/check.dart`. Las pruebas recorren todos los paquetes: fallan si tu paleta no pasa AA, falta una foto o pesa 200 KB o más, o el nombre no coincide con el catálogo.
 6. Capturas de Comunidad, Detalle y Mi perfil en claro y oscuro: en `tool/screenshots/capture.mjs` y `profile_screenshots_test.dart` agrega tu ciudad a la lista (las instrucciones están al inicio de cada archivo).
-7. PR a la rama de Ciudad Viva (no directo a `develop`).
+7. PR a `develop`.
 
 No hay que tocar widgets, pantallas ni pruebas. Esto se ensayó copiando el paquete de Cali como una tercera ciudad: la suite completa pasó sin más cambios.
 

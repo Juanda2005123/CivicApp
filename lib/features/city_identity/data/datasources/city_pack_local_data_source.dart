@@ -1,5 +1,6 @@
 import '../../../../core/utils/search_text.dart';
 import '../../domain/entities/city_identity.dart';
+import 'packs/bogota_pack.dart';
 import 'packs/cali_pack.dart';
 import 'packs/default_pack.dart';
 import 'packs/medellin_pack.dart';
@@ -12,6 +13,7 @@ class CityPackLocalDataSource {
   static const List<CityIdentity> _fullPacks = [
     caliPack,
     medellinPack,
+    bogotaPack,
   ];
 
   List<CityIdentity> getFullPacks() => _fullPacks;
