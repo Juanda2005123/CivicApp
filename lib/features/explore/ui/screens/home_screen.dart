@@ -15,6 +15,8 @@ import '../../../dashboard/ui/bloc/profile_bloc.dart';
 import '../../../dashboard/ui/bloc/profile_event.dart';
 import '../../../dashboard/ui/bloc/profile_state.dart';
 import '../../../dashboard/ui/pages/profile_page.dart';
+import '../../../notifications/ui/bloc/push_bloc.dart';
+import '../../../notifications/ui/bloc/push_event.dart';
 import '../../domain/entities/report_filter.dart';
 import '../bloc/feed_bloc.dart';
 import '../bloc/feed_event.dart';
@@ -77,6 +79,8 @@ class _HomeScreenState extends State<HomeScreen> {
   /// City the shell showed last; a different one is a switch (HU-21).
   String? _shownCity;
 
+  bool _pushStarted = false;
+
   @override
   void initState() {
     super.initState();
@@ -86,6 +90,18 @@ class _HomeScreenState extends State<HomeScreen> {
     if (city != null) _showCity(city);
     final home = context.read<ProfileBloc>().state.profile?.cityName;
     if (home != null) _showReferenceCity(home);
+    final map = context.read<MapBloc>().state.status;
+    if (map == MapStatus.success || map == MapStatus.failure) _startPushes();
+  }
+
+  /// Turns on the pushes (HU-24) after the first load of the map, which is when
+  /// the location was asked. Asking for both permissions at once makes Android
+  /// drop one of them: on a fresh install the location request never answered
+  /// and the map and the feed stayed loading. Absent in tests without pushes.
+  void _startPushes() {
+    if (_pushStarted) return;
+    _pushStarted = true;
+    context.read<PushBloc?>()?.add(const PushStarted());
   }
 
   /// The feed lists the city of the map and the app wears its look.
@@ -157,6 +173,11 @@ class _HomeScreenState extends State<HomeScreen> {
     // never in a builder. The same city again does nothing in the FeedBloc.
     return MultiBlocListener(
       listeners: [
+        BlocListener<MapBloc, MapState>(
+          listenWhen: (previous, current) =>
+              previous.status == MapStatus.loading && current.status != MapStatus.loading,
+          listener: (context, state) => _startPushes(),
+        ),
         BlocListener<MapBloc, MapState>(
           listenWhen: (previous, current) => current.city != null && previous.city != current.city,
           listener: (context, state) => _showCity(state.city!),
