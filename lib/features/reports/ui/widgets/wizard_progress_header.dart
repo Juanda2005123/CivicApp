@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vigia_app/core/theme/app_spacing.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Header for the 5-step reporting assistant displaying a segmented step indicator.
 class WizardProgressHeader extends StatelessWidget {
@@ -31,7 +32,7 @@ class WizardProgressHeader extends StatelessWidget {
           children: [
             if (currentStep > 1)
               IconButton(
-                icon: const Icon(Icons.arrow_back),
+                icon: const Icon(LucideIcons.arrowLeft),
                 tooltip: 'Paso anterior',
                 onPressed: onBack,
               )
@@ -45,7 +46,7 @@ class WizardProgressHeader extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.close),
+              icon: const Icon(LucideIcons.x),
               tooltip: 'Cerrar asistente',
               onPressed: onClose,
             ),

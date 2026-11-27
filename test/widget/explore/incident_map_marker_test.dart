@@ -4,6 +4,7 @@ import 'package:vigia_app/core/theme/app_spacing.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
 import 'package:vigia_app/features/explore/ui/widgets/incident_map_marker.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 Widget _host(Widget child, ThemeData theme) {
   return MaterialApp(theme: theme, home: Scaffold(body: Center(child: child)));
@@ -23,7 +24,7 @@ void main() {
           theme.value,
         ));
 
-        expect(find.byIcon(Icons.traffic_outlined), findsOneWidget);
+        expect(find.byIcon(LucideIcons.trafficCone), findsOneWidget);
         expect(tester.takeException(), isNull);
       });
     }
@@ -50,6 +51,6 @@ void main() {
   });
 
   test('unknown category keys fall back to a generic icon', () {
-    expect(categoryIconData('something-new'), Icons.report_problem_outlined);
+    expect(categoryIconData('something-new'), LucideIcons.triangleAlert);
   });
 }

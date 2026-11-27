@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -11,17 +12,33 @@ import '../../../../core/widgets/dotted_spinner.dart';
 import '../../../../core/widgets/location_blocked_dialog.dart';
 import '../../../auth/domain/entities/city.dart';
 import '../../../reports/domain/entities/incident_marker.dart';
+import '../../domain/entities/report_filter.dart';
 import '../bloc/map_bloc.dart';
 import '../bloc/map_event.dart';
 import '../bloc/map_state.dart';
 import '../widgets/city_switcher_sheet.dart';
 import '../widgets/incident_map_marker.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// "Mapa" tab of the shell (HU-13): the reports of the citizen's city as
 /// markers, and a button to center the map on the citizen's position. A Page,
 /// so it has no Scaffold of its own. Stateful only to own the [MapController].
 class MapPage extends StatefulWidget {
-  const MapPage({super.key});
+  /// A report changed in its detail (edited or deleted, HU-18): the shell reloads.
+  final VoidCallback? onReportChanged;
+
+  /// The search and filters of Comunidad also narrow the pins (HU-20, criterion 5).
+  final ReportFilter filter;
+
+  /// "Limpiar filtros" of the notice shown while a filter hides some pins.
+  final VoidCallback? onClearFilters;
+
+  const MapPage({
+    super.key,
+    this.onReportChanged,
+    this.filter = const ReportFilter(),
+    this.onClearFilters,
+  });
 
   /// Street level that still shows several neighborhoods.
   static const double initialZoom = 13;
@@ -123,6 +140,7 @@ class _MapPageState extends State<MapPage> {
           }
 
           final myLocation = state.myLocation;
+          final shownMarkers = widget.filter.applyToMarkers(state.markers);
 
           return Stack(
             children: [
@@ -145,7 +163,7 @@ class _MapPageState extends State<MapPage> {
                   ),
                   MarkerLayer(
                     markers: [
-                      for (final marker in state.markers) _toMapMarker(context, marker),
+                      for (final marker in shownMarkers) _toMapMarker(context, marker),
                       if (myLocation != null)
                         Marker(
                           point: LatLng(myLocation.latitude, myLocation.longitude),
@@ -171,6 +189,16 @@ class _MapPageState extends State<MapPage> {
                       isLoading: state.status == MapStatus.loading,
                       onPressed: () => _switchCity(context, city),
                     ),
+                    // Some pins are hidden by the filters of Comunidad: say so, with a way out.
+                    if (widget.filter.isActive) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      _ActiveFiltersNotice(
+                        filterCount: widget.filter.activeCount,
+                        shown: shownMarkers.length,
+                        total: state.markers.length,
+                        onClear: widget.onClearFilters,
+                      ),
+                    ],
                     // The city could not be saved or loaded: the map keeps the previous one.
                     if (state.status == MapStatus.failure && state.errorMessage != null) ...[
                       const SizedBox(height: AppSpacing.sm),
@@ -206,6 +234,13 @@ class _MapPageState extends State<MapPage> {
     bloc.add(CitySelected(picked));
   }
 
+  /// Opens the report detail. It answers `true` when the author edited or deleted
+  /// the report there (HU-18), and then the shell reloads the map and the feed.
+  Future<void> _openReport(String incidentId) async {
+    final changed = await Navigator.pushNamed(context, AppRoutes.reportDetail, arguments: incidentId);
+    if (changed == true && mounted) widget.onReportChanged?.call();
+  }
+
   Marker _toMapMarker(BuildContext context, IncidentMarker marker) {
     return Marker(
       point: LatLng(marker.coordinates.latitude, marker.coordinates.longitude),
@@ -215,7 +250,7 @@ class _MapPageState extends State<MapPage> {
         severity: marker.severity,
         categoryIcon: marker.categoryIcon,
         semanticLabel: '${marker.title}, ${marker.categoryName}, gravedad ${marker.severity.labelSpanish}',
-        onTap: () => Navigator.pushNamed(context, AppRoutes.reportDetail, arguments: marker.id),
+        onTap: () => _openReport(marker.id),
       ),
     );
   }
@@ -236,7 +271,7 @@ class _CityButton extends StatelessWidget {
 
     return Align(
       alignment: Alignment.centerLeft,
-      child: OutlinedButton.icon(
+      child: PressScale(child: OutlinedButton.icon(
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(0, AppSizes.touchTarget),
@@ -247,9 +282,9 @@ class _CityButton extends StatelessWidget {
         ),
         icon: isLoading
             ? const DottedSpinner(size: AppSizes.icon, semanticLabel: 'Cargando la ciudad')
-            : const Icon(Icons.location_city_outlined, size: AppSizes.icon),
+            : const Icon(LucideIcons.building2, size: AppSizes.icon),
         label: Text('${city.name}, ${city.department}', overflow: TextOverflow.ellipsis),
-      ),
+      )),
     );
   }
 }
@@ -278,7 +313,7 @@ class _MyLocationButton extends StatelessWidget {
       ),
       icon: isLocating
           ? const DottedSpinner(size: AppSizes.icon, semanticLabel: 'Buscando tu ubicación')
-          : const Icon(Icons.my_location),
+          : const Icon(LucideIcons.locateFixed),
     );
   }
 }
@@ -325,7 +360,7 @@ class _LoadError extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.map_outlined, size: AppSpacing.xxxl, color: theme.colorScheme.error),
+            Icon(LucideIcons.map, size: AppSpacing.xxxl, color: theme.colorScheme.error),
             const SizedBox(height: AppSpacing.lg),
             Text('No pudimos cargar el mapa', style: theme.textTheme.titleMedium),
             const SizedBox(height: AppSpacing.sm),
@@ -335,7 +370,54 @@ class _LoadError extends StatelessWidget {
               style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppSpacing.lg),
-            OutlinedButton(onPressed: onRetry, child: const Text('Reintentar')),
+            PressScale(child: OutlinedButton(onPressed: onRetry, child: const Text('Reintentar'))),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// While the filters of Comunidad are on: how many pins they leave and a
+/// one-tap way to clear them (HU-20, criterion 5). Solid surface with a 1 px
+/// border like the other overlays, so it reads on any tile.
+class _ActiveFiltersNotice extends StatelessWidget {
+  final int filterCount;
+  final int shown;
+  final int total;
+  final VoidCallback? onClear;
+
+  const _ActiveFiltersNotice({
+    required this.filterCount,
+    required this.shown,
+    required this.total,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final label = filterCount == 1 ? '1 filtro activo' : '$filterCount filtros activos';
+
+    return Material(
+      color: theme.colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: AppRadii.small,
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(left: AppSpacing.md),
+        child: Row(
+          children: [
+            Icon(LucideIcons.slidersHorizontal, size: AppSizes.icon, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                '$label: $shown de $total reportes',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+            if (onClear != null) TextButton(onPressed: onClear, child: const Text('Limpiar')),
           ],
         ),
       ),

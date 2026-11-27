@@ -69,3 +69,13 @@ tool/demo/out/
 tool/demo/assets/
 /Puente_Autopista_Sur_Hueco.jfif
 tool/demo/.env.local
+
+# Demo data seed: downloaded photos, user ids and photo credits
+tool/seed/out/
+
+# Firebase service account keys: never in the repo (lesson K2)
+*firebase-adminsdk*.json
+fcm-key.json
+
+# Supabase CLI local state
+supabase/.temp/

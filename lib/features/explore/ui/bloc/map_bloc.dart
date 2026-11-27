@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../auth/domain/entities/coordinates.dart';
@@ -17,8 +19,18 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   final OpenLocationSettingsUseCase _openLocationSettings;
   final SwitchCityUseCase _switchCity;
 
-  MapBloc(this._getCityMap, this._getCurrentLocation, this._openLocationSettings, this._switchCity)
-      : super(const MapState()) {
+  /// How long the first load waits for the position. It leaves time to answer
+  /// the permission dialog, and keeps a request the system never answers from
+  /// leaving the map loading forever.
+  final Duration locationWait;
+
+  MapBloc(
+    this._getCityMap,
+    this._getCurrentLocation,
+    this._openLocationSettings,
+    this._switchCity, {
+    this.locationWait = const Duration(seconds: 20),
+  }) : super(const MapState()) {
     on<MapStarted>(_onStarted);
     on<CitySelected>(_onCitySelected);
     on<MyLocationRequested>(_onMyLocationRequested);
@@ -59,9 +71,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
   Future<Coordinates?> _tryCurrentLocation() async {
     try {
-      return await _getCurrentLocation();
+      return await _getCurrentLocation().timeout(locationWait);
     } on Exception {
-      return null;
+      return null; // a TimeoutException too: the city view loads without a position
     }
   }
 

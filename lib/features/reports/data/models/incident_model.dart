@@ -25,11 +25,13 @@ class IncidentModel extends Incident {
     required super.city,
     super.photos,
     super.upvotesCount,
+    super.upvoterIds,
     super.commentsCount,
     required super.createdAt,
     super.updatedAt,
     super.resolvedAt,
     super.resolverId,
+    super.validatedAt,
   });
 
   factory IncidentModel.fromJson(Map<String, dynamic> json) {
@@ -49,7 +51,9 @@ class IncidentModel extends Incident {
       id: json['id_incident'] as String,
       trackingCode: json['tracking_code'] as String,
       reporterId: json['id_reporter_user'] as String,
-      reporterName: reporter?['full_name'] as String?,
+      reporterName: (reporter == null || reporter['show_real_name'] == false)
+          ? null
+          : reporter['full_name'] as String?,
       reporterRankName: (reporter?['civic_rank'] as Map<String, dynamic>?)?['name'] as String?,
       categoryId: json['id_category'] as int,
       categoryName: category?['name'] as String?,
@@ -68,11 +72,17 @@ class IncidentModel extends Incident {
       city: (json['city'] as String?) ?? 'Cali',
       photos: photosList,
       upvotesCount: upvotesList?.length ?? (json['upvotes_count'] as int?) ?? 0,
+      upvoterIds: upvotesList
+              ?.map((u) => (u as Map<String, dynamic>)['id_user'] as String?)
+              .whereType<String>()
+              .toList() ??
+          const [],
       commentsCount: commentsList?.length ?? (json['comments_count'] as int?) ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at'] as String) : null,
       resolvedAt: json['resolved_at'] != null ? DateTime.parse(json['resolved_at'] as String) : null,
       resolverId: json['id_resolver_user'] as String?,
+      validatedAt: json['validated_at'] != null ? DateTime.parse(json['validated_at'] as String) : null,
     );
   }
 

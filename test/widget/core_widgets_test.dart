@@ -17,6 +17,7 @@ import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/core/widgets/rank_seal.dart';
 import 'package:vigia_app/core/theme/severity_colors.dart';
 import 'package:vigia_app/core/widgets/severity_chip.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 Widget host(Widget child, {ThemeData? theme, bool reduceMotion = false}) {
   return MaterialApp(
@@ -104,7 +105,7 @@ void main() {
         AppStatusChip(label: 'Pendiente', met: false),
       ])));
 
-      expect(find.byIcon(Icons.check_circle_outline), findsOneWidget);
+      expect(find.byIcon(LucideIcons.circleCheck), findsOneWidget);
       expect(find.text('Cumplida'), findsOneWidget);
       expect(find.text('Pendiente'), findsOneWidget);
     });
@@ -134,7 +135,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('Escribe tu correo'), findsOneWidget);
-      expect(find.byIcon(Icons.error_outline), findsOneWidget);
+      expect(find.byIcon(LucideIcons.circleAlert), findsOneWidget);
     });
 
     testWidgets('typing updates the form value and clears nothing by itself', (tester) async {

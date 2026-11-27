@@ -14,6 +14,10 @@ import 'package:vigia_app/features/dashboard/ui/bloc/profile_bloc.dart';
 import 'package:vigia_app/features/explore/ui/bloc/city_switcher_bloc.dart';
 import 'package:vigia_app/features/explore/ui/bloc/feed_bloc.dart';
 import 'package:vigia_app/features/explore/ui/bloc/map_bloc.dart';
+import 'package:vigia_app/features/reports/data/repositories/resolution_repository_impl.dart';
+import 'package:vigia_app/features/reports/domain/repositories/resolution_repository.dart';
+import 'package:vigia_app/features/reports/ui/bloc/resolution_bloc.dart';
+import 'package:vigia_app/features/notifications/ui/bloc/push_bloc.dart';
 
 void main() {
   tearDown(() => sl.reset());
@@ -39,6 +43,17 @@ void main() {
       expect(sl<CitySwitcherBloc>(), isA<CitySwitcherBloc>());
       expect(sl<FeedBloc>(), isA<FeedBloc>());
       expect(identical(sl<FeedBloc>(), sl<FeedBloc>()), isFalse);
+    });
+
+    test('resolves the community resolution of a report (HU-25)', () async {
+      await initDependencies(
+        client: SupabaseClient('https://example.supabase.co', 'anon-key'),
+      );
+
+      expect(sl<ResolutionBloc>(), isA<ResolutionBloc>());
+      expect(identical(sl<ResolutionBloc>(), sl<ResolutionBloc>()), isFalse);
+      expect(sl<ResolutionRepository>(), isA<ResolutionRepositoryImpl>());
+      expect(sl<PushBloc>(), isA<PushBloc>());
     });
 
     test('registers each implementation under its contract', () async {

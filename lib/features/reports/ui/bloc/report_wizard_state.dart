@@ -73,6 +73,9 @@ class ReportWizardState extends Equatable {
   final String? dimensions;
   final Incident? publishedIncident;
   final bool isEndorsedNearby;
+
+  /// The citizen tapped "Es este" on a report they wrote: the wizard leaves without voting (HU-09, criterion 3).
+  final bool isOwnNearbyReport;
   final String? errorMessage;
 
   const ReportWizardState({
@@ -103,6 +106,7 @@ class ReportWizardState extends Equatable {
     this.dimensions,
     this.publishedIncident,
     this.isEndorsedNearby = false,
+    this.isOwnNearbyReport = false,
     this.errorMessage,
   });
 
@@ -156,6 +160,7 @@ class ReportWizardState extends Equatable {
     String? dimensions,
     Incident? publishedIncident,
     bool? isEndorsedNearby,
+    bool? isOwnNearbyReport,
     String? errorMessage,
     bool clearErrorMessage = false,
     bool clearPublishedIncident = false,
@@ -189,6 +194,7 @@ class ReportWizardState extends Equatable {
       dimensions: dimensions ?? this.dimensions,
       publishedIncident: clearPublishedIncident ? null : (publishedIncident ?? this.publishedIncident),
       isEndorsedNearby: isEndorsedNearby ?? this.isEndorsedNearby,
+      isOwnNearbyReport: isOwnNearbyReport ?? this.isOwnNearbyReport,
       errorMessage: clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
     );
   }
@@ -222,6 +228,7 @@ class ReportWizardState extends Equatable {
         dimensions,
         publishedIncident,
         isEndorsedNearby,
+        isOwnNearbyReport,
         errorMessage,
       ];
 }

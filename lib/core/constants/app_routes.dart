@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../features/auth/domain/entities/profile.dart';
 import '../../features/auth/ui/bloc/login_bloc.dart';
 import '../../features/auth/ui/bloc/register_bloc.dart';
 import '../../features/auth/ui/bloc/register_event.dart';
@@ -9,16 +10,31 @@ import '../../features/auth/ui/bloc/startup_event.dart';
 import '../../features/auth/ui/screens/login_screen.dart';
 import '../../features/auth/ui/screens/register_screen.dart';
 import '../../features/auth/ui/screens/splash_screen.dart';
+import '../../features/dashboard/ui/bloc/privacy_bloc.dart';
+import '../../features/dashboard/ui/bloc/privacy_event.dart';
+import '../../features/dashboard/ui/bloc/edit_profile_bloc.dart';
+import '../../features/dashboard/ui/bloc/edit_profile_event.dart';
+import '../../features/dashboard/ui/bloc/permissions_bloc.dart';
+import '../../features/dashboard/ui/bloc/permissions_event.dart';
 import '../../features/dashboard/ui/bloc/profile_bloc.dart';
 import '../../features/dashboard/ui/bloc/profile_event.dart';
+import '../../features/dashboard/ui/screens/profile_settings_screen.dart';
+import '../../features/dashboard/ui/screens/edit_profile_screen.dart';
+import '../../features/dashboard/ui/screens/permissions_screen.dart';
 import '../../features/explore/ui/bloc/city_switcher_bloc.dart';
 import '../../features/explore/ui/bloc/feed_bloc.dart';
 import '../../features/explore/ui/bloc/map_bloc.dart';
 import '../../features/explore/ui/bloc/map_event.dart';
 import '../../features/explore/ui/screens/home_screen.dart';
+import '../../features/reports/ui/bloc/comments_bloc.dart';
+import '../../features/reports/ui/bloc/resolution_bloc.dart';
+import '../../features/notifications/ui/bloc/push_bloc.dart';
+import '../../features/notifications/ui/widgets/push_opened_listener.dart';
+import '../../features/reports/ui/bloc/edit_report_bloc.dart';
 import '../../features/reports/ui/bloc/incident_detail_bloc.dart';
 import '../../features/reports/ui/bloc/report_wizard_bloc.dart';
 import '../../features/reports/ui/bloc/report_wizard_event.dart';
+import '../../features/reports/ui/screens/edit_report_screen.dart';
 import '../../features/reports/ui/screens/incident_detail_screen.dart';
 import '../../features/reports/ui/screens/report_wizard_screen.dart';
 import '../di/injection_container.dart';
@@ -32,6 +48,10 @@ class AppRoutes {
   static const String home = '/home';
   static const String reportWizard = '/report-wizard';
   static const String reportDetail = '/report-detail';
+  static const String reportEdit = '/report-edit';
+  static const String profileSettings = '/profile-settings';
+  static const String editProfile = '/edit-profile';
+  static const String permissions = '/permissions';
 
   static Map<String, WidgetBuilder> get routes => {
         splash: (context) => BlocProvider(
@@ -52,16 +72,46 @@ class AppRoutes {
                 BlocProvider(create: (_) => sl<MapBloc>()..add(MapStarted())),
                 BlocProvider(create: (_) => sl<CitySwitcherBloc>()),
                 BlocProvider(create: (_) => sl<FeedBloc>()),
+                // HomeScreen starts the pushes once the map has asked for the
+                // location: Android answers one permission dialog at a time.
+                BlocProvider(create: (_) => sl<PushBloc>()),
               ],
-              child: const HomeScreen(),
+              child: const PushOpenedListener(child: HomeScreen()),
             ),
         reportWizard: (context) => BlocProvider(
               create: (_) => sl<ReportWizardBloc>()..add(WizardStarted()),
               child: const ReportWizardScreen(),
             ),
-        reportDetail: (context) => BlocProvider(
-              create: (_) => sl<IncidentDetailBloc>(),
+        reportEdit: (context) => BlocProvider(
+              create: (_) => sl<EditReportBloc>(),
+              child: const EditReportScreen(),
+            ),
+        reportDetail: (context) => MultiBlocProvider(
+              providers: [
+                BlocProvider(create: (_) => sl<IncidentDetailBloc>()),
+                BlocProvider(create: (_) => sl<CommentsBloc>()),
+                BlocProvider(create: (_) => sl<ResolutionBloc>()),
+              ],
               child: const IncidentDetailScreen(),
+            ),
+        profileSettings: (context) {
+          final profile = ModalRoute.of(context)!.settings.arguments as Profile;
+          return BlocProvider(
+            create: (_) => sl<PrivacyBloc>()
+              ..add(PrivacyStarted(userId: profile.id, showRealName: profile.showRealName)),
+            child: const ProfileSettingsScreen(),
+          );
+        },
+        editProfile: (context) {
+          final profile = ModalRoute.of(context)!.settings.arguments as Profile;
+          return BlocProvider(
+            create: (_) => sl<EditProfileBloc>()..add(EditProfileStarted(profile)),
+            child: EditProfileScreen(initialProfile: profile),
+          );
+        },
+        permissions: (context) => BlocProvider(
+              create: (_) => sl<PermissionsBloc>()..add(PermissionsStarted()),
+              child: const PermissionsScreen(),
             ),
       };
 }

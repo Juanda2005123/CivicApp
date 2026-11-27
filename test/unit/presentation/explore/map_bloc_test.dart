@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
 import 'package:vigia_app/features/auth/domain/entities/city.dart';
@@ -34,6 +36,12 @@ const _marker = IncidentMarker(
   severity: IncidentSeverity.critical,
   coordinates: Coordinates(latitude: 3.45, longitude: -76.53),
 );
+
+/// A permission request the system never answers.
+class _SilentLocationRepository extends FakeLocationRepository {
+  @override
+  Future<Coordinates> currentCoordinates() => Completer<Coordinates>().future;
+}
 
 void main() {
   late FakeAuthRepository auth;
@@ -145,6 +153,25 @@ void main() {
     expect(states.last.city, _cali); // the profile city
     expect(states.last.myLocationStatus, MyLocationStatus.idle);
     expect(states.last.myLocation, isNull);
+  });
+
+  test('a position that never arrives does not leave the map loading', () async {
+    final bloc = MapBloc(
+      GetCityMapUseCase(auth, profiles, FakeCityRepository(const [_cali]), incidents, location),
+      GetCurrentLocationUseCase(_SilentLocationRepository()),
+      OpenLocationSettingsUseCase(location),
+      SwitchCityUseCase(auth, profiles, FakeRecentCitiesRepository()),
+      locationWait: const Duration(milliseconds: 20),
+    );
+    addTearDown(bloc.close);
+
+    bloc.add(MapStarted());
+    final state = await bloc.stream.firstWhere((state) => state.status != MapStatus.loading);
+
+    expect(state.status, MapStatus.success);
+    expect(state.city, _cali); // the profile city
+    expect(state.markers, [_marker]);
+    expect(state.myLocation, isNull);
   });
 
   group('MyLocationRequested', () {

@@ -20,4 +20,19 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   AuthUser? currentUser() => _dataSource.currentUser();
+
+  @override
+  Future<void> updateEmail(String newEmail) => _dataSource.updateEmail(newEmail);
+
+  @override
+  Future<void> updatePassword({
+    required String currentEmail,
+    required String currentPassword,
+    required String newPassword,
+  }) =>
+      _dataSource.updatePassword(
+        currentEmail: currentEmail,
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
 }

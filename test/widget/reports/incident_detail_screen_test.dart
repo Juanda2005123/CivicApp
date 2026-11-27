@@ -4,14 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vigia_app/core/theme/app_theme.dart';
-import 'package:vigia_app/core/widgets/dotted_spinner.dart';
+import 'package:vigia_app/core/widgets/city/city_skeleton.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_photo.dart';
-import 'package:vigia_app/features/reports/domain/usecases/get_incident_by_id_usecase.dart';
+
 import 'package:vigia_app/features/reports/ui/bloc/incident_detail_bloc.dart';
 import 'package:vigia_app/features/reports/ui/screens/incident_detail_screen.dart';
 
+import 'package:vigia_app/features/reports/ui/bloc/comments_bloc.dart';
+import 'package:vigia_app/features/reports/ui/bloc/resolution_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import '../../support/detail_bloc_factory.dart';
+import '../../support/fake_comment_repository.dart';
+import '../../support/fake_resolution_repository.dart';
 import '../../support/fakes.dart';
 
 void main() {
@@ -53,16 +60,24 @@ void main() {
     });
 
     IncidentDetailBloc newBloc() {
-      final bloc = IncidentDetailBloc(GetIncidentByIdUseCase(repository));
+      final bloc = buildDetailBloc(repository);
       addTearDown(bloc.close);
       return bloc;
     }
 
     Widget createWidgetUnderTest(IncidentDetailBloc bloc, {String? incidentIdOrCode}) {
+      final commentsBloc = buildCommentsBloc(FakeCommentRepository());
+      final resolutionBloc = buildResolutionBloc(FakeResolutionRepository());
+      addTearDown(resolutionBloc.close);
+      addTearDown(commentsBloc.close);
       return MaterialApp(
         theme: AppTheme.light,
-        home: BlocProvider<IncidentDetailBloc>.value(
-          value: bloc,
+        home: MultiBlocProvider(
+          providers: [
+            BlocProvider<IncidentDetailBloc>.value(value: bloc),
+            BlocProvider<CommentsBloc>.value(value: commentsBloc),
+            BlocProvider<ResolutionBloc>.value(value: resolutionBloc),
+          ],
           child: IncidentDetailScreen(incidentIdOrCode: incidentIdOrCode),
         ),
       );
@@ -84,15 +99,49 @@ void main() {
       expect(find.text('Hueco profundo en carril rápido'), findsOneWidget);
     });
 
+    // The test font is much wider than the real one: at 600 dp the old header
+    // row overflowed just like it did on a 412 dp phone with the real font.
+    testWidgets('a long status and a long category fit a phone screen', (tester) async {
+      tester.view.physicalSize = const Size(600, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final validated = Incident(
+        id: 'inc-1001',
+        trackingCode: '#VIG-1001',
+        reporterId: 'user-99',
+        categoryId: 5,
+        categoryName: 'Fuga de agua o alcantarillado',
+        title: 'Tapa de alcantarilla rota',
+        description: 'La tapa está partida en dos.',
+        severity: IncidentSeverity.high,
+        status: IncidentStatus.communityValidated,
+        coordinates: const Coordinates(latitude: 3.3864, longitude: -76.5286),
+        formattedAddress: 'Carrera 66 # 10-25',
+        neighborhood: 'El Ingenio',
+        city: 'Cali',
+        upvotesCount: 10,
+        createdAt: DateTime(2026, 11, 14),
+        validatedAt: DateTime(2026, 11, 20),
+      );
+      repository.stored['#VIG-1001'] = validated;
+
+      await tester.pumpWidget(createWidgetUnderTest(newBloc(), incidentIdOrCode: '#VIG-1001'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Validado por la comunidad'), findsOneWidget);
+      expect(find.text('· Fuga de agua o alcantarillado'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('while the report loads it shows the spinner, never the error view', (tester) async {
       final pending = Completer<Incident>();
-      final bloc = IncidentDetailBloc(GetIncidentByIdUseCase(_SlowIncidentRepository(pending.future)));
+      final bloc = buildDetailBloc(_SlowIncidentRepository(pending.future));
       addTearDown(bloc.close);
 
       await tester.pumpWidget(createWidgetUnderTest(bloc, incidentIdOrCode: '#VIG-1001'));
       await tester.pump();
 
-      expect(find.byType(DottedSpinner), findsOneWidget);
+      expect(find.byType(CitySkeleton), findsOneWidget);
       expect(find.text('No fue posible cargar el reporte vial.'), findsNothing);
       expect(find.text('Reintentar'), findsNothing);
 
@@ -159,7 +208,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Sin fotografías adjuntas'), findsOneWidget);
-      expect(find.byIcon(Icons.photo_library_outlined), findsOneWidget);
+      expect(find.byIcon(LucideIcons.images), findsOneWidget);
     });
 
     testWidgets('renders error notice and retry button when report does not exist', (tester) async {

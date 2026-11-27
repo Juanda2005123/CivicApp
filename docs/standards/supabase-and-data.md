@@ -42,6 +42,9 @@ client.auth.onAuthStateChange.listen((d) { /* signedIn / signedOut / tokenRefres
 - Constraint errors surface as `PostgrestException`: `23514` check violated, `23503` foreign key, `23505` duplicate key,
   `42501` permission.
 - This repo's DDL/DML are split: `data model/schema.sql` (DDL) and `data model/seeds.sql` (DML). Keep that separation.
+- This repo keeps numbered migrations in `data model/migrations/NNN_name.sql` (not `supabase/migrations/`) with a smoke test per
+  migration in `data model/tests/`. Apply them with the SQL Editor or `supabase db query --linked --project-ref <ref> -f <absolute path>`
+  (organization membership is enough; no database password).
 
 ## Reading
 

@@ -1,0 +1,1295 @@
+{
+  "about": "Demo data for the VIGÍA presentation. Everything here belongs to the demo users below; `node tool/seed/seed.mjs` explains the steps. Photos come from Wikimedia Commons (free licenses); credits are written to tool/seed/out/credits.md.",
+  "emailDomain": "vigia-demo.com",
+  "trackingPrefix": "#VIG-S",
+  "users": [
+    {
+      "key": "ana",
+      "name": "Ana Gómez",
+      "city": "Cali"
+    },
+    {
+      "key": "luis",
+      "name": "Luis Herrera",
+      "city": "Cali"
+    },
+    {
+      "key": "marta",
+      "name": "Marta Ruiz",
+      "city": "Cali"
+    },
+    {
+      "key": "carlos",
+      "name": "Carlos Mejía",
+      "city": "Cali"
+    },
+    {
+      "key": "sofia",
+      "name": "Sofía López",
+      "city": "Cali"
+    },
+    {
+      "key": "jorge",
+      "name": "Jorge Valencia",
+      "city": "Cali"
+    },
+    {
+      "key": "paula",
+      "name": "Paula Ocampo",
+      "city": "Cali"
+    },
+    {
+      "key": "camilo",
+      "name": "Camilo Rengifo",
+      "city": "Cali"
+    },
+    {
+      "key": "daniela",
+      "name": "Daniela Cárdenas",
+      "city": "Cali"
+    },
+    {
+      "key": "felipe",
+      "name": "Felipe Salazar",
+      "city": "Cali"
+    },
+    {
+      "key": "natalia",
+      "name": "Natalia Quintero",
+      "city": "Cali",
+      "hideName": true
+    },
+    {
+      "key": "sebastian",
+      "name": "Sebastián Arango",
+      "city": "Cali"
+    },
+    {
+      "key": "diego",
+      "name": "Diego Muñoz",
+      "city": "Popayán"
+    },
+    {
+      "key": "valentina",
+      "name": "Valentina Restrepo",
+      "city": "Medellín"
+    },
+    {
+      "key": "andres",
+      "name": "Andrés Castro",
+      "city": "Bogotá"
+    }
+  ],
+  "photos": {
+    "bache-grande": {
+      "commons": "Bache grande 1.jpg"
+    },
+    "bache-mediano": {
+      "commons": "Bache mediano.jpg"
+    },
+    "bache-calle": {
+      "commons": "Bache de calle.jpg"
+    },
+    "bache-milpa": {
+      "commons": "Bache de calle de Milpa Alta.jpg"
+    },
+    "bache-destruido": {
+      "commons": "Bache destruido.jpg"
+    },
+    "bache-coyoacan": {
+      "commons": "Bache en Coyoacan.jpg"
+    },
+    "bache-en-la-calle": {
+      "commons": "Bache en la calle.jpg"
+    },
+    "bache-pavimento1": {
+      "commons": "Bache en pavimento1.jpg"
+    },
+    "bache-pavimento2": {
+      "commons": "Bache en pavimento2.jpg"
+    },
+    "bache-san-luis": {
+      "commons": "Bache en San Luis.jpg"
+    },
+    "bache-noviembre": {
+      "commons": "Bache Noviembre.jpg"
+    },
+    "bache-pequeno": {
+      "commons": "Bache pequeño 1.jpg"
+    },
+    "bache-pequeno-cdmx": {
+      "commons": "Bache pequeño CDMX.jpg"
+    },
+    "baches-2": {
+      "commons": "BACHES 2.jpg"
+    },
+    "otro-bache": {
+      "commons": "Otro bache.jpg"
+    },
+    "bache-enp": {
+      "commons": "Bache ENP1.jpg"
+    },
+    "potholes-road": {
+      "commons": "Potholes in Bengaluru road.jpg"
+    },
+    "lcb-1": {
+      "commons": "Lcb-1.jpg"
+    },
+    "lcb-2": {
+      "commons": "Lcb-2.jpg"
+    },
+    "prmy-1": {
+      "commons": "Prmy-1.jpg"
+    },
+    "bache-tapado": {
+      "commons": "Bache tapado.jpg"
+    },
+    "anden-levantado": {
+      "commons": "Levantamiento de piso.jpg"
+    },
+    "anden-banqueta": {
+      "commons": "Bache en una banqueta.jpg"
+    },
+    "escombros": {
+      "commons": "Montón de piedras.jpg"
+    },
+    "pare": {
+      "commons": "ColombiaStopSign.JPG"
+    },
+    "semaforo": {
+      "search": "traffic light Colombia street"
+    },
+    "semaforo-2": {
+      "search": "semáforo calle Colombia"
+    },
+    "alcantarilla": {
+      "search": "broken manhole cover street"
+    },
+    "fuga-agua": {
+      "search": "water leak street pipe burst"
+    },
+    "cebra": {
+      "search": "faded zebra crossing"
+    }
+  },
+  "reports": [
+    {
+      "code": "001",
+      "author": "ana",
+      "city": "Cali",
+      "category": 1,
+      "severity": "CRITICAL",
+      "daysAgo": 13,
+      "title": "Cráter frente al Hospital Universitario del Valle",
+      "description": "Hueco de casi un metro de ancho en el carril derecho. Los buses lo esquivan invadiendo el otro carril y ya hubo una moto caída.",
+      "dimensions": "90 x 70 cm, 25 cm de profundidad",
+      "address": "Calle 5 # 36-08",
+      "neighborhood": "San Fernando",
+      "lat": 3.4361,
+      "lng": -76.5421,
+      "photos": [
+        "bache-grande",
+        "bache-destruido"
+      ],
+      "upvotes": 12
+    },
+    {
+      "code": "002",
+      "author": "luis",
+      "city": "Cali",
+      "category": 1,
+      "severity": "HIGH",
+      "daysAgo": 12,
+      "title": "Hundimiento en la Avenida Roosevelt",
+      "description": "El pavimento se hundió cerca del semáforo. Cuando llueve se llena de agua y no se ve.",
+      "dimensions": "1,2 m de largo",
+      "address": "Carrera 39 # 6-15",
+      "neighborhood": "Tequendama",
+      "lat": 3.4269,
+      "lng": -76.5447,
+      "photos": [
+        "bache-calle"
+      ],
+      "upvotes": 4
+    },
+    {
+      "code": "003",
+      "author": "marta",
+      "city": "Cali",
+      "category": 1,
+      "severity": "MEDIUM",
+      "daysAgo": 12,
+      "title": "Grietas y huecos en la Calle 9",
+      "description": "Varios huecos seguidos en la Calle 9 hacia el oriente. Los carros frenan de golpe.",
+      "address": "Calle 9 # 23-40",
+      "neighborhood": "Alameda",
+      "lat": 3.4413,
+      "lng": -76.5355,
+      "photos": [
+        "baches-2"
+      ],
+      "upvotes": 3
+    },
+    {
+      "code": "004",
+      "author": "carlos",
+      "city": "Cali",
+      "category": 5,
+      "severity": "HIGH",
+      "daysAgo": 11,
+      "title": "Tapa de alcantarilla rota en la Carrera 66",
+      "description": "La tapa está partida en dos y se ve el hueco. De noche es muy peligroso para motos y ciclistas.",
+      "address": "Carrera 66 # 10-25",
+      "neighborhood": "El Ingenio",
+      "lat": 3.3864,
+      "lng": -76.5286,
+      "photos": [
+        "alcantarilla"
+      ],
+      "upvotes": 10
+    },
+    {
+      "code": "005",
+      "author": "sofia",
+      "city": "Cali",
+      "category": 4,
+      "severity": "MEDIUM",
+      "daysAgo": 11,
+      "title": "Andén levantado por raíces en el Valle del Lili",
+      "description": "Las raíces del árbol levantaron las baldosas. Una señora con coche de bebé tuvo que bajarse a la calle.",
+      "address": "Carrera 98 # 42-10",
+      "neighborhood": "Valle del Lili",
+      "lat": 3.3732,
+      "lng": -76.521,
+      "photos": [
+        "anden-levantado"
+      ],
+      "upvotes": 5
+    },
+    {
+      "code": "006",
+      "author": "jorge",
+      "city": "Cali",
+      "category": 2,
+      "severity": "CRITICAL",
+      "daysAgo": 10,
+      "title": "Semáforo apagado en la Calle 5 con Carrera 50",
+      "description": "El semáforo lleva tres días apagado en hora pico. Nadie sabe a quién le toca pasar.",
+      "address": "Calle 5 # 50-02",
+      "neighborhood": "Cuarto de Legua",
+      "lat": 3.4198,
+      "lng": -76.5381,
+      "photos": [
+        "semaforo"
+      ],
+      "upvotes": 11
+    },
+    {
+      "code": "007",
+      "author": "paula",
+      "city": "Cali",
+      "category": 1,
+      "severity": "HIGH",
+      "daysAgo": 10,
+      "title": "Hueco profundo en la Avenida Pasoancho",
+      "description": "Hueco grande justo después del paradero. Ya reventó dos llantas esta semana.",
+      "dimensions": "60 x 50 cm",
+      "address": "Calle 13 # 56-30",
+      "neighborhood": "Camino Real",
+      "lat": 3.4106,
+      "lng": -76.5339,
+      "photos": [
+        "bache-mediano",
+        "bache-noviembre"
+      ],
+      "upvotes": 6
+    },
+    {
+      "code": "008",
+      "author": "camilo",
+      "city": "Cali",
+      "category": 3,
+      "severity": "HIGH",
+      "daysAgo": 10,
+      "title": "Obra de alcantarillado abandonada en Granada",
+      "description": "Abrieron la vía hace dos meses y la dejaron con una cinta. No hay señalización de noche.",
+      "address": "Avenida 9 Norte # 12-30",
+      "neighborhood": "Granada",
+      "lat": 3.4608,
+      "lng": -76.5313,
+      "photos": [
+        "bache-san-luis",
+        "escombros"
+      ],
+      "upvotes": 7
+    },
+    {
+      "code": "009",
+      "author": "daniela",
+      "city": "Cali",
+      "category": 1,
+      "severity": "MEDIUM",
+      "daysAgo": 9,
+      "title": "Bache en la entrada del Parque del Perro",
+      "description": "Bache en la esquina, los carros que voltean caen en él.",
+      "address": "Carrera 34 # 3-50",
+      "neighborhood": "San Fernando",
+      "lat": 3.4352,
+      "lng": -76.5402,
+      "photos": [
+        "bache-coyoacan"
+      ],
+      "upvotes": 2
+    },
+    {
+      "code": "010",
+      "author": "felipe",
+      "city": "Cali",
+      "category": 1,
+      "severity": "HIGH",
+      "daysAgo": 9,
+      "title": "Hueco en la Calle 70 frente al colegio",
+      "description": "Los niños salen del colegio y los carros frenan encima del hueco. Necesita arreglo urgente.",
+      "address": "Calle 70 # 7-15",
+      "neighborhood": "Alfonso López",
+      "lat": 3.4593,
+      "lng": -76.4912,
+      "photos": [
+        "bache-en-la-calle"
+      ],
+      "upvotes": 5
+    },
+    {
+      "code": "011",
+      "author": "natalia",
+      "city": "Cali",
+      "category": 6,
+      "severity": "MEDIUM",
+      "daysAgo": 9,
+      "title": "Señal de PARE caída en Ciudad Jardín",
+      "description": "La señal está en el piso desde el aguacero del lunes. Los carros ya no paran en la esquina.",
+      "address": "Carrera 105 # 15-20",
+      "neighborhood": "Ciudad Jardín",
+      "lat": 3.3708,
+      "lng": -76.5334,
+      "photos": [
+        "pare"
+      ],
+      "upvotes": 3
+    },
+    {
+      "code": "012",
+      "author": "sebastian",
+      "city": "Cali",
+      "category": 5,
+      "severity": "MEDIUM",
+      "daysAgo": 8,
+      "title": "Fuga de agua en San Antonio",
+      "description": "Sale agua limpia del pavimento todo el día. Ya está dañando la calle empedrada.",
+      "address": "Carrera 6 # 3-25",
+      "neighborhood": "San Antonio",
+      "lat": 3.4479,
+      "lng": -76.5381,
+      "photos": [
+        "fuga-agua"
+      ],
+      "upvotes": 4
+    },
+    {
+      "code": "013",
+      "author": "ana",
+      "city": "Cali",
+      "category": 1,
+      "severity": "LOW",
+      "daysAgo": 8,
+      "title": "Grietas en la Calle 16 en El Lido",
+      "description": "Grietas en el pavimento que van creciendo. Todavía no es hueco, pero va para allá.",
+      "address": "Calle 16 # 50-20",
+      "neighborhood": "El Lido",
+      "lat": 3.4332,
+      "lng": -76.5484,
+      "photos": [
+        "bache-pequeno"
+      ],
+      "upvotes": 1
+    },
+    {
+      "code": "014",
+      "author": "luis",
+      "city": "Cali",
+      "category": 4,
+      "severity": "HIGH",
+      "daysAgo": 8,
+      "title": "Paso peatonal sin rampa en la Calle 25",
+      "description": "La rampa del paso peatonal está destruida. Una persona en silla de ruedas no puede cruzar.",
+      "address": "Calle 25 # 4-30",
+      "neighborhood": "Obrero",
+      "lat": 3.4466,
+      "lng": -76.5251,
+      "photos": [
+        "anden-banqueta"
+      ],
+      "upvotes": 6
+    },
+    {
+      "code": "015",
+      "author": "marta",
+      "city": "Cali",
+      "category": 1,
+      "severity": "HIGH",
+      "daysAgo": 7,
+      "title": "Huecos en la Carrera 1 en Chipichape",
+      "description": "Cadena de huecos de una cuadra de largo. Los taxis van en zigzag.",
+      "address": "Carrera 1 # 38N-10",
+      "neighborhood": "Chipichape",
+      "lat": 3.4762,
+      "lng": -76.5288,
+      "photos": [
+        "bache-pavimento1"
+      ],
+      "upvotes": 4
+    },
+    {
+      "code": "016",
+      "author": "carlos",
+      "city": "Cali",
+      "category": 2,
+      "severity": "HIGH",
+      "daysAgo": 7,
+      "title": "Semáforo intermitente en la Avenida Sexta",
+      "description": "El semáforo queda en amarillo intermitente toda la noche y los carros no frenan.",
+      "address": "Avenida 6 Norte # 21-40",
+      "neighborhood": "Versalles",
+      "lat": 3.4645,
+      "lng": -76.5295,
+      "photos": [
+        "semaforo-2"
+      ],
+      "upvotes": 3
+    },
+    {
+      "code": "017",
+      "author": "sofia",
+      "city": "Cali",
+      "category": 1,
+      "severity": "MEDIUM",
+      "daysAgo": 7,
+      "title": "Bache en la Calle 44 en La Flora",
+      "description": "Bache en la mitad del carril, frente a la panadería.",
+      "address": "Calle 44 Norte # 6-20",
+      "neighborhood": "La Flora",
+      "lat": 3.4874,
+      "lng": -76.5198,
+      "photos": [
+        "otro-bache"
+      ],
+      "upvotes": 2
+    },
+    {
+      "code": "018",
+      "author": "jorge",
+      "city": "Cali",
+      "category": 7,
+      "severity": "LOW",
+      "daysAgo": 6,
+      "title": "Escombros abandonados en media calzada en Normandía",
+      "description": "Dejaron un montón de escombros y piedras que ocupan medio carril. Ya pasaron dos días.",
+      "address": "Calle 4 Oeste # 3-50",
+      "neighborhood": "Normandía",
+      "lat": 3.4564,
+      "lng": -76.5497,
+      "photos": [
+        "escombros"
+      ],
+      "upvotes": 2
+    },
+    {
+      "code": "019",
+      "author": "paula",
+      "city": "Cali",
+      "category": 1,
+      "severity": "CRITICAL",
+      "daysAgo": 6,
+      "title": "Hueco que se tragó una llanta en Siloé",
+      "description": "El hueco está en plena subida y de noche no se ve. Un carro dejó la llanta ahí.",
+      "dimensions": "80 x 60 cm, 30 cm de profundidad",
+      "address": "Carrera 52 # 2-15 Oeste",
+      "neighborhood": "Siloé",
+      "lat": 3.4254,
+      "lng": -76.5608,
+      "photos": [
+        "lcb-2"
+      ],
+      "upvotes": 10
+    },
+    {
+      "code": "020",
+      "author": "camilo",
+      "city": "Cali",
+      "category": 1,
+      "severity": "MEDIUM",
+      "daysAgo": 6,
+      "title": "Baches en la Carrera 15 en Mariano Ramos",
+      "description": "Varios baches que se volvieron charcos permanentes.",
+      "address": "Carrera 15 # 38-40",
+      "neighborhood": "Mariano Ramos",
+      "lat": 3.4042,
+      "lng": -76.5042,
+      "photos": [
+        "bache-pavimento2"
+      ],
+      "upvotes": 3
+    },
+    {
+      "code": "021",
+      "author": "daniela",
+      "city": "Cali",
+      "category": 3,
+      "severity": "MEDIUM",
+      "daysAgo": 5,
+      "title": "Zanja sin señalizar en Ciudad Córdoba",
+      "description": "Hicieron una zanja para tubería y la dejaron abierta. Solo hay unas piedras alrededor.",
+      "address": "Carrera 46 # 48-10",
+      "neighborhood": "Ciudad Córdoba",
+      "lat": 3.4112,
+      "lng": -76.5001,
+      "photos": [
+        "bache-san-luis"
+      ],
+      "upvotes": 4
+    },
+    {
+      "code": "022",
+      "author": "felipe",
+      "city": "Cali",
+      "category": 1,
+      "severity": "HIGH",
+      "daysAgo": 5,
+      "title": "Hueco en la Avenida Simón Bolívar",
+      "description": "Hueco en el carril rápido de la Simón Bolívar. Los carros frenan a 60 km/h.",
+      "address": "Carrera 70 # 14-50",
+      "neighborhood": "Capri",
+      "lat": 3.3938,
+      "lng": -76.5331,
+      "photos": [
+        "potholes-road"
+      ],
+      "upvotes": 5
+    },
+    {
+      "code": "023",
+      "author": "natalia",
+      "city": "Cali",
+      "category": 6,
+      "severity": "MEDIUM",
+      "daysAgo": 5,
+      "title": "Cebra borrada frente a la Universidad",
+      "description": "La cebra ya no se ve. Los estudiantes cruzan sin que los carros paren.",
+      "address": "Calle 13 # 100-00",
+      "neighborhood": "Ciudad Universitaria",
+      "lat": 3.3752,
+      "lng": -76.5328,
+      "photos": [
+        "cebra"
+      ],
+      "upvotes": 4
+    },
+    {
+      "code": "024",
+      "author": "sebastian",
+      "city": "Cali",
+      "category": 1,
+      "severity": "MEDIUM",
+      "daysAgo": 4,
+      "title": "Bache en la Calle 5 frente a Cosmocentro",
+      "description": "Bache en la bahía de los buses. Los pasajeros se bajan al hueco.",
+      "address": "Calle 5 # 50-103",
+      "neighborhood": "Departamental",
+      "lat": 3.4187,
+      "lng": -76.5419,
+      "photos": [
+        "lcb-1"
+      ],
+      "upvotes": 2
+    },
+    {
+      "code": "025",
+      "author": "ana",
+      "city": "Cali",
+      "category": 1,
+      "severity": "HIGH",
+      "daysAgo": 4,
+      "title": "Huecos en la Carrera 8 en Floralia",
+      "description": "La Carrera 8 está llena de huecos desde la esquina del parque.",
+      "address": "Carrera 8 # 78-20",
+      "neighborhood": "Floralia",
+      "lat": 3.4869,
+      "lng": -76.4912,
+      "photos": [
+        "lcb-2"
+      ],
+      "upvotes": 3
+    },
+    {
+      "code": "026",
+      "author": "luis",
+      "city": "Cali",
+      "category": 5,
+      "severity": "LOW",
+      "daysAgo": 4,
+      "title": "Sumidero tapado en Santa Mónica",
+      "description": "El sumidero está lleno de basura y cuando llueve se inunda la esquina.",
+      "address": "Avenida 4 Norte # 26-15",
+      "neighborhood": "Santa Mónica",
+      "lat": 3.4699,
+      "lng": -76.5254,
+      "photos": [
+        "alcantarilla"
+      ],
+      "upvotes": 1
+    },
+    {
+      "code": "027",
+      "author": "marta",
+      "city": "Cali",
+      "category": 1,
+      "severity": "MEDIUM",
+      "daysAgo": 3,
+      "title": "Bache en la Calle 10 en Junín",
+      "description": "Bache mediano que crece con cada aguacero.",
+      "address": "Calle 10 # 19-30",
+      "neighborhood": "Junín",
+      "lat": 3.4433,
+      "lng": -76.5185,
+      "photos": [
+        "bache-san-luis"
+      ],
+      "upvotes": 2
+    },
+    {
+      "code": "028",
+      "author": "carlos",
+      "city": "Cali",
+      "category": 4,
+      "severity": "MEDIUM",
+      "daysAgo": 3,
+      "title": "Baldosas sueltas en el bulevar del río",
+      "description": "Hay baldosas sueltas que se mueven al pisarlas. Alguien se va a caer.",
+      "address": "Avenida 2 Norte # 10-00",
+      "neighborhood": "El Peñón",
+      "lat": 3.4523,
+      "lng": -76.5356,
+      "photos": [
+        "anden-banqueta"
+      ],
+      "upvotes": 2
+    },
+    {
+      "code": "029",
+      "author": "sofia",
+      "city": "Cali",
+      "category": 1,
+      "severity": "HIGH",
+      "daysAgo": 3,
+      "title": "Hueco en la Avenida Cañasgordas",
+      "description": "Hueco grande en la curva. Los carros que vienen rápido lo ven tarde.",
+      "address": "Calle 18 # 122-30",
+      "neighborhood": "Pance",
+      "lat": 3.3412,
+      "lng": -76.5352,
+      "photos": [
+        "baches-2"
+      ],
+      "upvotes": 3
+    },
+    {
+      "code": "030",
+      "author": "jorge",
+      "city": "Cali",
+      "category": 1,
+      "severity": "MEDIUM",
+      "daysAgo": 2,
+      "title": "Bache en la Carrera 44 en Cristales",
+      "description": "Bache en la subida, los carros raspan.",
+      "address": "Carrera 44 Oeste # 4-10",
+      "neighborhood": "Cristales",
+      "lat": 3.4308,
+      "lng": -76.5522,
+      "photos": [
+        "prmy-1"
+      ],
+      "upvotes": 2
+    },
+    {
+      "code": "031",
+      "author": "paula",
+      "city": "Cali",
+      "category": 1,
+      "severity": "LOW",
+      "daysAgo": 2,
+      "title": "Bache pequeño en El Limonar",
+      "description": "Todavía es pequeño, pero conviene taparlo antes de las lluvias.",
+      "address": "Carrera 66 # 13-40",
+      "neighborhood": "El Limonar",
+      "lat": 3.3988,
+      "lng": -76.5419,
+      "photos": [
+        "bache-pequeno-cdmx"
+      ],
+      "upvotes": 1
+    },
+    {
+      "code": "032",
+      "author": "camilo",
+      "city": "Cali",
+      "category": 6,
+      "severity": "LOW",
+      "daysAgo": 2,
+      "title": "Señal de PARE desteñida en Meléndez",
+      "description": "La señal de PARE está desteñida y casi no se ve. Los carros pasan derecho.",
+      "address": "Calle 2 # 94-15",
+      "neighborhood": "Meléndez",
+      "lat": 3.3802,
+      "lng": -76.5447,
+      "photos": [
+        "pare"
+      ],
+      "upvotes": 1
+    },
+    {
+      "code": "033",
+      "author": "daniela",
+      "city": "Cali",
+      "category": 1,
+      "severity": "HIGH",
+      "daysAgo": 1,
+      "title": "Hueco nuevo en la Autopista Sur",
+      "description": "Se abrió después del aguacero de anoche, en el carril de buses.",
+      "address": "Calle 10 # 66-50",
+      "neighborhood": "El Caney",
+      "lat": 3.3881,
+      "lng": -76.5129,
+      "photos": [
+        "bache-enp"
+      ],
+      "upvotes": 1
+    },
+    {
+      "code": "034",
+      "author": "felipe",
+      "city": "Cali",
+      "category": 1,
+      "severity": "MEDIUM",
+      "daysAgo": 1,
+      "title": "Bache en la Calle 52 en Calima",
+      "description": "Bache frente al centro de salud.",
+      "address": "Calle 52 # 2-40",
+      "neighborhood": "Calima",
+      "lat": 3.4799,
+      "lng": -76.4998,
+      "photos": [
+        "bache-milpa"
+      ],
+      "upvotes": 0
+    },
+    {
+      "code": "035",
+      "author": "diego",
+      "city": "Popayán",
+      "category": 1,
+      "severity": "HIGH",
+      "daysAgo": 9,
+      "title": "Hueco en la Carrera 6 cerca del Centro Histórico",
+      "description": "Hueco grande en la vía de acceso al centro. Los carros dañan las llantas.",
+      "address": "Carrera 6 # 8-40",
+      "neighborhood": "Centro",
+      "lat": 2.4421,
+      "lng": -76.6064,
+      "photos": [
+        "bache-noviembre"
+      ],
+      "upvotes": 3
+    },
+    {
+      "code": "036",
+      "author": "diego",
+      "city": "Popayán",
+      "category": 4,
+      "severity": "MEDIUM",
+      "daysAgo": 4,
+      "title": "Andén roto en el barrio Bolívar",
+      "description": "El andén se partió y quedó una grada de 15 cm.",
+      "address": "Calle 5 # 15-20",
+      "neighborhood": "Bolívar",
+      "lat": 2.4486,
+      "lng": -76.6128,
+      "photos": [
+        "anden-levantado"
+      ],
+      "upvotes": 1
+    },
+    {
+      "code": "037",
+      "author": "valentina",
+      "city": "Medellín",
+      "category": 1,
+      "severity": "HIGH",
+      "daysAgo": 8,
+      "title": "Hueco en la Avenida 80 en Laureles",
+      "description": "Hueco profundo en el carril izquierdo de la 80.",
+      "address": "Carrera 80 # 33-20",
+      "neighborhood": "Laureles",
+      "lat": 6.2426,
+      "lng": -75.5975,
+      "photos": [
+        "bache-destruido"
+      ],
+      "upvotes": 2
+    },
+    {
+      "code": "038",
+      "author": "valentina",
+      "city": "Medellín",
+      "category": 2,
+      "severity": "MEDIUM",
+      "daysAgo": 3,
+      "title": "Semáforo peatonal sin luz en El Poblado",
+      "description": "El semáforo peatonal no prende la luz verde.",
+      "address": "Carrera 43A # 10-15",
+      "neighborhood": "El Poblado",
+      "lat": 6.2105,
+      "lng": -75.5696,
+      "photos": [
+        "semaforo"
+      ],
+      "upvotes": 1
+    },
+    {
+      "code": "039",
+      "author": "andres",
+      "city": "Bogotá",
+      "category": 1,
+      "severity": "CRITICAL",
+      "daysAgo": 7,
+      "title": "Hundimiento en la Carrera Séptima en Chapinero",
+      "description": "El carril mixto se hundió y lo cerraron con conos.",
+      "address": "Carrera 7 # 60-30",
+      "neighborhood": "Chapinero",
+      "lat": 4.6454,
+      "lng": -74.0611,
+      "photos": [
+        "bache-grande"
+      ],
+      "upvotes": 2
+    },
+    {
+      "code": "040",
+      "author": "andres",
+      "city": "Bogotá",
+      "category": 6,
+      "severity": "LOW",
+      "daysAgo": 2,
+      "title": "Cebra borrada en Usaquén",
+      "description": "La cebra del cruce de la Calle 119 ya no se ve.",
+      "address": "Calle 119 # 6-10",
+      "neighborhood": "Usaquén",
+      "lat": 4.6959,
+      "lng": -74.0308,
+      "photos": [
+        "cebra"
+      ],
+      "upvotes": 0
+    }
+  ],
+  "comments": [
+    {
+      "report": "001",
+      "user": "luis",
+      "hoursAgo": 300,
+      "text": "Paso por ahí todos los días. Es el hueco más peligroso de la Calle 5."
+    },
+    {
+      "report": "001",
+      "user": "marta",
+      "hoursAgo": 290,
+      "text": "Hoy casi me caigo en la moto. Ojo los que van de noche.",
+      "photo": "bache-destruido"
+    },
+    {
+      "report": "001",
+      "user": "sofia",
+      "hoursAgo": 200,
+      "text": "Ya lo reporté también a la línea de la Alcaldía."
+    },
+    {
+      "report": "001",
+      "user": "jorge",
+      "hoursAgo": 120,
+      "text": "Sigue igual, y con la lluvia está más grande."
+    },
+    {
+      "report": "002",
+      "user": "carlos",
+      "hoursAgo": 260,
+      "text": "Cuando llueve no se ve. Mucho cuidado."
+    },
+    {
+      "report": "002",
+      "user": "paula",
+      "hoursAgo": 100,
+      "text": "Le pusieron una llanta encima para avisar."
+    },
+    {
+      "report": "003",
+      "user": "daniela",
+      "hoursAgo": 250,
+      "text": "Son como cinco huecos seguidos."
+    },
+    {
+      "report": "004",
+      "user": "ana",
+      "hoursAgo": 240,
+      "text": "Le pusimos una rama para que la gente lo vea.",
+      "photo": "alcantarilla"
+    },
+    {
+      "report": "004",
+      "user": "felipe",
+      "hoursAgo": 230,
+      "text": "Un ciclista se cayó ayer ahí."
+    },
+    {
+      "report": "004",
+      "user": "luis",
+      "hoursAgo": 150,
+      "text": "Esto ya está validado, a ver si lo arreglan."
+    },
+    {
+      "report": "005",
+      "user": "marta",
+      "hoursAgo": 220,
+      "text": "Las raíces también están rompiendo la tubería."
+    },
+    {
+      "report": "006",
+      "user": "ana",
+      "hoursAgo": 230,
+      "text": "Hoy un agente de tránsito estaba dirigiendo el cruce."
+    },
+    {
+      "report": "006",
+      "user": "camilo",
+      "hoursAgo": 210,
+      "text": "Por la noche es un caos total."
+    },
+    {
+      "report": "006",
+      "user": "sebastian",
+      "hoursAgo": 180,
+      "text": "Casi hay un choque esta mañana."
+    },
+    {
+      "report": "006",
+      "user": "daniela",
+      "hoursAgo": 90,
+      "text": "Sigue apagado."
+    },
+    {
+      "report": "007",
+      "user": "sofia",
+      "hoursAgo": 215,
+      "text": "Reventé una llanta ahí el martes.",
+      "photo": "bache-mediano"
+    },
+    {
+      "report": "007",
+      "user": "jorge",
+      "hoursAgo": 160,
+      "text": "Necesita arreglo urgente."
+    },
+    {
+      "report": "008",
+      "user": "ana",
+      "hoursAgo": 225,
+      "text": "La cinta ya se cayó, no hay nada que avise.",
+      "photo": "escombros"
+    },
+    {
+      "report": "008",
+      "user": "marta",
+      "hoursAgo": 200,
+      "text": "Hace dos meses que no viene nadie a trabajar."
+    },
+    {
+      "report": "008",
+      "user": "felipe",
+      "hoursAgo": 140,
+      "text": "Un carro se metió de noche."
+    },
+    {
+      "report": "009",
+      "user": "paula",
+      "hoursAgo": 200,
+      "text": "Los perros también se lastiman con el hueco."
+    },
+    {
+      "report": "010",
+      "user": "natalia",
+      "hoursAgo": 190,
+      "text": "Mis hijos estudian ahí. Por favor arreglen esto."
+    },
+    {
+      "report": "010",
+      "user": "carlos",
+      "hoursAgo": 120,
+      "text": "Le pregunté al colegio y ya enviaron una carta."
+    },
+    {
+      "report": "011",
+      "user": "camilo",
+      "hoursAgo": 190,
+      "text": "Ya no para nadie en esa esquina."
+    },
+    {
+      "report": "012",
+      "user": "jorge",
+      "hoursAgo": 170,
+      "text": "Es agua limpia, se está perdiendo mucha.",
+      "photo": "fuga-agua"
+    },
+    {
+      "report": "012",
+      "user": "ana",
+      "hoursAgo": 100,
+      "text": "Llamé a Emcali y dijeron que mandan a alguien."
+    },
+    {
+      "report": "014",
+      "user": "sofia",
+      "hoursAgo": 170,
+      "text": "Mi abuela no puede cruzar sola por esto."
+    },
+    {
+      "report": "014",
+      "user": "daniela",
+      "hoursAgo": 110,
+      "text": "Apoyo, esto es urgente para las personas en silla de ruedas."
+    },
+    {
+      "report": "015",
+      "user": "felipe",
+      "hoursAgo": 150,
+      "text": "Una cuadra entera de huecos."
+    },
+    {
+      "report": "015",
+      "user": "luis",
+      "hoursAgo": 60,
+      "text": "Pasé hoy y ya taparon la mitad."
+    },
+    {
+      "report": "016",
+      "user": "paula",
+      "hoursAgo": 150,
+      "text": "En la noche es muy peligroso."
+    },
+    {
+      "report": "017",
+      "user": "sebastian",
+      "hoursAgo": 140,
+      "text": "Lo tienen marcado con un cono."
+    },
+    {
+      "report": "018",
+      "user": "carlos",
+      "hoursAgo": 130,
+      "text": "Ya pasaron tres días y nadie lo recoge.",
+      "photo": "escombros"
+    },
+    {
+      "report": "019",
+      "user": "ana",
+      "hoursAgo": 130,
+      "text": "Es el hueco más profundo que he visto en Cali."
+    },
+    {
+      "report": "019",
+      "user": "marta",
+      "hoursAgo": 125,
+      "text": "Un taxi dejó el rin ahí.",
+      "photo": "lcb-1"
+    },
+    {
+      "report": "019",
+      "user": "luis",
+      "hoursAgo": 100,
+      "text": "Lo validamos entre todos, ojalá lo arreglen."
+    },
+    {
+      "report": "019",
+      "user": "camilo",
+      "hoursAgo": 70,
+      "text": "Sigue igual."
+    },
+    {
+      "report": "020",
+      "user": "daniela",
+      "hoursAgo": 130,
+      "text": "Cuando llueve parecen piscinas."
+    },
+    {
+      "report": "021",
+      "user": "jorge",
+      "hoursAgo": 110,
+      "text": "Los niños juegan cerca de la zanja."
+    },
+    {
+      "report": "022",
+      "user": "natalia",
+      "hoursAgo": 100,
+      "text": "Frené en seco y el de atrás casi me choca."
+    },
+    {
+      "report": "022",
+      "user": "sebastian",
+      "hoursAgo": 80,
+      "text": "Mucho cuidado en el carril rápido."
+    },
+    {
+      "report": "023",
+      "user": "paula",
+      "hoursAgo": 100,
+      "text": "Los estudiantes cruzan corriendo."
+    },
+    {
+      "report": "024",
+      "user": "carlos",
+      "hoursAgo": 90,
+      "text": "Los pasajeros se bajan directo al hueco."
+    },
+    {
+      "report": "025",
+      "user": "felipe",
+      "hoursAgo": 85,
+      "text": "Ya van tres semanas así."
+    },
+    {
+      "report": "027",
+      "user": "sofia",
+      "hoursAgo": 60,
+      "text": "Cada día está más grande."
+    },
+    {
+      "report": "028",
+      "user": "marta",
+      "hoursAgo": 60,
+      "text": "Me caí ayer, ojo con las baldosas."
+    },
+    {
+      "report": "029",
+      "user": "jorge",
+      "hoursAgo": 50,
+      "text": "En la curva no se ve."
+    },
+    {
+      "report": "030",
+      "user": "paula",
+      "hoursAgo": 40,
+      "text": "Los carros bajitos raspan."
+    },
+    {
+      "report": "033",
+      "user": "ana",
+      "hoursAgo": 20,
+      "text": "Apareció con la lluvia de anoche."
+    },
+    {
+      "report": "035",
+      "user": "ana",
+      "hoursAgo": 150,
+      "text": "Pasé el fin de semana por Popayán y está muy feo."
+    },
+    {
+      "report": "037",
+      "user": "andres",
+      "hoursAgo": 120,
+      "text": "En Bogotá también tenemos muchos así."
+    },
+    {
+      "report": "039",
+      "user": "valentina",
+      "hoursAgo": 100,
+      "text": "Qué peligro, ojalá lo arreglen pronto."
+    }
+  ],
+  "resolutions": [
+    {
+      "report": "015",
+      "proponent": "luis",
+      "hoursAgo": 30,
+      "photo": "bache-tapado",
+      "description": "Ya taparon los huecos de la cuadra con asfalto nuevo. Pasé hoy y quedó parejo.",
+      "confirmations": [
+        "carlos"
+      ],
+      "outcome": "pending"
+    },
+    {
+      "report": "027",
+      "proponent": "sofia",
+      "hoursAgo": 10,
+      "photo": "bache-tapado",
+      "description": "Esta mañana vinieron a tapar el bache, ya se puede pasar.",
+      "confirmations": [],
+      "outcome": "pending"
+    },
+    {
+      "report": "003",
+      "proponent": "carlos",
+      "hoursAgo": 120,
+      "photo": "bache-pequeno",
+      "description": "Repavimentaron toda la Calle 9 entre la 20 y la 25.",
+      "confirmations": [
+        "ana",
+        "luis",
+        "sofia"
+      ],
+      "outcome": "community"
+    },
+    {
+      "report": "009",
+      "proponent": "sofia",
+      "hoursAgo": 90,
+      "photo": "bache-tapado",
+      "description": "Taparon el bache de la esquina del parque.",
+      "confirmations": [
+        "ana",
+        "marta",
+        "jorge"
+      ],
+      "outcome": "community"
+    },
+    {
+      "report": "013",
+      "proponent": "camilo",
+      "hoursAgo": 60,
+      "photo": "bache-tapado",
+      "description": "Sellaron las grietas con asfalto.",
+      "confirmations": [],
+      "outcome": "author"
+    },
+    {
+      "report": "020",
+      "proponent": "jorge",
+      "hoursAgo": 70,
+      "photo": "bache-tapado",
+      "description": "Ya arreglaron los baches.",
+      "objections": [
+        "daniela",
+        "felipe",
+        "natalia"
+      ],
+      "outcome": "rejected"
+    }
+  ]
+}

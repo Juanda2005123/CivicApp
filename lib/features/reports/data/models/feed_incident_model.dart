@@ -12,6 +12,8 @@ class FeedIncidentModel extends FeedIncident {
     required super.title,
     required super.neighborhood,
     required super.categoryName,
+    super.description,
+    super.formattedAddress,
     required super.categoryIcon,
     required super.severity,
     required super.status,
@@ -27,9 +29,9 @@ class FeedIncidentModel extends FeedIncident {
 
   /// Columns the feed needs, nested as PostgREST resolves them.
   static const String select = 'id_incident, tracking_code, title, severity, current_status, '
-      'neighborhood, latitude, longitude, created_at, '
+      'neighborhood, description, formatted_address, latitude, longitude, created_at, '
       'category:incident_category(name, icon), '
-      'reporter:user_profile!fk_incident_reporter_user(full_name, civic_rank(id_rank, name)), '
+      'reporter:user_profile!fk_incident_reporter_user(full_name, show_real_name, civic_rank(id_rank, name)), '
       'incident_photo(file_url, is_primary), incident_upvote(id_user), incident_comment(id_comment)';
 
   factory FeedIncidentModel.fromJson(Map<String, dynamic> json) {
@@ -46,11 +48,13 @@ class FeedIncidentModel extends FeedIncident {
       title: json['title'] as String,
       neighborhood: (json['neighborhood'] as String?) ?? '',
       categoryName: (category?['name'] as String?) ?? 'Otro daño vial',
+      description: (json['description'] as String?) ?? '',
+      formattedAddress: (json['formatted_address'] as String?) ?? '',
       categoryIcon: (category?['icon'] as String?) ?? 'more_horiz',
       severity: IncidentSeverity.fromDbValue((json['severity'] as String?) ?? 'MEDIUM'),
       status: IncidentStatus.fromDbValue((json['current_status'] as String?) ?? 'REPORTED'),
       primaryPhotoUrl: _coverUrl(photos),
-      reporterName: reporter?['full_name'] as String?,
+      reporterName: _visibleName(reporter),
       reporterRankName: rank?['name'] as String?,
       reporterRankId: rank?['id_rank'] as int?,
       upvotesCount: upvotes?.length ?? 0,
@@ -68,5 +72,10 @@ class FeedIncidentModel extends FeedIncident {
     if (photos.isEmpty) return null;
     final cover = photos.firstWhere((p) => p['is_primary'] == true, orElse: () => photos.first);
     return cover['file_url'] as String?;
+  }
+
+  static String? _visibleName(Map<String, dynamic>? profile) {
+    if (profile == null || profile['show_real_name'] == false) return null;
+    return profile['full_name'] as String?;
   }
 }

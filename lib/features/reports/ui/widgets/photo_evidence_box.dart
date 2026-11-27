@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:vigia_app/core/theme/app_spacing.dart';
 import 'package:vigia_app/features/reports/domain/entities/picked_photo.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:vigia_app/core/theme/city_theme.dart';
 
 /// Renders up to 3 photographic evidence slots with thumbnail preview,
 /// primary cover indicator, and remove actions (HU-10).
@@ -103,13 +105,13 @@ class _PhotoThumbnail extends StatelessWidget {
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Center(
                       child: Icon(
-                        Icons.broken_image_outlined,
+                        LucideIcons.imageOff,
                         size: 28,
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   )
-                : const Icon(Icons.image, size: 32),
+                : const Icon(LucideIcons.image, size: 32),
           ),
           if (isPrimary)
             Positioned(
@@ -144,7 +146,7 @@ class _PhotoThumbnail extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.close,
+                  LucideIcons.x,
                   size: 16,
                   color: Colors.white,
                 ),
@@ -192,10 +194,10 @@ class _EmptyPhotoSlot extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                Icons.add_a_photo_outlined,
+                LucideIcons.imagePlus,
                 size: 26,
                 color: enabled
-                    ? theme.colorScheme.primary
+                    ? CityTheme.of(context).deep
                     : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
               ),
               const SizedBox(height: 4),
@@ -203,7 +205,7 @@ class _EmptyPhotoSlot extends StatelessWidget {
                 'Agregar',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: enabled
-                      ? theme.colorScheme.primary
+                      ? CityTheme.of(context).deep
                       : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                   fontSize: 11,
                   fontWeight: FontWeight.w600,

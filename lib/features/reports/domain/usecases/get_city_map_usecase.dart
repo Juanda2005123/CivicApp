@@ -6,6 +6,7 @@ import 'package:vigia_app/features/auth/domain/repositories/location_repository.
 import 'package:vigia_app/features/auth/domain/repositories/profile_repository.dart';
 import 'package:vigia_app/features/auth/domain/usecases/detect_nearest_city_usecase.dart';
 
+import '../entities/incident.dart';
 import '../entities/incident_marker.dart';
 import '../repositories/incident_repository.dart';
 import 'geocode_address_usecase.dart';
@@ -18,6 +19,9 @@ import 'geocode_address_usecase.dart';
 /// city from the profile. A guest (HU-22) has no profile: the map opens on the
 /// covered city nearest to the GPS, or on [guestFallbackCity] when the position
 /// is unavailable.
+///
+/// The map shows what is damaged today: resolved reports (HU-25) are left out;
+/// the community feed and the report detail still show them.
 class GetCityMapUseCase {
   final AuthRepository _auth;
   final ProfileRepository _profiles;
@@ -45,7 +49,7 @@ class GetCityMapUseCase {
   }) async {
     final target = city ?? await _defaultCity(position, positionRead);
     final markers = await _incidents.getCityIncidents(target.name);
-    return (target, markers);
+    return (target, markers.where((m) => m.status != IncidentStatus.resolved).toList());
   }
 
   Future<City> _defaultCity(Coordinates? position, bool positionRead) async {

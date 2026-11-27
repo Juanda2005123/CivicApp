@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/app_spacing.dart';
 
@@ -109,7 +110,7 @@ class _FieldError extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.error_outline, size: 14, color: scheme.error),
+            Icon(LucideIcons.circleAlert, size: 14, color: scheme.error),
             const SizedBox(width: AppSpacing.xs + 2),
             Expanded(
               child: Text(

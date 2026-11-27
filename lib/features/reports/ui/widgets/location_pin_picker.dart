@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vigia_app/core/theme/app_spacing.dart';
 import 'package:vigia_app/core/theme/app_text_styles.dart';
+import 'package:vigia_app/core/theme/city_theme.dart';
 import 'package:vigia_app/core/widgets/app_notice.dart';
 import 'package:vigia_app/core/widgets/app_text_field.dart';
 import 'package:vigia_app/core/widgets/dotted_spinner.dart';
@@ -10,7 +11,9 @@ import 'package:vigia_app/features/reports/domain/entities/address_outcome.dart'
 import 'package:vigia_app/features/reports/domain/entities/location_source.dart';
 import 'package:vigia_app/features/reports/domain/entities/suggested_address.dart';
 import 'package:vigia_app/features/reports/domain/validators/report_validators.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'map_point_selector.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// Step 1: Location georeferencing and Colombian address confirmation (HU-07).
 class LocationPinPicker extends StatefulWidget {
@@ -415,7 +418,7 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.location_on, color: theme.colorScheme.primary, size: 28),
+                    Icon(LucideIcons.mapPin, color: CityTheme.of(context).deep, size: 28),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Column(
@@ -442,18 +445,18 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
                 const SizedBox(height: AppSpacing.xs),
                 _SourceLabel(source: widget.coordinatesSource),
                 const SizedBox(height: AppSpacing.sm),
-                OutlinedButton.icon(
+                PressScale(child: OutlinedButton.icon(
                   onPressed: () => setState(() => _pickingOnMap = true),
-                  icon: const Icon(Icons.map_outlined),
+                  icon: const Icon(LucideIcons.map),
                   label: const Text('Seleccionar ubicación'),
-                ),
+                )),
                 if (widget.locationStatusMessage != null) ...[
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     widget.locationStatusMessage!,
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: widget.locationStatusMessage!.startsWith('GPS detectado')
-                          ? theme.colorScheme.primary
+                          ? CityTheme.of(context).deep
                           : theme.colorScheme.error,
                       fontWeight: FontWeight.w500,
                     ),
@@ -524,6 +527,7 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
                       key: ValueKey('road-type-$_selectedRoadType'),
                       initialValue: _selectedRoadType,
                       isExpanded: true,
+                      icon: const Icon(LucideIcons.chevronDown, size: AppSizes.icon),
                       style: theme.textTheme.bodyLarge?.copyWith(
                         color: theme.colorScheme.onSurface,
                       ),
@@ -547,7 +551,7 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadii.sm),
                           borderSide: BorderSide(
-                            color: theme.colorScheme.primary,
+                            color: CityTheme.of(context).deep,
                             width: 2.0,
                           ),
                         ),
@@ -606,7 +610,7 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
                     label: 'Cruce o generadora (#)',
                     controller: _crossRoadNumberController,
                     hint: searchingCrossRoad ? 'Buscando…' : 'Ej. 45 o 2B',
-                    prefixIcon: Icons.tag,
+                    prefixIcon: LucideIcons.hash,
                     suffix: searchingCrossRoad ? _searchingRing('Buscando el cruce') : null,
                     validator: (v) {
                       if (!_useStructuredAddress) return null;
@@ -623,7 +627,7 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
                     label: 'Número o predio (opcional)',
                     controller: _plaqueNumberController,
                     hint: 'Ej. 20 o 04',
-                    prefixIcon: Icons.remove,
+                    prefixIcon: LucideIcons.minus,
                     validator: (v) {
                       // Placa is optional per Colombian road damage context
                       return null;
@@ -642,7 +646,7 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle_outline, size: 16, color: theme.colorScheme.primary),
+                  Icon(LucideIcons.circleCheck, size: 16, color: CityTheme.of(context).deep),
                   const SizedBox(width: AppSpacing.xs),
                   Expanded(
                     child: Text(
@@ -662,7 +666,7 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
               label: 'Punto de referencia o dirección',
               controller: _freeAddressController,
               hint: 'Ej. Frente a la estación de servicio Bellavista',
-              prefixIcon: Icons.signpost_outlined,
+              prefixIcon: LucideIcons.signpost,
               textCapitalization: TextCapitalization.sentences,
               validator: (v) {
                 if (_useStructuredAddress) return null;
@@ -682,7 +686,7 @@ class _LocationPinPickerState extends State<LocationPinPicker> {
             label: 'Barrio o sector',
             controller: _neighborhoodController,
             hint: 'Ej. Granada, Tequendama, Centro',
-            prefixIcon: Icons.holiday_village_outlined,
+            prefixIcon: LucideIcons.mapPinned,
             textCapitalization: TextCapitalization.words,
             validator: (v) {
               try {
@@ -721,10 +725,10 @@ class _SourceLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final (icon, text) = switch (source) {
-      LocationSource.gps => (Icons.gps_fixed, 'Tu ubicación (GPS)'),
-      LocationSource.mapPoint => (Icons.push_pin_outlined, 'Punto marcado en el mapa'),
-      LocationSource.address => (Icons.edit_location_alt_outlined, 'Aproximada: según la dirección'),
-      LocationSource.cityCenter => (Icons.location_city_outlined, 'Aproximada: centro de la ciudad'),
+      LocationSource.gps => (LucideIcons.locateFixed, 'Tu ubicación (GPS)'),
+      LocationSource.mapPoint => (LucideIcons.pin, 'Punto marcado en el mapa'),
+      LocationSource.address => (LucideIcons.mapPinPen, 'Aproximada: según la dirección'),
+      LocationSource.cityCenter => (LucideIcons.building2, 'Aproximada: centro de la ciudad'),
     };
 
     return Row(

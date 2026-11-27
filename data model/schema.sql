@@ -40,6 +40,7 @@ CREATE TABLE user_profile (
     last_city VARCHAR(80) NOT NULL,
     profile_picture_url VARCHAR(500) NULL,
     experience_points INT NOT NULL DEFAULT 0 CHECK (experience_points >= 0),
+    show_real_name BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     
@@ -107,6 +108,7 @@ CREATE TABLE road_incident (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     resolved_at TIMESTAMPTZ NULL,
     id_resolver_user UUID NULL,
+    validated_at TIMESTAMPTZ NULL, -- first time the report reached 10 endorsements (migration 004)
     
     CONSTRAINT fk_incident_reporter_user 
         FOREIGN KEY (id_reporter_user) 
@@ -397,6 +399,12 @@ DROP POLICY IF EXISTS "Reporters can update own road_incident" ON public.road_in
 CREATE POLICY "Reporters can update own road_incident"
   ON public.road_incident FOR UPDATE TO authenticated USING (auth.uid() = id_reporter_user);
 
+-- Delete and edit are limited to 30 minutes and fewer than 5 endorsements by
+-- triggers (migration 006, RN-03).
+DROP POLICY IF EXISTS "Reporters can delete own road_incident" ON public.road_incident;
+CREATE POLICY "Reporters can delete own road_incident"
+  ON public.road_incident FOR DELETE TO authenticated USING (auth.uid() = id_reporter_user);
+
 -- Incident Photos Policies
 ALTER TABLE public.incident_photo ENABLE ROW LEVEL SECURITY;
 
@@ -404,9 +412,29 @@ DROP POLICY IF EXISTS "Public read access on incident_photo" ON public.incident_
 CREATE POLICY "Public read access on incident_photo"
   ON public.incident_photo FOR SELECT TO authenticated, anon USING (true);
 
-DROP POLICY IF EXISTS "Authenticated users can insert incident_photo" ON public.incident_photo;
-CREATE POLICY "Authenticated users can insert incident_photo"
-  ON public.incident_photo FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "Reporters can insert photo of own incident" ON public.incident_photo;
+CREATE POLICY "Reporters can insert photo of own incident"
+  ON public.incident_photo FOR INSERT TO authenticated
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.road_incident i
+     WHERE i.id_incident = incident_photo.id_incident AND i.id_reporter_user = auth.uid()
+  ));
+
+DROP POLICY IF EXISTS "Reporters can update photo of own incident" ON public.incident_photo;
+CREATE POLICY "Reporters can update photo of own incident"
+  ON public.incident_photo FOR UPDATE TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.road_incident i
+     WHERE i.id_incident = incident_photo.id_incident AND i.id_reporter_user = auth.uid()
+  ));
+
+DROP POLICY IF EXISTS "Reporters can delete photo of own incident" ON public.incident_photo;
+CREATE POLICY "Reporters can delete photo of own incident"
+  ON public.incident_photo FOR DELETE TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.road_incident i
+     WHERE i.id_incident = incident_photo.id_incident AND i.id_reporter_user = auth.uid()
+  ));
 
 -- Comments Policies
 ALTER TABLE public.incident_comment ENABLE ROW LEVEL SECURITY;
@@ -459,3 +487,42 @@ CREATE POLICY "Users can read own notifications"
 DROP POLICY IF EXISTS "Users can update own notifications" ON public.notification;
 CREATE POLICY "Users can update own notifications"
   ON public.notification FOR UPDATE TO authenticated USING (auth.uid() = id_user);
+-- Resolution Policies (HU-25, RN-11). The rules (quorum, XP, status of the
+-- report, 7-day expiry) are the triggers of migrations/010_community_resolution.sql.
+ALTER TABLE public.incident_resolution ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read access on incident_resolution" ON public.incident_resolution;
+CREATE POLICY "Public read access on incident_resolution"
+  ON public.incident_resolution FOR SELECT TO anon, authenticated USING (true);
+
+DROP POLICY IF EXISTS "Citizens can propose a resolution" ON public.incident_resolution;
+CREATE POLICY "Citizens can propose a resolution"
+  ON public.incident_resolution FOR INSERT TO authenticated WITH CHECK (auth.uid() = id_proponent_user);
+
+DROP POLICY IF EXISTS "Report authors can decide on a resolution" ON public.incident_resolution;
+CREATE POLICY "Report authors can decide on a resolution"
+  ON public.incident_resolution FOR UPDATE TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.road_incident i
+     WHERE i.id_incident = incident_resolution.id_incident AND i.id_reporter_user = auth.uid()
+  ));
+
+ALTER TABLE public.resolution_confirmation ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read access on resolution_confirmation" ON public.resolution_confirmation;
+CREATE POLICY "Public read access on resolution_confirmation"
+  ON public.resolution_confirmation FOR SELECT TO anon, authenticated USING (true);
+
+DROP POLICY IF EXISTS "Citizens can confirm a resolution" ON public.resolution_confirmation;
+CREATE POLICY "Citizens can confirm a resolution"
+  ON public.resolution_confirmation FOR INSERT TO authenticated WITH CHECK (auth.uid() = id_user);
+
+ALTER TABLE public.resolution_objection ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public read access on resolution_objection" ON public.resolution_objection;
+CREATE POLICY "Public read access on resolution_objection"
+  ON public.resolution_objection FOR SELECT TO anon, authenticated USING (true);
+
+DROP POLICY IF EXISTS "Citizens can object to a resolution" ON public.resolution_objection;
+CREATE POLICY "Citizens can object to a resolution"
+  ON public.resolution_objection FOR INSERT TO authenticated WITH CHECK (auth.uid() = id_user);

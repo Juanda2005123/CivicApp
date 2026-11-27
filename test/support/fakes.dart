@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:vigia_app/features/auth/domain/entities/auth_user.dart';
 import 'package:vigia_app/features/auth/domain/entities/city.dart';
@@ -56,6 +57,20 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   AuthUser? currentUser() => user;
+
+  @override
+  Future<void> updateEmail(String newEmail) async {
+    calls.add('auth.updateEmail');
+  }
+
+  @override
+  Future<void> updatePassword({
+    required String currentEmail,
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    calls.add('auth.updatePassword');
+  }
 }
 
 class FakeProfileRepository implements ProfileRepository {
@@ -103,8 +118,64 @@ class FakeProfileRepository implements ProfileRepository {
       rankId: profile.rankId,
       rankName: profile.rankName,
       experiencePoints: profile.experiencePoints,
+      showRealName: profile.showRealName,
+      avatarUrl: profile.avatarUrl,
       isActive: profile.isActive,
     );
+  }
+
+  @override
+  Future<void> updatePrivacy({required String userId, required bool showRealName}) async {
+    calls.add('profile.updatePrivacy');
+    final profile = stored[userId];
+    if (profile == null) throw Exception('Civic profile not found');
+    stored[userId] = Profile(
+      id: profile.id,
+      email: profile.email,
+      fullName: profile.fullName,
+      cityName: profile.cityName,
+      lastCityName: profile.lastCityName,
+      rankId: profile.rankId,
+      rankName: profile.rankName,
+      experiencePoints: profile.experiencePoints,
+      showRealName: showRealName,
+      avatarUrl: profile.avatarUrl,
+      isActive: profile.isActive,
+    );
+  }
+
+  @override
+  Future<void> updateProfileInfo({
+    required String userId,
+    required String fullName,
+    required String cityName,
+  }) async {
+    calls.add('profile.updateProfileInfo');
+    final profile = stored[userId];
+    if (profile == null) throw Exception('Civic profile not found');
+    stored[userId] = Profile(
+      id: profile.id,
+      email: profile.email,
+      fullName: fullName,
+      cityName: cityName,
+      lastCityName: profile.lastCityName,
+      rankId: profile.rankId,
+      rankName: profile.rankName,
+      experiencePoints: profile.experiencePoints,
+      showRealName: profile.showRealName,
+      avatarUrl: profile.avatarUrl,
+      isActive: profile.isActive,
+    );
+  }
+
+  @override
+  Future<String> updateAvatar({
+    required String userId,
+    required Uint8List bytes,
+    required String extension,
+  }) async {
+    calls.add('profile.updateAvatar');
+    return 'https://example.com/avatars/$userId/avatar.$extension';
   }
 }
 
@@ -319,12 +390,115 @@ class FakeIncidentRepository implements IncidentRepository {
     return incident;
   }
 
+  Exception? endorseError;
+  Exception? revokeError;
+
+  /// When set, endorse and revoke wait for it: lets a test see the optimistic state.
+  Completer<void>? endorseGate;
+
   @override
   Future<void> endorseIncident({
     required String incidentId,
     required String userId,
   }) async {
     calls.add('incident.endorse');
+    if (endorseGate != null) await endorseGate!.future;
+    if (endorseError != null) throw endorseError!;
+    // Like the database trigger: the 10th endorsement validates the report.
+    _updateStored(incidentId, (incident) {
+      final endorsed = incident.withEndorsementBy(userId);
+      if (endorsed.upvotesCount >= Incident.validationTarget && !endorsed.isCommunityValidated) {
+        return endorsed.copyWith(
+          status: IncidentStatus.communityValidated,
+          validatedAt: DateTime(2026, 11, 16),
+        );
+      }
+      return endorsed;
+    });
+  }
+
+  @override
+  Future<void> revokeEndorsement({
+    required String incidentId,
+    required String userId,
+  }) async {
+    calls.add('incident.revoke');
+    if (endorseGate != null) await endorseGate!.future;
+    if (revokeError != null) throw revokeError!;
+    _updateStored(incidentId, (incident) => incident.withoutEndorsementBy(userId));
+  }
+
+  Exception? updateError;
+  Exception? deleteError;
+
+  /// Reports deleted, by id.
+  final List<String> deletedIds = [];
+
+  /// Like the server: the report keeps its code and place, the photos follow the
+  /// edit, and a frozen report (window over or 5 endorsements) is refused.
+  @override
+  Future<Incident> updateIncident({
+    required String incidentId,
+    required String reporterId,
+    required int categoryId,
+    required String title,
+    required String description,
+    required IncidentSeverity severity,
+    String? estimatedDimensions,
+    required List<IncidentPhoto> removedPhotos,
+    required List<PickedPhoto> addedPhotos,
+  }) async {
+    calls.add('incident.update');
+    if (updateError != null) throw updateError!;
+    final current = stored[incidentId];
+    if (current == null) throw Exception('Reporte no encontrado');
+
+    final removedIds = removedPhotos.map((p) => p.id).toSet();
+    final photos = [
+      ...current.photos.where((p) => !removedIds.contains(p.id)),
+      for (final (i, _) in addedPhotos.indexed)
+        IncidentPhoto(
+          id: 'new-photo-${current.photos.length + i + 1}',
+          incidentId: incidentId,
+          fileUrl: 'https://example.com/new-${current.photos.length + i + 1}.jpg',
+          uploadedAt: DateTime(2026, 11, 12),
+        ),
+    ];
+    final updated = current.copyWith(
+      categoryId: categoryId,
+      title: title,
+      description: description,
+      severity: severity,
+      estimatedDimensions: estimatedDimensions,
+      clearEstimatedDimensions: estimatedDimensions == null,
+      photos: photos,
+    );
+    _storeUpdated(current, updated);
+    return updated;
+  }
+
+  @override
+  Future<void> deleteIncident(Incident incident) async {
+    calls.add('incident.delete');
+    if (deleteError != null) throw deleteError!;
+    deletedIds.add(incident.id);
+    stored.remove(incident.id);
+    stored.remove(incident.trackingCode);
+  }
+
+  void _storeUpdated(Incident current, Incident updated) {
+    stored[current.id] = updated;
+    stored[current.trackingCode] = updated;
+  }
+
+  /// Mimics the server: the stored report reflects the endorsement, so a later
+  /// read of the report shows it.
+  void _updateStored(String incidentId, Incident Function(Incident) change) {
+    final current = stored[incidentId];
+    if (current == null) return;
+    final updated = change(current);
+    stored[current.id] = updated;
+    stored[current.trackingCode] = updated;
   }
 }
 

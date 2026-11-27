@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -10,12 +12,13 @@ import 'package:vigia_app/features/auth/domain/entities/city.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import 'package:vigia_app/features/auth/domain/entities/profile.dart';
 import 'package:vigia_app/features/auth/domain/repositories/location_repository.dart';
-import 'package:vigia_app/features/auth/domain/usecases/get_current_profile_usecase.dart';
 import 'package:vigia_app/features/auth/domain/usecases/open_location_settings_usecase.dart';
-import 'package:vigia_app/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:vigia_app/features/dashboard/ui/bloc/profile_bloc.dart';
 import 'package:vigia_app/features/dashboard/ui/bloc/profile_event.dart';
 import 'package:vigia_app/features/explore/domain/usecases/get_city_options_usecase.dart';
+import 'package:vigia_app/features/notifications/domain/usecases/enable_push_usecase.dart';
+import 'package:vigia_app/features/notifications/domain/usecases/watch_opened_reports_usecase.dart';
+import 'package:vigia_app/features/notifications/ui/bloc/push_bloc.dart';
 import 'package:vigia_app/features/explore/domain/usecases/search_cities_usecase.dart';
 import 'package:vigia_app/features/explore/ui/bloc/city_switcher_bloc.dart';
 import 'package:vigia_app/features/explore/ui/bloc/feed_bloc.dart';
@@ -31,8 +34,12 @@ import 'package:vigia_app/features/reports/domain/entities/incident_marker.dart'
 import 'package:vigia_app/features/explore/domain/usecases/switch_city_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/get_city_map_usecase.dart';
 import 'package:vigia_app/features/reports/domain/usecases/get_current_location_usecase.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../support/fake_push_repository.dart';
 import '../../support/fakes.dart';
+import '../../support/profile_bloc_factory.dart';
+import '../../support/report_filter_samples.dart';
 
 const _cali = City(
   id: 1,
@@ -65,6 +72,15 @@ FeedIncident _feedReport(String title, {String id = 'inc-1'}) => FeedIncident(
       createdAt: DateTime.utc(2026, 11, 14, 12),
     );
 
+/// A location whose answer the test decides when to give, like a permission
+/// dialog the citizen has not answered yet.
+class _PendingLocationRepository extends FakeLocationRepository {
+  final answer = Completer<Coordinates>();
+
+  @override
+  Future<Coordinates> currentCoordinates() => answer.future;
+}
+
 void main() {
   late FakeAuthRepository auth;
   late FakeProfileRepository profiles;
@@ -87,8 +103,8 @@ void main() {
 
   // Blocs are created inside each test so their event loop runs in the
   // tester's fake async zone.
-  Widget createShell() {
-    final profileBloc = ProfileBloc(GetCurrentProfileUseCase(auth, profiles), SignOutUseCase(auth))
+  Widget createShell({FakePushRepository? push}) {
+    final profileBloc = buildProfileBloc(auth, profiles)
       ..add(ProfileStarted());
     final mapBloc = MapBloc(
       GetCityMapUseCase(auth, profiles, FakeCityRepository(cities), incidents, location),
@@ -113,6 +129,10 @@ void main() {
         BlocProvider<MapBloc>.value(value: mapBloc),
         BlocProvider<CitySwitcherBloc>.value(value: switcherBloc),
         BlocProvider<FeedBloc>.value(value: feedBloc),
+        if (push != null)
+          BlocProvider<PushBloc>(
+            create: (_) => PushBloc(EnablePushUseCase(auth, push), WatchOpenedReportsUseCase(push)),
+          ),
       ],
       child: MaterialApp(
         theme: AppTheme.light,
@@ -134,6 +154,22 @@ void main() {
     );
   }
 
+  testWidgets('the pushes wait for the location question: one permission dialog at a time', (tester) async {
+    final pending = _PendingLocationRepository();
+    location = pending;
+    final push = FakePushRepository();
+
+    await tester.pumpWidget(createShell(push: push));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(push.calls, isEmpty, reason: 'the location is still being asked');
+
+    pending.answer.complete(const Coordinates(latitude: 3.40, longitude: -76.55));
+    await tester.pumpAndSettle();
+
+    expect(push.calls, ['push.enable uid-1']);
+  });
+
   testWidgets('opens on Mapa with the bottom bar and the report button', (tester) async {
     await tester.pumpWidget(createShell());
     await tester.pumpAndSettle();
@@ -142,7 +178,7 @@ void main() {
     expect(find.byTooltip('Centrar en mi ubicación'), findsOneWidget);
     expect(find.text('Reportar daño'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.person_outline));
+    await tester.tap(find.byIcon(LucideIcons.circleUserRound));
     await tester.pumpAndSettle();
 
     expect(find.text('Mi perfil'), findsNWidgets(2));
@@ -268,7 +304,7 @@ void main() {
       await tester.pumpWidget(createShell());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.person_outline));
+      await tester.tap(find.byIcon(LucideIcons.circleUserRound));
       await tester.pumpAndSettle();
 
       expect(find.text('Inicia sesión para ver tu perfil'), findsOneWidget);
@@ -387,7 +423,7 @@ void main() {
     );
 
     Future<void> openFeed(WidgetTester tester) async {
-      await tester.tap(find.byIcon(Icons.groups_outlined));
+      await tester.tap(find.byIcon(LucideIcons.usersRound));
       await tester.pumpAndSettle();
     }
 
@@ -487,6 +523,127 @@ void main() {
       await openFeed(tester);
 
       expect(find.text('Hueco grande en la Cra 15'), findsOneWidget);
+    });
+  });
+
+  group('Search and filters across Comunidad and Mapa (HU-20)', () {
+    /// Two reports in the city, as pins and as feed cards: a pothole and a traffic light.
+    void stageTwoReports() {
+      incidents
+        ..cityMarkers = [
+          filterMarker(id: 'inc-1', title: 'Hueco en la Calle 5', neighborhood: 'Centro'),
+          filterMarker(
+            id: 'inc-2',
+            code: '#VIG-1002',
+            title: 'Semáforo apagado',
+            neighborhood: 'Granada',
+            category: 'Semáforo dañado o apagado',
+          ),
+        ]
+        ..feed = [
+          filterFeedIncident(id: 'inc-1', title: 'Hueco en la Calle 5', neighborhood: 'Centro'),
+          filterFeedIncident(
+            id: 'inc-2',
+            code: '#VIG-1002',
+            title: 'Semáforo apagado',
+            neighborhood: 'Granada',
+            category: 'Semáforo dañado o apagado',
+          ),
+        ];
+      // Permission denied on open: the map keeps the city view, where the pins are.
+      location = FakeLocationRepository(error: Exception('Sin permiso de ubicación. Elige tu ciudad en la lista.'));
+    }
+
+    testWidgets('a filter set in Comunidad stays on the pins of Mapa and can be cleared there (criterion 5)',
+        (tester) async {
+      stageTwoReports();
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+      expect(find.byType(IncidentMapMarker), findsNWidgets(2));
+
+      await tester.tap(find.byIcon(LucideIcons.usersRound));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'semaforo');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(LucideIcons.map));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(IncidentMapMarker), findsOneWidget);
+      expect(find.bySemanticsLabel('Semáforo apagado, Semáforo dañado o apagado, gravedad Alta'), findsOneWidget);
+      expect(find.text('1 filtro activo: 1 de 2 reportes'), findsOneWidget);
+
+      await tester.tap(find.text('Limpiar'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(IncidentMapMarker), findsNWidgets(2));
+      expect(find.textContaining('filtro activo'), findsNothing);
+
+      // Back in Comunidad the search is empty too: it is the same filter.
+      await tester.tap(find.byIcon(LucideIcons.usersRound));
+      await tester.pumpAndSettle();
+      expect(tester.widget<TextField>(find.byType(TextField)).controller?.text, isEmpty);
+    });
+
+    testWidgets('the neighborhood and the category chosen in Comunidad narrow the pins too (criterion 5)',
+        (tester) async {
+      stageTwoReports();
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(LucideIcons.usersRound));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Barrio'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.descendant(of: find.byType(ListTile), matching: find.text('Granada')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(LucideIcons.map));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(IncidentMapMarker), findsOneWidget);
+    });
+
+    testWidgets('"Más cercanos" with a blocked permission opens the explanation and keeps the order (criterion 4)',
+        (tester) async {
+      stageTwoReports();
+      location = FakeLocationRepository(error: Exception(LocationRepository.blockedMessage));
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(LucideIcons.usersRound));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Más recientes'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Más cercanos'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ubicación bloqueada'), findsOneWidget);
+      expect(find.textContaining('activa tu ubicación'), findsOneWidget);
+
+      await tester.tap(find.text('Ahora no'));
+      await tester.pumpAndSettle();
+      expect(find.text('Más recientes'), findsOneWidget, reason: 'the previous order stays');
+    });
+
+    testWidgets('"Más cercanos" locates the citizen when the first attempt was denied and then orders', (tester) async {
+      stageTwoReports();
+      location = FakeLocationRepository(
+        coordinates: const Coordinates(latitude: 3.40, longitude: -76.55),
+        firstCallError: Exception('Sin permiso de ubicación. Elige tu ciudad en la lista.'),
+      );
+      await tester.pumpWidget(createShell());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(LucideIcons.usersRound));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Más recientes'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Más cercanos'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Más cercanos'), findsOneWidget, reason: 'the chip names the new order');
+      expect(find.textContaining('activa tu ubicación'), findsNothing);
     });
   });
 }

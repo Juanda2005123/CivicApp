@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "961937143935",
+    "project_id": "vigia-596ec",
+    "storage_bucket": "vigia-596ec.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:961937143935:android:4947e7191fefb6d8c5674a",
+        "android_client_info": {
+          "package_name": "com.vigia.vigia_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9m2VSLaspuQqfNn_8__p4_Jgl0wyTgSo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

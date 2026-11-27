@@ -4,10 +4,12 @@ import 'package:vigia_app/core/theme/app_spacing.dart';
 import 'package:vigia_app/core/theme/app_text_styles.dart';
 import 'package:vigia_app/core/widgets/app_notice.dart';
 import 'package:vigia_app/core/widgets/app_text_field.dart';
+import 'package:vigia_app/core/widgets/dotted_spinner.dart';
 import 'package:vigia_app/core/widgets/location_blocked_dialog.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident.dart';
 import 'package:vigia_app/features/reports/domain/entities/incident_category.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../bloc/report_wizard_bloc.dart';
 import '../bloc/report_wizard_event.dart';
 import '../bloc/report_wizard_state.dart';
@@ -16,6 +18,8 @@ import '../widgets/nearby_incidents_modal.dart';
 import '../widgets/photo_evidence_box.dart';
 import '../widgets/severity_chip_selector.dart';
 import '../widgets/wizard_progress_header.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
+import 'package:vigia_app/core/theme/city_theme.dart';
 
 /// 5-Step guided wizard for reporting road infrastructure damage (HU-06 to HU-12).
 class ReportWizardScreen extends StatefulWidget {
@@ -70,7 +74,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
             onPressed: () => Navigator.of(dialogCtx).pop(false),
             child: const Text('Seguir editando'),
           ),
-          FilledButton(
+          PressScale(child: FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
@@ -79,7 +83,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
               Navigator.of(context).pop();
             },
             child: const Text('Descartar reporte'),
-          ),
+          )),
         ],
       ),
     );
@@ -112,6 +116,13 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
           if (state.isEndorsedNearby) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('¡Apoyaste el reporte existente con éxito!')),
+            );
+            Navigator.of(context).pop();
+          } else if (state.isOwnNearbyReport) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Ese reporte ya es tuyo, así que no suma un apoyo. No hace falta reportarlo otra vez.'),
+              ),
             );
             Navigator.of(context).pop();
           } else if (state.publishedIncident != null) {
@@ -224,24 +235,24 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
   IconData _getCategoryIcon(IncidentCategory cat) {
     final lower = cat.name.toLowerCase();
     if (lower.contains('hueco') || lower.contains('bache') || lower.contains('pothole')) {
-      return Icons.remove_road_outlined;
+      return LucideIcons.road;
     }
     if (lower.contains('semáforo') || lower.contains('semaforo') || lower.contains('traffic')) {
-      return Icons.traffic_outlined;
+      return LucideIcons.trafficCone;
     }
     if (lower.contains('obra') || lower.contains('abandoned')) {
-      return Icons.construction_outlined;
+      return LucideIcons.construction;
     }
     if (lower.contains('andén') || lower.contains('anden') || lower.contains('sidewalk')) {
-      return Icons.directions_walk_outlined;
+      return LucideIcons.footprints;
     }
     if (lower.contains('agua') || lower.contains('fuga') || lower.contains('water') || lower.contains('alcantarilla')) {
-      return Icons.water_drop_outlined;
+      return LucideIcons.droplet;
     }
     if (lower.contains('señal') || lower.contains('senal') || lower.contains('signage')) {
-      return Icons.signpost_outlined;
+      return LucideIcons.signpost;
     }
-    return Icons.report_problem_outlined;
+    return LucideIcons.triangleAlert;
   }
 
   // STEP 2: Classification and Severity (HU-08/HU-09)
@@ -271,7 +282,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
         if (state.status == WizardStatus.loading)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: DottedSpinner(size: AppSizes.iconLarge, semanticLabel: 'Cargando categorías')),
           )
         else
           GridView.builder(
@@ -289,7 +300,8 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
               final isSelected = (_selectedCategoryId ?? state.selectedCategoryId) == cat.id;
               final iconData = _getCategoryIcon(cat);
 
-              return InkWell(
+              return PressScale(
+                child: InkWell(
                 onTap: () {
                   setState(() => _selectedCategoryId = cat.id);
                 },
@@ -317,7 +329,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
                         decoration: BoxDecoration(
                           color: isSelected
                               ? theme.colorScheme.onPrimary.withValues(alpha: 0.22)
-                              : theme.colorScheme.primary.withValues(alpha: 0.08),
+                              : CityTheme.of(context).deep.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Icon(
@@ -325,7 +337,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
                           size: 15,
                           color: isSelected
                               ? theme.colorScheme.onPrimary
-                              : theme.colorScheme.primary,
+                              : CityTheme.of(context).deep,
                         ),
                       ),
                       const SizedBox(width: AppSpacing.xs + 2),
@@ -347,7 +359,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
                     ],
                   ),
                 ),
-              );
+              ));
             },
           ),
         const SizedBox(height: AppSpacing.md),
@@ -371,7 +383,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.warning, color: theme.colorScheme.error, size: 20),
+                Icon(LucideIcons.triangleAlert, color: theme.colorScheme.error, size: 20),
                 const SizedBox(width: AppSpacing.xs),
                 Expanded(
                   child: Text(
@@ -476,7 +488,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.camera_alt_outlined),
+                  leading: const Icon(LucideIcons.camera),
                   title: const Text('Tomar foto con la cámara'),
                   onTap: () {
                     Navigator.of(bottomSheetContext).pop();
@@ -484,7 +496,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.photo_library_outlined),
+                  leading: const Icon(LucideIcons.images),
                   title: const Text('Elegir foto de la galería / archivos'),
                   onTap: () {
                     Navigator.of(bottomSheetContext).pop();
@@ -613,13 +625,13 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      color: CityTheme.of(context).deep.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       state.severity.labelSpanish,
                       style: TextStyle(
-                        color: theme.colorScheme.primary,
+                        color: CityTheme.of(context).deep,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -644,7 +656,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
               const Divider(height: AppSpacing.lg),
               Row(
                 children: [
-                  const Icon(Icons.location_on_outlined, size: 18),
+                  const Icon(LucideIcons.mapPin, size: 18),
                   const SizedBox(width: AppSpacing.xs),
                   Expanded(
                     child: Text(
@@ -657,7 +669,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
               const SizedBox(height: AppSpacing.xs),
               Row(
                 children: [
-                  const Icon(Icons.photo_camera_outlined, size: 18),
+                  const Icon(LucideIcons.camera, size: 18),
                   const SizedBox(width: AppSpacing.xs),
                   Text(
                     'Fotos adjuntas: ${state.photos.length}',
@@ -672,20 +684,20 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
         Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.08),
+            color: CityTheme.of(context).deep.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(AppRadii.md),
-            border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+            border: Border.all(color: CityTheme.of(context).deep.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
-              Icon(Icons.workspace_premium, color: theme.colorScheme.primary),
+              Icon(LucideIcons.award, color: CityTheme.of(context).deep),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   'Al publicar este reporte recibirás +100 XP en tu perfil cívico.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.primary,
+                    color: CityTheme.of(context).deep,
                   ),
                 ),
               ),
@@ -722,7 +734,7 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
               incident.trackingCode,
               style: AppTextStyles.data(size: 18).copyWith(
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
+                color: CityTheme.of(context).deep,
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -730,13 +742,13 @@ class _ReportWizardScreenState extends State<ReportWizardScreen> {
           ],
         ),
         actions: [
-          FilledButton(
+          PressScale(child: FilledButton(
             onPressed: () {
               Navigator.of(dialogCtx).pop();
               Navigator.of(context).pop(incident);
             },
             child: const Text('Aceptar'),
-          ),
+          )),
         ],
       ),
     );

@@ -6,8 +6,10 @@ import 'package:vigia_app/features/auth/domain/entities/city.dart';
 import 'package:vigia_app/features/auth/domain/entities/coordinates.dart';
 import 'package:vigia_app/core/widgets/primary_button.dart';
 import 'package:vigia_app/main.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../support/fakes.dart';
+import '../support/fake_impact_repository.dart';
 
 const _cali = City(
   id: 1,
@@ -39,6 +41,7 @@ void main() {
         coordinates: const Coordinates(latitude: 3.4516, longitude: -76.5320),
       ),
       incidentRepository: FakeIncidentRepository(),
+      impactRepository: FakeImpactRepository(),
     );
     await tester.pumpWidget(const VigiaApp());
     await tester.pumpAndSettle();
@@ -92,7 +95,7 @@ void main() {
       expect(auth.calls, ['auth.signUp', 'profile.create', 'profile.get']);
       // The shell opens on the map; the profile is one tap away
       expect(find.text('Mapa'), findsNWidgets(2));
-      await tester.tap(find.byIcon(Icons.person_outline));
+      await tester.tap(find.byIcon(LucideIcons.circleUserRound));
       await tester.pumpAndSettle();
       expect(find.text('Mi perfil'), findsNWidgets(2));
       expect(find.text('Juan David Quintero'), findsOneWidget);
@@ -116,7 +119,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Mapa'), findsNWidgets(2));
-      await tester.tap(find.byIcon(Icons.person_outline));
+      await tester.tap(find.byIcon(LucideIcons.circleUserRound));
       await tester.pumpAndSettle();
       expect(find.text('Juan David Quintero'), findsOneWidget);
     },
@@ -131,7 +134,7 @@ void main() {
 
     expect(find.text('Mapa'), findsNWidgets(2));
     expect(find.text('Ingresar'), findsNothing);
-    await tester.tap(find.byIcon(Icons.person_outline));
+    await tester.tap(find.byIcon(LucideIcons.circleUserRound));
     await tester.pumpAndSettle();
     expect(find.text('Ana Gomez'), findsOneWidget);
   });

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/app_spacing.dart';
+import 'package:vigia_app/core/widgets/city/city_motion.dart';
 
 /// Modal shown when the user blocked the location permission (HU-29): it
 /// explains how to unblock it and offers to open the system settings. Used by
@@ -13,7 +15,7 @@ Future<void> showLocationBlockedDialog(
   return showDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      icon: const Icon(Icons.location_disabled_outlined),
+      icon: const Icon(LucideIcons.locateOff),
       title: const Text('Ubicación bloqueada'),
       content: Text(message),
       actions: [
@@ -21,14 +23,14 @@ Future<void> showLocationBlockedDialog(
           onPressed: () => Navigator.of(dialogContext).pop(),
           child: const Text('Ahora no'),
         ),
-        FilledButton.icon(
+        PressScale(child: FilledButton.icon(
           onPressed: () {
             Navigator.of(dialogContext).pop();
             onOpenSettings();
           },
-          icon: const Icon(Icons.settings_outlined, size: AppSizes.icon),
+          icon: const Icon(LucideIcons.settings, size: AppSizes.icon),
           label: const Text('Abrir ajustes'),
-        ),
+        )),
       ],
     ),
   );

@@ -1,7 +1,7 @@
 # Document 6: Sprint Backlog 3 — Community Interaction, Lifecycle, Gamification, and Notifications
 
 **Branch:** `develop` (documented in `docs/sprint-2-3-backlogs`)  
-**Status:** Planned  
+**Status:** In progress. HU-01, HU-02, HU-04, HU-05, HU-15, HU-16, HU-17, HU-18, HU-20 and HU-23 are implemented on `develop`, HU-25 (PR #23), and HU-24 on `feat/hu-24-push-notifications` (details in `docs/07-sprint-handoff-status.md`, section 4).  
 **Sprint Goal:** Activate VIGÍA's participatory community loop: enable citizen endorsement (*upvotes*), collective validation upon reaching 10 votes (+500 XP), neighborhood discussion threads with photographic evidence, strict time-window moderation for reports and comments, live impact dashboard with gamified rank progression, complete profile/privacy settings, and academic-requirement **push notifications**.
 
 ---
@@ -204,6 +204,9 @@
 3. **Given that** I tap a received push notification, **when** the app opens, **then** it deep-links directly to the relevant report detail screen (HU-14/HU-16).
 4. **Given that** push notifications are disabled at the OS level, **when** events occur, **then** events are persistently recorded in the `notification` database table for in-app alert center viewing.
 
+
+#### Implementation decisions (2026-11-26)
+Firebase Cloud Messaging as the course teaches it (lessons K0–K4), with a Supabase Edge Function as the backend. Every row the triggers write to `notification` (`NEW_UPVOTE`, `NEW_COMMENT`, `COMMUNITY_VALIDATION`, `RESOLUTION_PROPOSAL`, `REPORT_RESOLVED`) is pushed, not only the two mandatory events. Each citizen has a topic `user_<id>` instead of a stored `fcm_token`: the phone subscribes after sign-in and unsubscribes on sign-out. Android only. Migration 011 also makes the "new comment" text say "Ciudadano anónimo" when the commenter hides their name (HU-01).
 ---
 
 ### HU-25: Community Resolution Proposal & Verification *(RN-11 / Civic Resolution)*
@@ -217,6 +220,13 @@
 3. **Given that** the original author submits repair evidence, **when** confirmed, **then** the report transitions directly to `RESOLVED`.
 4. **Given that** a non-author citizen submits the repair proposal, **when** it accumulates **3 community confirmation votes**, **then** the report transitions to `RESOLVED` and the proponent receives **+50 XP**.
 5. **Given that** neighbors detect fraudulent or invalid repair evidence, **when** the proposal receives **3 community objections**, **then** it transitions to `REJECTED_BY_COMMUNITY`, unlocking the report for future valid proposals.
+
+#### Implementation decisions (2026-11-25)
+The whole of RN-11 is implemented, not only the five criteria: the report author can **accept** a neighbor's proposal or **reject** it with a mandatory reason (`REJECTED_BY_AUTHOR`), a pending proposal **expires after 7 days**, and the report shows `UNDER_REVIEW` while a neighbor's proposal is pending (it goes back to `REPORTED` or `COMMUNITY_VALIDATED` when the proposal is rejected or expires). Server rules: `data model/migrations/010_community_resolution.sql`.
+- The author's own proposal closes the report **without XP** (nobody rewards themselves); the +50 XP goes to a neighbor whose proposal is accepted by the author or by 3 confirmations.
+- The proponent and the report author cannot vote; each neighbor votes once and cannot both confirm and object; votes are final.
+- Expiry is lazy (no cron): an expired proposal takes no votes or decisions, and it is marked `EXPIRED` when somebody proposes again.
+- Deleting a report also takes back the +50 XP of an accepted neighbor's resolution (extends migration 007).
 
 ---
 
