@@ -1,4 +1,4 @@
-// Screenshots of the real web build, as a guest (HU-22), for Cali, Medellín and Bogotá in
+// Screenshots of the real web build, as a guest (HU-22), for Cali, Medellín, Bogotá and Cartagena in
 // light and dark. No dependencies: it drives an installed Chrome through the
 // DevTools protocol (Node 22+).
 //
@@ -29,6 +29,7 @@ const CITIES = [
   { slug: 'cali', name: 'Cali', latitude: 3.4516, longitude: -76.532 },
   { slug: 'medellin', name: 'Medellín', latitude: 6.2442, longitude: -75.5812 },
   { slug: 'bogota', name: 'Bogotá', latitude: 4.711, longitude: -74.0721 },
+  { slug: 'cartagena', name: 'Cartagena', latitude: 10.391, longitude: -75.4794 },
 ].filter((city) => !process.env.CITY || city.slug === process.env.CITY);
 const THEMES = [
   { slug: 'claro', scheme: 'light' },

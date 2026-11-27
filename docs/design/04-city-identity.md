@@ -1,7 +1,7 @@
 # VIGÍA: identidad por ciudad ("Ciudad Viva")
 
-Estado: **implementado** para Cali y Medellín (2026-11-25) en la rama `claude/ciudad-viva-redesign-798c30`, sobre `develop` (commit `88d0749`). Lo que cambió al construirlo está en la [§10](#10-lo-que-cambió-al-construirlo). Capturas de la app: [`screenshots/ciudad-viva/`](screenshots/ciudad-viva/). **Bogotá** se agregó el 2026-11-26 (rama `feat/city-bogota`), solo con datos y fotos.
-Maqueta navegable: [`mockups/city-identity.html`](mockups/city-identity.html) (Cali, Medellín y Bogotá, momento del día automático o manual, claro/oscuro, paleta editable y el catálogo de animaciones).
+Estado: **implementado** para Cali y Medellín (2026-11-25) en la rama `claude/ciudad-viva-redesign-798c30`, sobre `develop` (commit `88d0749`). Lo que cambió al construirlo está en la [§10](#10-lo-que-cambió-al-construirlo). Capturas de la app: [`screenshots/ciudad-viva/`](screenshots/ciudad-viva/). **Bogotá** se agregó el 2026-11-26 (rama `feat/city-bogota`) y **Cartagena** (rama `feat/city-cartagena`), solo con datos y fotos. De Cartagena falta la captura del Detalle: la base compartida no tiene reportes allí.
+Maqueta navegable: [`mockups/city-identity.html`](mockups/city-identity.html) (Cali, Medellín, Bogotá y Cartagena, momento del día automático o manual, claro/oscuro, paleta editable y el catálogo de animaciones).
 Fotos: originales en `docs/design/ideas/city-identity/photos/` con `CREDITS.json` (autor, licencia y enlace). `python tool/city_photos.py` las convierte a WebP en `assets/cities/<slug>/` y escribe `assets/cities/CREDITS.md`.
 Cómo agregar otra ciudad: [`05-new-city-guide.md`](05-new-city-guide.md). Ideas que **no** se construyen ahora: [`ideas/city-identity/future-album-and-seasons.md`](ideas/city-identity/future-album-and-seasons.md).
 
@@ -121,6 +121,8 @@ Cada `deep` debe pasar 4.5:1 con blanco y cada `accent` 4.5:1 con su `onAccent` 
 
 **Bogotá** (maqueta aprobada el 2026-11-26): tono profundo `#8C2F1B` (ladrillo), botones `#F6C21C` con `#1A1300`, velo `#14202E`; bandera amarillo 1, rojo 1 (sin escudo; comparada con el archivo de Wikimedia Commons); cabeceras: centro y cerros orientales / centro con la Torre Colpatria / la ciudad de noche; rangos: Chorro de Quevedo · Plaza de Bolívar · Torre Colpatria · Monserrate; saludos "¡Buenos días, sumercé!" / "¡Qué más, sumercé!" / "¡Buenas noches, sumercé!"; eslogan "Bogotá se cuida entre vecinos."; al validar "¡Qué bacano!".
 
+**Cartagena** (maqueta aprobada el 2026-11-26): tono profundo `#8A2258` (trinitaria), botones coral `#FF9470` con `#2A0F06`, velo `#102235`; bandera rojo 1, amarillo 1, verde 2, amarillo 1, rojo 1 (los tres rectángulos del archivo de Wikimedia Commons leídos como franjas, sin la estrella); cabeceras: Bocagrande desde el mar / una garita al atardecer / la bahía al anochecer; rangos: Torre del Reloj · Las Murallas · Castillo San Felipe · La Popa; saludos "¡Buenos días, mi llave!" / "¡Ajá, mi llave!" / "¡Buenas noches, mi llave!"; eslogan "Cartagena se cuida entre vecinos."; al validar "¡Qué nota!".
+
 ### 3.4 Ciudad genérica (paquete regional)
 Para las ciudades sin paquete completo. Tiene el mismo molde, los mismos widgets y las mismas animaciones; solo cambian los datos, y van **por región**:
 
@@ -226,7 +228,7 @@ Ninguna función cambia. Las que no están en la maqueta reciben el tratamiento 
 Pruebas mínimas: `DayPart.of`, `GetCityIdentityUseCase` (completo → regional → por defecto, nombres con tilde), contraste AA de cada paleta, `CityAmbienceBloc` (cambio de ciudad, vuelve a primer plano), y widget tests de `CityHero`, `LandmarkTrail` y `CelebrationOverlay` con Cali, Medellín y por defecto, claro y oscuro, y con animaciones desactivadas. `dart run tool/check.dart` en verde.
 
 ## 9. Reparto
-Hecho (Juan): pasos 1 a 6 de §8 para Cali y Medellín. Hecho: Bogotá. Pendiente: Cartagena y la ciudad genérica.
+Hecho (Juan): pasos 1 a 6 de §8 para Cali y Medellín. Hecho: Bogotá y Cartagena. Pendiente: la ciudad genérica.
 
 - **Juan:** arquitectura (pasos 1–4), paquetes de Cali y Medellín, todo en una rama propia y documentado.
 - **Cano y Juan David:** Bogotá y Cartagena, siguiendo [`05-new-city-guide.md`](05-new-city-guide.md) (maqueta primero).

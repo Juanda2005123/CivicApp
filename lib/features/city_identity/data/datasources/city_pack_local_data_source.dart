@@ -2,6 +2,7 @@ import '../../../../core/utils/search_text.dart';
 import '../../domain/entities/city_identity.dart';
 import 'packs/bogota_pack.dart';
 import 'packs/cali_pack.dart';
+import 'packs/cartagena_pack.dart';
 import 'packs/default_pack.dart';
 import 'packs/medellin_pack.dart';
 import 'packs/regional_packs.dart';
@@ -14,6 +15,7 @@ class CityPackLocalDataSource {
     caliPack,
     medellinPack,
     bogotaPack,
+    cartagenaPack,
   ];
 
   List<CityIdentity> getFullPacks() => _fullPacks;

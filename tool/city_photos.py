@@ -52,6 +52,15 @@ CITIES = {
         },
         ["bog-chorro", "bog-bolivar", "bog-colpatria", "bog-santuario"],
     ),
+    "cartagena": (
+        "Cartagena",
+        {
+            "morning": "ctg-bocagrande-mar",
+            "afternoon": "ctg-atardecer-garita",
+            "night": "ctg-hora-dorada",
+        },
+        ["ctg-torre-reloj", "ctg-murallas", "ctg-san-felipe", "ctg-popa-claustro"],
+    ),
 }
 
 
