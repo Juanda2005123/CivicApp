@@ -50,6 +50,14 @@ const _cities = {
     longitude: -75.5812,
     isCapital: true,
   ),
+  'bogota': City(
+    id: 2,
+    name: 'Bogotá',
+    department: 'Bogotá D.C.',
+    latitude: 4.7110,
+    longitude: -74.0721,
+    isCapital: true,
+  ),
 };
 
 Future<void> _loadFonts() async {

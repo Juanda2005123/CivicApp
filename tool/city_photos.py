@@ -43,6 +43,15 @@ CITIES = {
         },
         ["med-comuna13", "med-botero", "med-metrocable", "med-pueblito"],
     ),
+    "bogota": (
+        "Bogotá",
+        {
+            "morning": "bog-vista-cerros",
+            "afternoon": "bog-colpatria-tarde",
+            "night": "bog-noche-skyline",
+        },
+        ["bog-chorro", "bog-bolivar", "bog-colpatria", "bog-santuario"],
+    ),
 }
 
 

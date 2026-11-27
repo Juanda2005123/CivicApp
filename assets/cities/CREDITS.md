@@ -27,3 +27,15 @@ to a square). The app does not show them (academic project, decision of 2026-11-
 | `medellin/rank_2.webp` | [Medellín, Plaza Botero, 2023-07 CN-01.jpg](https://commons.wikimedia.org/wiki/File:Medell%C3%ADn,_Plaza_Botero,_2023-07_CN-01.jpg) | Steffen Schmitz (more photos) | CC BY-SA 4.0 |
 | `medellin/rank_3.webp` | [Metrocable and Comuna 1 in Medellín 02.jpg](https://commons.wikimedia.org/wiki/File:Metrocable_and_Comuna_1_in_Medell%C3%ADn_02.jpg) | JoranL | CC BY-SA 4.0 |
 | `medellin/rank_4.webp` | [Pueblito Paisa, Medellin, Antioquia, Colombia.jpg](https://commons.wikimedia.org/wiki/File:Pueblito_Paisa,_Medellin,_Antioquia,_Colombia.jpg) | RH Ruggles | CC BY-SA 4.0 |
+
+## Bogotá
+
+| File | Photo | Author | License |
+|---|---|---|---|
+| `bogota/hero_morning.webp` | [Monserrate y centro de Bogota.jpg](https://commons.wikimedia.org/wiki/File:Monserrate_y_centro_de_Bogota.jpg) | Jos Cuevasc | CC BY-SA 4.0 |
+| `bogota/hero_afternoon.webp` | [Bogota z Mirador Torre Colpatria (34553345656).jpg](https://commons.wikimedia.org/wiki/File:Bogota_z_Mirador_Torre_Colpatria_(34553345656).jpg) | Peter Chovanec | CC BY 2.0 |
+| `bogota/hero_night.webp` | [Bogotá, vista nocturna.png](https://commons.wikimedia.org/wiki/File:Bogot%C3%A1,_vista_nocturna.png) | Xxaljxx | CC BY-SA 4.0 |
+| `bogota/rank_1.webp` | [Plaza del Chorro de Quevedo de Bogotá.JPG](https://commons.wikimedia.org/wiki/File:Plaza_del_Chorro_de_Quevedo_de_Bogot%C3%A1.JPG) | Javier Benítez | CC BY-SA 3.0 |
+| `bogota/rank_2.webp` | [Catedral Primada de Bogotá en la lluvia.jpg](https://commons.wikimedia.org/wiki/File:Catedral_Primada_de_Bogot%C3%A1_en_la_lluvia.jpg) | Aztlek, Luis Alejandro Bernal Romero | CC BY-SA 3.0 |
+| `bogota/rank_3.webp` | [Torre Colpatria en Bogotá abril 2017, Col.jpg](https://commons.wikimedia.org/wiki/File:Torre_Colpatria_en_Bogot%C3%A1_abril_2017,_Col.jpg) | EEIM | CC BY-SA 4.0 |
+| `bogota/rank_4.webp` | [2018 Bogotá - Iglesia de Monserrate desde Germania.jpg](https://commons.wikimedia.org/wiki/File:2018_Bogot%C3%A1_-_Iglesia_de_Monserrate_desde_Germania.jpg) | Felipe Restrepo Acosta | CC BY-SA 4.0 |

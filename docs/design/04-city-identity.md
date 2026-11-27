@@ -1,7 +1,7 @@
 # VIGÍA: identidad por ciudad ("Ciudad Viva")
 
-Estado: **implementado** para Cali y Medellín (2026-11-25) en la rama `claude/ciudad-viva-redesign-798c30`, sobre `develop` (commit `88d0749`). Lo que cambió al construirlo está en la [§10](#10-lo-que-cambió-al-construirlo). Capturas de la app: [`screenshots/ciudad-viva/`](screenshots/ciudad-viva/).
-Maqueta navegable: [`mockups/city-identity.html`](mockups/city-identity.html) (Cali y Medellín, momento del día automático o manual, claro/oscuro, paleta editable y el catálogo de animaciones).
+Estado: **implementado** para Cali y Medellín (2026-11-25) en la rama `claude/ciudad-viva-redesign-798c30`, sobre `develop` (commit `88d0749`). Lo que cambió al construirlo está en la [§10](#10-lo-que-cambió-al-construirlo). Capturas de la app: [`screenshots/ciudad-viva/`](screenshots/ciudad-viva/). **Bogotá** se agregó el 2026-11-26 (rama `feat/city-bogota`), solo con datos y fotos.
+Maqueta navegable: [`mockups/city-identity.html`](mockups/city-identity.html) (Cali, Medellín y Bogotá, momento del día automático o manual, claro/oscuro, paleta editable y el catálogo de animaciones).
 Fotos: originales en `docs/design/ideas/city-identity/photos/` con `CREDITS.json` (autor, licencia y enlace). `python tool/city_photos.py` las convierte a WebP en `assets/cities/<slug>/` y escribe `assets/cities/CREDITS.md`.
 Cómo agregar otra ciudad: [`05-new-city-guide.md`](05-new-city-guide.md). Ideas que **no** se construyen ahora: [`ideas/city-identity/future-album-and-seasons.md`](ideas/city-identity/future-album-and-seasons.md).
 
@@ -119,6 +119,8 @@ Cada `deep` debe pasar 4.5:1 con blanco y cada `accent` 4.5:1 con su `onAccent` 
 | eslogan | "Cali se cuida entre vecinos." | "Medellín se cuida entre vecinos." |
 | frase al validar | "¡Eso, ve!" | "¡Qué chimba, parce!" |
 
+**Bogotá** (maqueta aprobada el 2026-11-26): tono profundo `#8C2F1B` (ladrillo), botones `#F6C21C` con `#1A1300`, velo `#14202E`; bandera amarillo 1, rojo 1 (sin escudo; comparada con el archivo de Wikimedia Commons); cabeceras: centro y cerros orientales / centro con la Torre Colpatria / la ciudad de noche; rangos: Chorro de Quevedo · Plaza de Bolívar · Torre Colpatria · Monserrate; saludos "¡Buenos días, sumercé!" / "¡Qué más, sumercé!" / "¡Buenas noches, sumercé!"; eslogan "Bogotá se cuida entre vecinos."; al validar "¡Qué bacano!".
+
 ### 3.4 Ciudad genérica (paquete regional)
 Para las ciudades sin paquete completo. Tiene el mismo molde, los mismos widgets y las mismas animaciones; solo cambian los datos, y van **por región**:
 
@@ -224,7 +226,7 @@ Ninguna función cambia. Las que no están en la maqueta reciben el tratamiento 
 Pruebas mínimas: `DayPart.of`, `GetCityIdentityUseCase` (completo → regional → por defecto, nombres con tilde), contraste AA de cada paleta, `CityAmbienceBloc` (cambio de ciudad, vuelve a primer plano), y widget tests de `CityHero`, `LandmarkTrail` y `CelebrationOverlay` con Cali, Medellín y por defecto, claro y oscuro, y con animaciones desactivadas. `dart run tool/check.dart` en verde.
 
 ## 9. Reparto
-Hecho (Juan): pasos 1 a 6 de §8 para Cali y Medellín. Pendiente: Bogotá, Cartagena y la ciudad genérica.
+Hecho (Juan): pasos 1 a 6 de §8 para Cali y Medellín. Hecho: Bogotá. Pendiente: Cartagena y la ciudad genérica.
 
 - **Juan:** arquitectura (pasos 1–4), paquetes de Cali y Medellín, todo en una rama propia y documentado.
 - **Cano y Juan David:** Bogotá y Cartagena, siguiendo [`05-new-city-guide.md`](05-new-city-guide.md) (maqueta primero).
