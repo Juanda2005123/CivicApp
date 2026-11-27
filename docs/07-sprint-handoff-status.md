@@ -6,7 +6,7 @@
 **Rama de integración:** `develop` (cada HU entra con su rama `feat/hu-XX-…` y un merge commit)  
 **Fecha de corte:** 14 de noviembre de 2026  
 **Progreso Sprint 2:** 17 de 17 historias completadas (100 % en código; falta validarlas en un dispositivo).
-**Progreso Sprint 3 (corte 25 de noviembre de 2026):** 10 de 12 historias en `develop` (HU-01, 02, 04, 05, 15, 16, 17, 18, 20 y 23) y HU-25 lista en `feat/hu-25-community-resolution` (migración 010 ya aplicada en Supabase); falta HU-24. Ver sección 4.
+**Progreso Sprint 3 (corte 26 de noviembre de 2026):** 11 de 12 historias en `develop` (HU-01, 02, 04, 05, 15, 16, 17, 18, 20, 23 y 25) y HU-24 (notificaciones push) lista en `feat/hu-24-push-notifications`, con la migración 011 y la Edge Function `send-push` ya en Supabase. Ver sección 4.
 
 ---
 
@@ -184,12 +184,13 @@ Las 17 historias del Sprint 2 están implementadas. Lo que queda no es una histo
 | **HU-02** | Permisos del dispositivo | En Mi perfil → **Permisos**: muestra **Cámara** y **Ubicación** en texto claro (*Permitido*, *No solicitado*, *Denegado*, *Bloqueado*). Solicita permiso nativo si no se ha pedido o abre ajustes del SO si ya fue respondido, refrescando al volver a la app. |
 | **HU-04** | Editar datos personales | En Mi perfil → **Datos personales**: edita nombre completo (≥ 2 palabras), ciudad del catálogo DANE (con apoyo GPS), correo (con aviso de verificación al cambiarlo) y contraseña (validando la actual y complejidad). Conserva borradores si falla. |
 | **HU-25** | Propuesta de resolución y verificación (RN-11) | En el detalle, encima de los comentarios: **Reportar como reparado** abre una hoja con foto obligatoria y "¿Cómo quedó la vía?". Si la envía el autor, el reporte queda **Resuelto** al instante (sin XP). Si la envía un vecino, el reporte pasa a **En revisión** y aparece la tarjeta fijada de borde verde "Reparación en verificación" con la foto, "Confirmaciones N de 3" y "Objeciones N de 3": los vecinos **Confirmar** u **Objetar** (un voto cada uno), el autor **Aceptar** o **Rechazar** con motivo. 3 confirmaciones o aceptar → Resuelto y +50 XP a quien propuso; 3 objeciones o rechazar → el reporte vuelve a su estado y admite otra propuesta. Solo una propuesta pendiente por reporte; vence a los 7 días. Un reporte resuelto sale del **Mapa** (sigue en Comunidad, en Mis reportes y en el detalle). Invitado: modal de inicio de sesión. Rama `feat/hu-25-community-resolution`. |
+| **HU-25** | (ver arriba) | En `develop` desde el PR #23. |
+| **HU-24** | Notificaciones push | Cada fila nueva de `notification` (nuevo apoyo, nuevo comentario, reporte validado, propuesta de reparación, reporte resuelto) llega como push al dueño, con la app abierta, en segundo plano o cerrada; al tocarla abre el reporte. Firebase (`vigia-596ec`) solo en Android; en web y escritorio la app sigue igual, sin push. Al cerrar sesión el teléfono deja de recibir los avisos de esa cuenta. Las filas siguen en la tabla aunque el push esté apagado. |
 | **HU-05** | Avatar cívico | Tocar el avatar/sello en Mi perfil permite tomar foto o elegir de galería (JPG, PNG o WebP, máx. 5 MB), sube a `incident-evidence/avatars/` y actualiza `profile_picture_url` en Mi perfil y comentarios; sin foto muestra `RankSeal`. |
 
 ### Historias pendientes (para el resto del equipo)
 
-- **HU-24** Notificaciones push (requisito académico obligatorio): ya se escriben filas en la tabla `notification` (apoyo, comentario, validación); falta el envío push, que necesita Firebase (FCM + Edge Functions/Webhooks + deep-link al detalle).
-- **HU-25** — terminada en `feat/hu-25-community-resolution`. La migración 010 ya está aplicada en el Supabase compartido (25 de noviembre, prueba de humo 43 PASS). Falta el merge a `develop`.
+- **HU-24** — terminada en `feat/hu-24-push-notifications`; la migración 011, los secretos y la Edge Function `send-push` ya están en el Supabase compartido. Falta el merge a `develop`.
 
 ### Reglas del servidor (migraciones aplicadas en Supabase)
 
@@ -205,7 +206,7 @@ Las reglas de puntos y ventanas viven en la base de datos, no en la app. Todas e
 | **009** | Columna `show_real_name BOOLEAN NOT NULL DEFAULT TRUE` en `user_profile` para la privacidad cívica (HU-01). |
 | **010** | Resolución comunitaria (HU-25, RN-11): una sola propuesta pendiente por reporte, foto y descripción obligatorias; la del autor cierra el reporte sin XP; la de un vecino lo pone `UNDER_REVIEW` y notifica al autor (`RESOLUTION_PROPOSAL`); 3 confirmaciones o la aceptación del autor → `RESOLVED` y +50 XP al proponente; 3 objeciones o el rechazo del autor (con motivo) → el reporte vuelve a su estado; vence a los 7 días (se marca al proponer otra); nadie vota su propia propuesta ni el autor del reporte; un voto por persona; notificación `REPORT_RESOLVED` al autor, al proponente y a los seguidores; RLS en las tres tablas. Ajusta la 004 (el 10.º apoyo no saca de `UNDER_REVIEW`) y la 007 (borrar un reporte devuelve los +50). |
 
-**Siguiente migración: `011`** (reservada para HU-24, push). Quien necesite una nueva debe avisar antes para no chocar en la numeración. Las pruebas de humo corren como el rol del SQL Editor y se saltan la seguridad por filas; la de la 008 corre como `authenticated` justamente por eso.
+**Siguiente migración: `013`** (la `012`, nombres de categorías en español, es de Ciudad Viva). Quien necesite una nueva debe avisar antes para no chocar en la numeración. Las pruebas de humo corren como el rol del SQL Editor y se saltan la seguridad por filas; la de la 008 corre como `authenticated` justamente por eso.
 
 **Cómo aplicar una migración.** Desde el SQL Editor del dashboard (pegar y *Run*), o desde la terminal con el Supabase CLI, sin la contraseña de la base: basta ser miembro de la organización del proyecto y haber hecho `supabase login`.
 
@@ -219,6 +220,8 @@ La ruta del archivo debe ser absoluta. La prueba de humo responde con el error `
 ### Qué se probó con sesión real
 
 El 24 de noviembre se probó `develop` en la versión web contra el Supabase real con una cuenta de prueba: publicar un reporte (XP 100 exacto), comentar (115 XP), buscar en Comunidad, ver los contadores del perfil, editar título y gravedad (el código no cambió) y eliminar (el XP volvió a 0). Esa prueba encontró la política faltante de la migración 008.
+
+El 26 de noviembre se probó HU-24 en el mismo teléfono: Luis comentó `#VIG-S001` y a Ana le llegó "Nuevo comentario en el reporte #VIG-S001: Luis Herrera aportó a la discusión."; al tocarla abrió el reporte. La base llamó sola a `send-push` (respuesta 200 de FCM).
 
 El 25 de noviembre se probó HU-25 en un Android real (moto g86 5G, Android 15) contra el Supabase compartido con dos cuentas: un vecino propuso la reparación de `#VIG-9509` con foto (subida al bucket), el autor recibió la notificación `RESOLUTION_PROPOSAL` y aceptó; el reporte quedó `RESOLVED`, el vecino ganó +50 XP y recibió `REPORT_RESOLVED`.
 
@@ -235,8 +238,29 @@ El 25 de noviembre se probó HU-25 en un Android real (moto g86 5G, Android 15) 
 9. **Votos definitivos (HU-25):** confirmar u objetar no se puede deshacer; no hay política `DELETE` en `resolution_confirmation` ni `resolution_objection`.
 10. **Contraseña de la base:** la `SUPABASE_DB_PASSWORD` que circula en el equipo (`.env`) es rechazada por Supabase (`password authentication failed`). No hace falta para migrar (ver "Cómo aplicar una migración"), pero quien administre el proyecto debería restablecerla y compartirla.
 11. **Android compila contra SDK 37:** `permission_handler_android` 14 (HU-02) exige `compileSdk` 37 y sin él `flutter run` en Android fallaba en `checkDebugAarMetadata`. `android/app/build.gradle.kts` fija `compileSdk = 37`; `minSdk` y `targetSdk` siguen siendo los de Flutter. El Android Gradle Plugin 9.1 avisa que recomienda hasta 36, pero compila.
+12. **Push solo en Android (HU-24):** el proyecto de Firebase (`vigia-596ec`) solo registra la app Android (`com.vigia.vigia_app`). En web y escritorio Firebase no se inicia. iOS necesitaría APNs y una cuenta de Apple Developer.
+13. **Un topic por usuario:** el teléfono se suscribe a `user_<id>`. Si la app se desinstala sin cerrar sesión, ese teléfono deja de recibir solo (FCM descarta el token). Dos teléfonos con la misma cuenta reciben los dos.
 
 **Regla para lo que venga (sigue vigente):** toda acción que necesite cuenta debe abrir `showSignInRequiredDialog` cuando el usuario es invitado (`ProfileStatus.guest`).
+
+---
+
+### Notificaciones push (HU-24): cómo funciona y cómo probarlo
+
+Cadena: una regla de la base escribe una fila en `notification` → el disparador de la migración 011 (`pg_net`) llama a la Edge Function `supabase/functions/send-push` → la función firma con la llave de servicio de Firebase y envía por FCM al topic `user_<id_user>` → el teléfono suscrito la muestra; `data.incidentId` abre el reporte al tocarla.
+
+**Llaves y secretos (ninguno en el repo):**
+
+| Qué | Dónde vive | Para qué |
+|---|---|---|
+| `android/app/google-services.json` y `lib/firebase_options.dart` | En el repo | Configuración pública de la app Android en Firebase (no es secreta) |
+| Llave de servicio de Firebase (`firebase-adminsdk…json`) | Secreto `FCM_SERVICE_ACCOUNT` de la Edge Function, y en `~/.config/vigia/fcm-service-account.json` para los scripts de prueba | Firmar los envíos (lección K2). **Nunca** en la app ni en el repo; `.gitignore` la bloquea |
+| `PUSH_WEBHOOK_SECRET` | Secreto de la Edge Function y Vault `push_webhook_secret` | Solo la base puede llamar a `send-push` (sin él responde 403) |
+| URL de la función | Vault `push_function_url` | A dónde llama el disparador |
+
+Montarlo en otro proyecto: `supabase secrets set --project-ref <ref> "PUSH_WEBHOOK_SECRET=<aleatorio>" "FCM_SERVICE_ACCOUNT=$(cat <llave>.json)"`, `supabase functions deploy send-push --project-ref <ref> --no-verify-jwt --use-api`, crear los dos secretos del Vault (comentario de la migración 011) y aplicar la 011.
+
+**Probar sin tocar la base:** `tool/push/test_1_hello.sh [usuario]` (aviso simple), `tool/push/test_2_validated.sh` (abre `#VIG-S001`), `tool/push/test_3_comment.sh` (abre `#VIG-S013`). Mandan a un usuario demo (Ana por defecto) con la llave de `~/.config/vigia/`; el teléfono debe tener la app abierta con esa cuenta al menos una vez.
 
 ---
 

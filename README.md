@@ -22,8 +22,9 @@
 7. [How to Run the Application](#how-to-run-the-application)
 8. [Sprint 1 Walkthrough](#sprint-1-walkthrough-registration-login-and-profile-summary)
 9. [Sprint 2 Walkthrough](#sprint-2-walkthrough-map-community-feed-and-report-wizard)
-10. [Running the Test Suite](#running-the-test-suite)
-11. [Commit & Contribution Standards](#commit--contribution-standards)
+10. [Sprint 3 Walkthrough](#sprint-3-walkthrough-community-repairs-and-push-notifications)
+11. [Running the Test Suite](#running-the-test-suite)
+12. [Commit & Contribution Standards](#commit--contribution-standards)
 
 ---
 
@@ -34,7 +35,8 @@
 3. `flutter pub get` y `flutter run -d chrome` (o un dispositivo Android).
 4. Flujo: **Regístrate** → llena el formulario → **Crear cuenta** → llegas a *Mi perfil* → **Cerrar sesión** → **Ingresar** con los mismos datos.
 5. VIGÍA tiene un solo tipo de usuario (el ciudadano). Para ver que el flujo sirve para cualquier usuario, repite el registro y el login con una segunda cuenta (otro correo y otra ciudad). El detalle paso a paso está en "Sprint 1 Walkthrough".
-6. **Sprint 2:** con la sesión iniciada recorre **Mapa**, **Comunidad** y **Reportar daño** (asistente de 5 pasos). También puedes entrar sin cuenta con **Explorar sin cuenta**. El paso a paso está en "Sprint 2 Walkthrough". No hay cuentas ni contraseñas precargadas: el registro es abierto, crea la tuya (por ejemplo, la contraseña `Vigia2026` cumple las reglas).
+6. **Sprint 2:** con la sesión iniciada recorre **Mapa**, **Comunidad** y **Reportar daño** (asistente de 5 pasos). También puedes entrar sin cuenta con **Explorar sin cuenta**. El paso a paso está en "Sprint 2 Walkthrough". El registro es abierto: crea tu cuenta (por ejemplo, la contraseña `Vigia2026` cumple las reglas).
+7. **Sprint 3:** el proyecto compartido tiene datos de demostración: 15 usuarios `<nombre>.demo@vigia-demo.com` (ana, luis, marta, carlos…; la contraseña se pide al equipo) y 40 reportes `#VIG-S001`–`S040`. Recorre apoyar, comentar, editar, buscar y filtrar, Mi perfil, **Reportar como reparado** (HU-25) y las **notificaciones push** (HU-24, solo Android). El paso a paso está en "Sprint 3 Walkthrough".
 
 ---
 
@@ -204,6 +206,24 @@ Run once per Supabase project, in this order:
 3. **SQL Editor:** run `data model/migrations/002_spanish_rank_names.sql` (only if the project was created before the Spanish interface: it renames the four civic ranks).
 4. **Authentication > Sign In / Providers > User Signups:** turn **Confirm email** off. The profile insert needs the session that `signUp` returns.
 5. **Later migrations** (`003` onward, in order) can also be applied from a terminal by any member of the project's organization, without the database password: `supabase login`, then `supabase db query --linked --project-ref <ref> -f "<absolute path to the .sql file>"`. Run each migration's smoke test from `data model/tests/` the same way.
+6. **Push notifications (HU-24), only if you use your own Firebase/Supabase projects:** the shared project is already set up. Otherwise follow "Firebase Setup" below. The Firebase service account key never goes in the app or the repo.
+
+---
+
+### 4. Firebase Setup (push notifications, Android only)
+The shared Firebase project is `vigia-596ec` and its Android app is `com.vigia.vigia_app`; `android/app/google-services.json` and `lib/firebase_options.dart` are already in the repo (public config, not secret), so **a normal clone builds and receives pushes with no extra steps**. Web and desktop run without Firebase.
+
+To set it up in **another** Firebase/Supabase pair (course lessons K1–K4):
+1. **Firebase console:** *Crear un proyecto* (Analytics off) → *Agregar app* → **Android**, package `com.vigia.vigia_app` → download `google-services.json` to `android/app/`. Update the values of `lib/firebase_options.dart` from that file (or run `flutterfire configure --project=<id> --platforms=android`).
+2. **Service account key:** *Configuración del proyecto → Cuentas de servicio → Generar nueva clave privada*. **Never** put it in the app or the repo (`.gitignore` blocks `*firebase-adminsdk*.json`). Keep a copy in `~/.config/vigia/fcm-service-account.json` for the test scripts.
+3. **Supabase Edge Function secrets and deploy:**
+   ```bash
+   openssl rand -hex 32 > ~/.config/vigia/push-webhook-secret
+   supabase secrets set --project-ref <ref> "PUSH_WEBHOOK_SECRET=$(cat ~/.config/vigia/push-webhook-secret)" "FCM_SERVICE_ACCOUNT=$(cat ~/.config/vigia/fcm-service-account.json)"
+   supabase functions deploy send-push --project-ref <ref> --no-verify-jwt --use-api
+   ```
+4. **Vault and migration:** create the two Vault secrets described at the top of `data model/migrations/011_push_notifications.sql` (`push_function_url`, `push_webhook_secret`), then apply migration 011 and run `data model/tests/011_push_notifications_smoke_test.sql` (every line must say PASS).
+5. **Check:** `tool/push/test_1_hello.sh <demo user>` sends a push to that user's phone.
 
 ---
 
@@ -280,7 +300,19 @@ No accounts or passwords ship with the app: registration is open (see the Sprint
 
 To see the nearby-reports warning (step 2), publish one report first and start a second one at the same place with the same type.
 
-Not part of this delivery (planned for Sprint 3, see `docs/06-sprint-3-backlog.md`): supporting and commenting on reports, privacy and personal data settings, avatar, search and filters, the impact dashboard and push notifications.
+Supporting and commenting on reports, privacy and personal data, avatar, search and filters, the impact dashboard, repairs and push notifications arrived in Sprint 3: see the next section.
+
+## Sprint 3 Walkthrough: Community, Repairs and Push Notifications
+
+The shared project has demo data: 15 users `<name>.demo@vigia-demo.com` (`ana`, `luis`, `marta`, `carlos`, `sofia`, `jorge`, `paula`, `camilo`, `daniela`, `felipe`, `natalia`, `sebastian`, `diego`, `valentina`, `andres`; ask the team for the common password) and 40 reports `#VIG-S001` to `#VIG-S040`, 34 of them in Cali. Use two accounts to see one citizen's action reach another.
+
+1. **Endorse and community validation (HU-15, HU-16):** open a report of another user and tap **Apoyar este reporte** (tap again to take it back; your own reports have no button). `#VIG-S001`, `S004`, `S006` and `S019` already have 10+ endorsements and show the **Reporte validado** seal.
+2. **Comments (HU-17):** at the bottom of the detail write a comment, optionally with a photo, and **Publicar** (+15 XP). Your comment can be deleted during 5 minutes.
+3. **Edit or delete your report (HU-18):** on a report you just published, the **Tu reporte** card offers **Editar** and **Eliminar** during 30 minutes while it has fewer than 5 endorsements.
+4. **Search, filter and sort (HU-20):** in **Comunidad** search `hueco`, filter by category or neighborhood, and sort by **Más recientes / Más votados / Más cercanos**; the map hides the pins that do not match.
+5. **Mi perfil (HU-23, HU-01, HU-02, HU-04, HU-05):** rank progress, impact counters and *Mis reportes*; **Configuración** (hide your name), **Permisos**, **Datos personales**, and tap the avatar to change the photo.
+6. **Repair proposal (HU-25):** on an open report tap **Reportar como reparado**, attach a photo and describe the road. Signed in as the author, the report is resolved at once. As a neighbor, a green card **Reparación en verificación** appears: other neighbors **Confirmar** or **Objetar** (3 confirmations resolve it and give +50 XP; 3 objections reject it), and the author can **Aceptar** or **Rechazar** with a reason. Live demo: `#VIG-S015` and `#VIG-S027` (author `marta`) have pending proposals. Resolved reports leave the map but stay in **Comunidad**.
+7. **Push notifications (HU-24, Android):** sign in on an Android phone (for example as `ana`) and allow notifications. With another account (on the web or another phone) comment, endorse or propose a repair on one of Ana's reports (`#VIG-S001`, `S013`, `S025`): Ana's phone gets the push with the app open, in the background or closed, and **tapping it opens the report**. Without a second device, `tool/push/test_2_validated.sh ana` and `tool/push/test_3_comment.sh ana` send the two mandatory pushes (they need the service account key, see "Firebase Setup"). Signing out stops that account's pushes on the phone.
 
 ### Demo video recorder (optional)
 

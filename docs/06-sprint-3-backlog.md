@@ -1,7 +1,7 @@
 # Document 6: Sprint Backlog 3 — Community Interaction, Lifecycle, Gamification, and Notifications
 
 **Branch:** `develop` (documented in `docs/sprint-2-3-backlogs`)  
-**Status:** In progress. HU-01, HU-02, HU-04, HU-05, HU-15, HU-16, HU-17, HU-18, HU-20 and HU-23 are implemented on `develop`, and HU-25 on `feat/hu-25-community-resolution` (details in `docs/07-sprint-handoff-status.md`, section 4); HU-24 is pending.  
+**Status:** In progress. HU-01, HU-02, HU-04, HU-05, HU-15, HU-16, HU-17, HU-18, HU-20 and HU-23 are implemented on `develop`, HU-25 (PR #23), and HU-24 on `feat/hu-24-push-notifications` (details in `docs/07-sprint-handoff-status.md`, section 4).  
 **Sprint Goal:** Activate VIGÍA's participatory community loop: enable citizen endorsement (*upvotes*), collective validation upon reaching 10 votes (+500 XP), neighborhood discussion threads with photographic evidence, strict time-window moderation for reports and comments, live impact dashboard with gamified rank progression, complete profile/privacy settings, and academic-requirement **push notifications**.
 
 ---
@@ -204,6 +204,9 @@
 3. **Given that** I tap a received push notification, **when** the app opens, **then** it deep-links directly to the relevant report detail screen (HU-14/HU-16).
 4. **Given that** push notifications are disabled at the OS level, **when** events occur, **then** events are persistently recorded in the `notification` database table for in-app alert center viewing.
 
+
+#### Implementation decisions (2026-11-26)
+Firebase Cloud Messaging as the course teaches it (lessons K0–K4), with a Supabase Edge Function as the backend. Every row the triggers write to `notification` (`NEW_UPVOTE`, `NEW_COMMENT`, `COMMUNITY_VALIDATION`, `RESOLUTION_PROPOSAL`, `REPORT_RESOLVED`) is pushed, not only the two mandatory events. Each citizen has a topic `user_<id>` instead of a stored `fcm_token`: the phone subscribes after sign-in and unsubscribes on sign-out. Android only. Migration 011 also makes the "new comment" text say "Ciudadano anónimo" when the commenter hides their name (HU-01).
 ---
 
 ### HU-25: Community Resolution Proposal & Verification *(RN-11 / Civic Resolution)*

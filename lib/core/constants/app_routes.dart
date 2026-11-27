@@ -28,6 +28,9 @@ import '../../features/explore/ui/bloc/map_event.dart';
 import '../../features/explore/ui/screens/home_screen.dart';
 import '../../features/reports/ui/bloc/comments_bloc.dart';
 import '../../features/reports/ui/bloc/resolution_bloc.dart';
+import '../../features/notifications/ui/bloc/push_bloc.dart';
+import '../../features/notifications/ui/bloc/push_event.dart';
+import '../../features/notifications/ui/widgets/push_opened_listener.dart';
 import '../../features/reports/ui/bloc/edit_report_bloc.dart';
 import '../../features/reports/ui/bloc/incident_detail_bloc.dart';
 import '../../features/reports/ui/bloc/report_wizard_bloc.dart';
@@ -70,8 +73,9 @@ class AppRoutes {
                 BlocProvider(create: (_) => sl<MapBloc>()..add(MapStarted())),
                 BlocProvider(create: (_) => sl<CitySwitcherBloc>()),
                 BlocProvider(create: (_) => sl<FeedBloc>()),
+                BlocProvider(create: (_) => sl<PushBloc>()..add(const PushStarted())),
               ],
-              child: const HomeScreen(),
+              child: const PushOpenedListener(child: HomeScreen()),
             ),
         reportWizard: (context) => BlocProvider(
               create: (_) => sl<ReportWizardBloc>()..add(WizardStarted()),

@@ -97,6 +97,12 @@ import '../../features/reports/domain/usecases/pick_resolution_photo_usecase.dar
 import '../../features/reports/domain/usecases/propose_resolution_usecase.dart';
 import '../../features/reports/domain/usecases/reject_resolution_usecase.dart';
 import '../../features/reports/ui/bloc/resolution_bloc.dart';
+import '../../features/notifications/data/datasources/push_data_source.dart';
+import '../../features/notifications/data/repositories/push_repository_impl.dart';
+import '../../features/notifications/domain/repositories/push_repository.dart';
+import '../../features/notifications/domain/usecases/enable_push_usecase.dart';
+import '../../features/notifications/domain/usecases/watch_opened_reports_usecase.dart';
+import '../../features/notifications/ui/bloc/push_bloc.dart';
 import '../../features/reports/domain/usecases/get_categories_usecase.dart';
 import '../../features/reports/domain/usecases/geocode_address_usecase.dart';
 import '../../features/reports/domain/usecases/get_city_center_usecase.dart';
@@ -136,6 +142,7 @@ Future<void> initDependencies({
   CommentRepository? commentRepository,
   ResolutionRepository? resolutionRepository,
   ImpactRepository? impactRepository,
+  PushRepository? pushRepository,
   CityIdentityRepository? cityIdentityRepository,
 }) async {
   await sl.reset();
@@ -160,6 +167,7 @@ Future<void> initDependencies({
   sl.registerLazySingleton(() => PhotoPickerDataSource());
   sl.registerLazySingleton(() => NominatimDataSource(sl()));
   sl.registerLazySingleton(() => RecentCitiesLocalDataSource());
+  sl.registerLazySingleton(() => PushDataSource());
   sl.registerLazySingleton(() => CityPackLocalDataSource());
   sl.registerLazySingleton(() => LastCityLocalDataSource());
 
@@ -169,6 +177,9 @@ Future<void> initDependencies({
   );
   sl.registerLazySingleton<ProfileRepository>(
     () => profileRepository ?? ProfileRepositoryImpl(sl()),
+  );
+  sl.registerLazySingleton<PushRepository>(
+    () => pushRepository ?? PushRepositoryImpl(sl()),
   );
   sl.registerLazySingleton<ImpactRepository>(
     () => impactRepository ?? ImpactRepositoryImpl(sl()),
@@ -208,7 +219,9 @@ Future<void> initDependencies({
   // Use cases
   sl.registerLazySingleton(() => SignUpUseCase(sl(), sl()));
   sl.registerLazySingleton(() => SignInUseCase(sl(), sl()));
-  sl.registerLazySingleton(() => SignOutUseCase(sl()));
+  sl.registerLazySingleton(() => SignOutUseCase(sl(), sl()));
+  sl.registerLazySingleton(() => EnablePushUseCase(sl(), sl()));
+  sl.registerLazySingleton(() => WatchOpenedReportsUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentProfileUseCase(sl(), sl()));
   sl.registerLazySingleton(() => UpdatePrivacyUseCase(sl()));
   sl.registerLazySingleton(() => UpdatePersonalInfoUseCase(sl(), sl()));
@@ -289,4 +302,5 @@ Future<void> initDependencies({
   sl.registerFactory(() => EditReportBloc(sl(), sl(), sl(), sl()));
   sl.registerFactory(() => CommentsBloc(sl(), sl(), sl(), sl(), sl()));
   sl.registerFactory(() => ResolutionBloc(sl(), sl(), sl(), sl(), sl(), sl(), sl(), sl()));
+  sl.registerFactory(() => PushBloc(sl(), sl()));
 }
