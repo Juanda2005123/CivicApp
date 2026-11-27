@@ -77,6 +77,7 @@ flutter:
     - assets/cities/cali/
     - assets/cities/medellin/
     - assets/cities/bogota/
+    - assets/cities/cartagena/
 
   # Brand typography (open licenses in assets/fonts/licenses). Fraunces and
   # IBM Plex Sans are variable fonts: the weight is chosen with

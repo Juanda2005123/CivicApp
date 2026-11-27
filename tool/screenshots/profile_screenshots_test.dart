@@ -50,6 +50,14 @@ const _cities = {
     longitude: -75.5812,
     isCapital: true,
   ),
+  'cartagena': City(
+    id: 5,
+    name: 'Cartagena',
+    department: 'Bolívar',
+    latitude: 10.3910,
+    longitude: -75.4794,
+    isCapital: true,
+  ),
   'bogota': City(
     id: 2,
     name: 'Bogotá',

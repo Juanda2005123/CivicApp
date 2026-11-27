@@ -39,3 +39,15 @@ to a square). The app does not show them (academic project, decision of 2026-11-
 | `bogota/rank_2.webp` | [Catedral Primada de Bogotá en la lluvia.jpg](https://commons.wikimedia.org/wiki/File:Catedral_Primada_de_Bogot%C3%A1_en_la_lluvia.jpg) | Aztlek, Luis Alejandro Bernal Romero | CC BY-SA 3.0 |
 | `bogota/rank_3.webp` | [Torre Colpatria en Bogotá abril 2017, Col.jpg](https://commons.wikimedia.org/wiki/File:Torre_Colpatria_en_Bogot%C3%A1_abril_2017,_Col.jpg) | EEIM | CC BY-SA 4.0 |
 | `bogota/rank_4.webp` | [2018 Bogotá - Iglesia de Monserrate desde Germania.jpg](https://commons.wikimedia.org/wiki/File:2018_Bogot%C3%A1_-_Iglesia_de_Monserrate_desde_Germania.jpg) | Felipe Restrepo Acosta | CC BY-SA 4.0 |
+
+## Cartagena
+
+| File | Photo | Author | License |
+|---|---|---|---|
+| `cartagena/hero_morning.webp` | [Cartagena skyline, Colombia.jpg](https://commons.wikimedia.org/wiki/File:Cartagena_skyline,_Colombia.jpg) | poirpom | CC BY 2.0 |
+| `cartagena/hero_afternoon.webp` | [Sunset-cartagena-tower-dewired.jpg](https://commons.wikimedia.org/wiki/File:Sunset-cartagena-tower-dewired.jpg) | Igvir Ramirez | CC BY-SA 2.0 |
+| `cartagena/hero_night.webp` | [Atardecer en Cartagena de Indias desde La Popa. (esvoy).jpg](https://commons.wikimedia.org/wiki/File:Atardecer_en_Cartagena_de_Indias_desde_La_Popa._(esvoy).jpg) | Norma Gòmez | CC BY 2.0 |
+| `cartagena/rank_1.webp` | [Torre del Reloj, Cartagena de Indias.jpg](https://commons.wikimedia.org/wiki/File:Torre_del_Reloj,_Cartagena_de_Indias.jpg) | Flakkita88 | CC BY-SA 3.0 |
+| `cartagena/rank_2.webp` | [Panorama Baluarte de Santo Domingo CTG 11 2019 2143.jpg](https://commons.wikimedia.org/wiki/File:Panorama_Baluarte_de_Santo_Domingo_CTG_11_2019_2143.jpg) | Mariordo (Mario Roberto Durán Ortiz) | CC BY-SA 4.0 |
+| `cartagena/rank_3.webp` | [Castillo San Felipe de Barajas, Cartagena 14.jpg](https://commons.wikimedia.org/wiki/File:Castillo_San_Felipe_de_Barajas,_Cartagena_14.jpg) | Bernard Gagnon | CC BY-SA 4.0 |
+| `cartagena/rank_4.webp` | [Patio Convento de la Popa CTG 11 2019 1844.jpg](https://commons.wikimedia.org/wiki/File:Patio_Convento_de_la_Popa_CTG_11_2019_1844.jpg) | Mariordo (Mario Roberto Durán Ortiz) | CC BY-SA 4.0 |
