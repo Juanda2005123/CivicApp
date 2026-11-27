@@ -29,7 +29,6 @@ import '../../features/explore/ui/screens/home_screen.dart';
 import '../../features/reports/ui/bloc/comments_bloc.dart';
 import '../../features/reports/ui/bloc/resolution_bloc.dart';
 import '../../features/notifications/ui/bloc/push_bloc.dart';
-import '../../features/notifications/ui/bloc/push_event.dart';
 import '../../features/notifications/ui/widgets/push_opened_listener.dart';
 import '../../features/reports/ui/bloc/edit_report_bloc.dart';
 import '../../features/reports/ui/bloc/incident_detail_bloc.dart';
@@ -73,7 +72,9 @@ class AppRoutes {
                 BlocProvider(create: (_) => sl<MapBloc>()..add(MapStarted())),
                 BlocProvider(create: (_) => sl<CitySwitcherBloc>()),
                 BlocProvider(create: (_) => sl<FeedBloc>()),
-                BlocProvider(create: (_) => sl<PushBloc>()..add(const PushStarted())),
+                // HomeScreen starts the pushes once the map has asked for the
+                // location: Android answers one permission dialog at a time.
+                BlocProvider(create: (_) => sl<PushBloc>()),
               ],
               child: const PushOpenedListener(child: HomeScreen()),
             ),

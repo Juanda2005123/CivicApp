@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -14,6 +16,9 @@ import 'package:vigia_app/features/auth/domain/usecases/open_location_settings_u
 import 'package:vigia_app/features/dashboard/ui/bloc/profile_bloc.dart';
 import 'package:vigia_app/features/dashboard/ui/bloc/profile_event.dart';
 import 'package:vigia_app/features/explore/domain/usecases/get_city_options_usecase.dart';
+import 'package:vigia_app/features/notifications/domain/usecases/enable_push_usecase.dart';
+import 'package:vigia_app/features/notifications/domain/usecases/watch_opened_reports_usecase.dart';
+import 'package:vigia_app/features/notifications/ui/bloc/push_bloc.dart';
 import 'package:vigia_app/features/explore/domain/usecases/search_cities_usecase.dart';
 import 'package:vigia_app/features/explore/ui/bloc/city_switcher_bloc.dart';
 import 'package:vigia_app/features/explore/ui/bloc/feed_bloc.dart';
@@ -31,6 +36,7 @@ import 'package:vigia_app/features/reports/domain/usecases/get_city_map_usecase.
 import 'package:vigia_app/features/reports/domain/usecases/get_current_location_usecase.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../support/fake_push_repository.dart';
 import '../../support/fakes.dart';
 import '../../support/profile_bloc_factory.dart';
 import '../../support/report_filter_samples.dart';
@@ -66,6 +72,15 @@ FeedIncident _feedReport(String title, {String id = 'inc-1'}) => FeedIncident(
       createdAt: DateTime.utc(2026, 11, 14, 12),
     );
 
+/// A location whose answer the test decides when to give, like a permission
+/// dialog the citizen has not answered yet.
+class _PendingLocationRepository extends FakeLocationRepository {
+  final answer = Completer<Coordinates>();
+
+  @override
+  Future<Coordinates> currentCoordinates() => answer.future;
+}
+
 void main() {
   late FakeAuthRepository auth;
   late FakeProfileRepository profiles;
@@ -88,7 +103,7 @@ void main() {
 
   // Blocs are created inside each test so their event loop runs in the
   // tester's fake async zone.
-  Widget createShell() {
+  Widget createShell({FakePushRepository? push}) {
     final profileBloc = buildProfileBloc(auth, profiles)
       ..add(ProfileStarted());
     final mapBloc = MapBloc(
@@ -114,6 +129,10 @@ void main() {
         BlocProvider<MapBloc>.value(value: mapBloc),
         BlocProvider<CitySwitcherBloc>.value(value: switcherBloc),
         BlocProvider<FeedBloc>.value(value: feedBloc),
+        if (push != null)
+          BlocProvider<PushBloc>(
+            create: (_) => PushBloc(EnablePushUseCase(auth, push), WatchOpenedReportsUseCase(push)),
+          ),
       ],
       child: MaterialApp(
         theme: AppTheme.light,
@@ -134,6 +153,22 @@ void main() {
       ),
     );
   }
+
+  testWidgets('the pushes wait for the location question: one permission dialog at a time', (tester) async {
+    final pending = _PendingLocationRepository();
+    location = pending;
+    final push = FakePushRepository();
+
+    await tester.pumpWidget(createShell(push: push));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(push.calls, isEmpty, reason: 'the location is still being asked');
+
+    pending.answer.complete(const Coordinates(latitude: 3.40, longitude: -76.55));
+    await tester.pumpAndSettle();
+
+    expect(push.calls, ['push.enable uid-1']);
+  });
 
   testWidgets('opens on Mapa with the bottom bar and the report button', (tester) async {
     await tester.pumpWidget(createShell());
